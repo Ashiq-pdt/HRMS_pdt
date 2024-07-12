@@ -1,0 +1,152 @@
+<!-- templates/admin/index.html -->
+
+{% extends "layout/base.html" %}
+
+{% block content %}
+<!--Page header-->
+<div class="page-header d-xl-flex d-block">
+    <div class="page-leftheader">
+        <div class="page-title">Department</div>
+    </div>
+    <div class="page-rightheader ms-md-auto">
+        <div class="align-items-end flex-wrap my-auto right-content breadcrumb-right">
+            <div class="btn-list">
+                <a href="javascript:void(0);" class="btn btn-primary me-3" data-bs-toggle="modal"
+                    data-bs-target="#adddepartmentmodal">Add Department</a>
+                <button class="btn btn-light" data-bs-toggle="tooltip" data-bs-placement="top" title="E-mail"> <i
+                        class="feather feather-mail"></i> </button>
+                <button class="btn btn-light" data-bs-placement="top" data-bs-toggle="tooltip" title="Contact"> <i
+                        class="feather feather-phone-call"></i> </button>
+                <button class="btn btn-primary" data-bs-placement="top" data-bs-toggle="tooltip" title="Info"> <i
+                        class="feather feather-info"></i> </button>
+            </div>
+        </div>
+    </div>
+</div>
+<!--End Page header-->
+
+<!-- Row -->
+<div class="row">
+    <div class="col-xl-12 col-md-12 col-lg-12">
+        <div class="card">
+            <div class="card-header  border-0">
+                <h4 class="card-title">Department Summary</h4>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    {% if departments.departments %}
+                    <table class="table  table-vcenter text-nowrap table-bordered border-bottom table-striped" id="hr-table">
+                        <thead>
+                            <tr>
+                                <th class="border-bottom-0 w-5">No</th>
+                                <th class="border-bottom-0">Department Name</th>
+                                <th class="border-bottom-0">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in departments.departments %}
+                            <tr>
+                                <td>{{loop.index}}</td>
+                                <td>{{item.department_name}}</td>
+                                <td>
+                                    <a class="btn btn-primary btn-icon btn-sm" data-bs-toggle="modal"
+                                        data-bs-target="#editdepartmentmodal" data-id="{{item.dep_id}}"
+                                        data-dept_name="{{item.department_name}}">
+                                        <i class="feather feather-edit" data-bs-toggle="tooltip"
+                                            data-original-title="Edit"></i>
+                                    </a>
+                                    <a class="btn btn-danger btn-icon btn-sm" data-bs-toggle="tooltip"
+                                        data-original-title="Delete"
+                                        href="{{ url_for('company.delete_department',dep_id=item.dep_id) }}"><i
+                                            class="feather feather-trash-2"></i></a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                    {% else %}
+                    <div class="expanel expanel-default mt-4">
+                        <div class="expanel-body">
+                            No Departments Added.
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- End Row-->
+<!--Add Department Modal -->
+<div class="modal fade" id="adddepartmentmodal">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Add Department</h5>
+                <button class="btn-close" data-bs-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">×</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form class="card-body pt-3" method="POST" action="/add/department">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+                    <div class="form-group">
+                        <label class="form-label">Add Department</label>
+                        <input type="text" class="form-control" placeholder="Department" name="dept_name" value=""
+                            required>
+                    </div>
+            </div>
+            <div class="modal-footer">
+                <a href="javascript:void(0);" class="btn btn-outline-primary" data-bs-dismiss="modal">Close</a>
+                <button class="btn btn-primary">Submit</button>
+            </div>
+            </form>
+        </div>
+    </div>
+</div>
+<!-- End Add Department Modal  -->
+
+<!--Edit Department Modal -->
+<div class="modal fade" id="editdepartmentmodal">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Edit Department</h5>
+                <button class="btn-close" data-bs-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">×</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form class="card-body pt-3" method="POST" action="/update/department">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+                    <input type="text" class="form-control dept-id" placeholder="Department" name="dept_id" value=""
+                        hidden>
+                    <div class="form-group">
+                        <label class="form-label">Edit Department</label>
+                        <input type="text" class="form-control dept" placeholder="Department" name="dept_name" value="">
+                    </div>
+            </div>
+            <div class="modal-footer">
+                <a href="javascript:void(0);" class="btn btn-outline-primary" data-bs-dismiss="modal">Close</a>
+                <button class="btn btn-primary">Submit</button>
+            </div>
+            </form>
+        </div>
+    </div>
+</div>
+<!-- End Edit Department Modal  -->
+{% endblock %}
+{% block script %}
+{{ super() }}
+<!-- INTERNAL Index js-->
+<script src="{{ url_for('static', filename='assets/js/hr/hr-department.js')}}"></script>
+<script>
+    $('#editdepartmentmodal').on('show.bs.modal', function (e) {
+        var id = $(e.relatedTarget).data('id');
+        var name = $(e.relatedTarget).data('dept_name');
+        $(".dept-id").val(id);
+        $(".dept").val(name);
+
+    });
+</script>
+{% endblock %}

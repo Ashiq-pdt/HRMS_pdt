@@ -1,0 +1,297 @@
+<!-- templates/admin/index.html -->
+{% extends "layout/base.html" %}
+{% block head %}
+{{ super() }}
+<!-- INTERNAL Daterangepicker css-->
+<link rel="stylesheet" href="{{ url_for('static', filename='assets/plugins/daterangepicker/daterangepicker.css') }}">
+<link href="https://cdn.datatables.net/buttons/2.2.3/css/buttons.dataTables.min.css"></link>
+<style>
+    table.dataTable tbody th,
+    table.dataTable tbody td,
+    table.dataTable thead th,
+    table.dataTable thead td {
+        padding: 5px 10px !important;
+    }
+</style>
+
+{% endblock %}
+
+{% block content %}
+{% autoescape off %}
+
+<!--Page header-->
+<div class="page-header d-xl-flex d-block">
+    <div class="page-leftheader">
+        <div class="page-title">Leave Encashment</div>
+    </div>
+    <div class="page-rightheader ms-md-auto">
+        <div class="d-flex align-items-end flex-wrap my-auto end-content breadcrumb-end">
+            <div class="btn-list">
+                <button  class="btn btn-light" data-bs-toggle="tooltip" data-bs-placement="top" title="E-mail"> <i class="feather feather-mail"></i> </button>
+                <button  class="btn btn-light" data-bs-placement="top" data-bs-toggle="tooltip" title="Contact"> <i class="feather feather-phone-call"></i> </button>
+                <button  class="btn btn-primary" data-bs-placement="top" data-bs-toggle="tooltip" title="Info"> <i class="feather feather-info"></i> </button>
+            </div>
+        </div>
+    </div>
+</div>
+<!--End Page header-->
+
+<!-- Row -->
+<div class="row">
+    <div class="col-xl-3 col-md-12">
+        <form class="card-body pt-3" id="EOSB_form">
+            <div class="card">
+                <div class="card-header  border-0">
+                    <h4 class="card-title">Calculate Leave Encashment</h4>
+                </div>
+                <div class="card-body pb-0 pt-3">
+                    <div>
+                        <div class="col-md-12 col-lg-12">
+                            <div class="form-group">
+                                <label class="form-label">Select Employee</label>
+                                <select class="form-control select2-show-search custom-select" name="employee_details_id"
+                                    data-placeholder="Select Employee" id="employee_details_id">
+                                    <option label="Select Employee"></option>
+                                    {% for item in employees_details.employees|selectattr('employee_company_details.type', 'equalto', '0') %}
+                                        {% if item.employee_leave_policies %}
+                                            <option value="{{item._id}}" {% if item._id==selected_emp %}selected{% endif %}>
+                                                {{item.first_name + ' ' + item.last_name}}</option>
+                                        {% endif %}
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mt-3">
+                        <div class="col-md-12 col-lg-12">
+                            <div class="form-group">
+                                <div class="row">
+                                    <label class="form-label mb-0 mt-2">Leave Policy</label>
+                                    <div class="col-md-12">
+                                        <select name="leave_policy"  class="form-control" id="select2insidemodal"  data-placeholder="Contract Type">
+                                            <option>Choose the Employee First</option>
+
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-footer border-top-0">
+                    <div class="btn-list">
+                        <button class="btn btn-primary btnCalculateEOSB">Calculate Encashment</button>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+    <div class="col-xl-9 col-md-12">
+        <div class="card">
+            <div class="card-body">
+                <div class="mb-5">
+                    <a class="text-dark"  href="javascript:void(0);">
+                    <h3 class="mb-2 name" >Employee Name</h3></a>
+                    <div class="d-flex">
+                        <!-- <ul class="mb-0 d-md-flex">
+                            <li class="me-5">
+                                <a class="icons "  href="javascript:void(0);"><i class="si si-briefcase text-muted me-1"></i>Designation</a>
+                            </li>
+                            <li class="me-5">
+                                <a class="icons"  href="javascript:void(0);"><i class="si si-location-pin text-muted me-1"></i> USA</a>
+                            </li>
+                            <li class="me-5" data-bs-placement="top" data-bs-toggle="tooltip" title="Views">
+                                <a class="icons"  href="javascript:void(0);"><i class="si si-eye text-muted me-1"></i> 765</a>
+                            </li>
+                        </ul> -->
+                    </div>
+                </div>
+                <h5 class="mb-3 mt-5 font-weight-semibold">Employee Details</h5>
+                <div class="table-responsive">
+                    <table class="table row table-borderless w-100 m-0 text-nowrap">
+                        <tbody class="col-lg-12 col-xl-6 p-0">
+                            <tr>
+                                <td class="font-weight-semibold">Department : <span class="department"> --</span></td>
+                            </tr>
+                            <tr>
+                                <td class="font-weight-semibold">Designation : <span class="designation"> --</span></td>
+                            </tr>
+                            <tr>
+                                <td class="font-weight-semibold">Total Salary : AED <span class="total_salary">0.00</span></td>
+                            </tr>
+                            <tr>
+                                <td class="font-weight-semibold">Basic Salary : AED <span class="basic_salary">0.00</span></td>
+                            </tr>
+                            <!-- <tr>
+                                <td><span class="font-weight-semibold">Job Tags :</span> PHP, Laravel, HTML5, CSS, SCSS, Javascript</td>
+                            </tr> -->
+                        </tbody>
+                        <tbody class="col-lg-12 col-xl-6 p-0 border-top-0">
+                            <tr>
+                                <td class="font-weight-semibold">Joining Date : <span class="joining_date">DD/MM/YYYY</span></td>
+                            </tr>
+                            <tr>
+                                <td class="font-weight-semibold">Daily Basic Pay : <span class="daily_pay">0.00</span></td>
+                            </tr>
+                            <tr>
+                                <td class="font-weight-semibold">Served Years : <span class="served_years">--</span></td>
+
+                            </tr>
+                            <!-- <tr>
+                                <td><span class="font-weight-semibold">Eligibility :</span> B.tech, Any Graduate</td>
+                            </tr>
+                            <tr>
+                                <td><span class="font-weight-semibold">Company :</span> Abcd Corporation pvt ltd</td>
+                            </tr> -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="list-id">
+                    <div class="row">
+                        <div class="col">
+                            <a class="mb-0 font-weight-semibold">Total Leave Encashment to be Paid : </a>
+                        </div>
+                        <div class="col">AED <a class="mb-0 font-weight-semibold graduity text-success">0.00</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="icons">
+                    <a class="btn btn-success icons mt-2 mb-2 btnSaveTransanction d-none" data-bs-target="#apply" data-bs-toggle="modal"  href="javascript:void(0);"><i class="si si-check me-1"></i>Save Transaction</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- End Row -->
+
+{% endautoescape %}
+{% endblock %}
+{% block script %}
+{{ super() }}
+
+<!-- Datepicker js -->
+<!-- INTERNAL Bootstrap-Datepicker js-->
+<!--Othercharts js-->
+<!-- INTERNAL Pg-calendar-master js -->
+<script src="{{ url_for('static', filename='assets/plugins/pg-calendar-master/pignose.calendar.full.min.js') }}">
+</script>
+<script src="{{ url_for('static', filename='assets/plugins/daterangepicker/moment.min.js') }}"></script>
+<script src="{{ url_for('static', filename='assets/plugins/select2/select2.full.min.js') }}"></script>
+<script src="{{ url_for('static', filename='assets/js/select2.js') }}"></script>
+
+<!-- INTERNAl Bootstrap-timepicker js-->
+<script>
+    fpm = $(".fc-datepicker").datepicker({
+        dateFormat: "dd/mm/yy"
+    });
+</script>
+<script>
+// Ajax Add Gen Settings
+$('.btnCalculateEOSB').click(function (e) {
+    e.preventDefault();
+    var selected_employee = $('#employee_details_id :selected').val()
+    var selected_dod = $('#select2insidemodal :selected').val()
+    if(selected_employee && selected_dod){
+        swal({
+            title: "Are you sure?",
+            text: "You want to calculate the Leave Encashment to pay? ",
+            icon: "info",
+            buttons: true,
+            dangerMode: true,
+        }).then((willDelete) => {
+            if (willDelete) {
+                $("#global-loader").show();
+                cs = "{{csrf_token()}}"
+                $.ajax({
+                        headers: {
+                            'X-CSRF-TOKEN': cs
+                        },
+                        url: '/calculateleaveencashment/',
+                        data: $('#EOSB_form').serialize(),
+                        type: 'POST',
+                    }).done(function (data) {
+                        if (data.status == "success") {
+                            $('.daily_pay').html(data.details.per_day_basic_pay.toFixed(2))
+                            //$('.served_years').html(data.details.served_years +' Years, ' + data.details.days + ' Days')
+                            $('.graduity').html(parseFloat(data.details.leave_encashment_amount).toFixed(2))
+                            $("#global-loader").hide();
+                            //$(".btnSaveTransanction").removeClass("d-none");
+                            //swal({
+                                //title: "Success",
+                                //text: "Successfully Saved Setting(s)!",
+                              //  icon: "success",
+                            //});
+                        }
+                        else{
+                             $("#global-loader").hide();
+                             $('.daily_pay').html('0.00')
+                            $('.served_years').html('--')
+                            $('.graduity').html('0.00')
+                            $(".btnSaveTransanction").addClass("d-none");
+                        }
+                    })
+                    .fail(function (err) {
+                        console.log(err);
+                        $("#global-loader").hide();
+                        $('#message').html(err);
+                    })
+            }
+        });
+    }
+});
+//EnD Ajax Gen Settings
+// Ajax Time Approvers Policy
+$(document).on("change", '#employee_details_id', function (e) {
+    e.preventDefault();
+    cs = "{{csrf_token()}}"
+    var selected_employee = $('#employee_details_id :selected').val()
+    $("#global-loader").show();
+    if(selected_employee !=''){
+        $.ajax({
+            headers: {
+                'X-CSRF-TOKEN': cs
+            },
+            url: '/getemployeesdetails',
+            data: {selected_employee:selected_employee},
+            type: 'GET',
+        })
+        .done(function (data) {
+            response = JSON.parse(data)
+            if (response.status==="success"){
+                var employee_data = '';
+                var manager_data = '';
+                details = JSON.parse(response.details)
+                $('.name').html(details.first_name + ' '+details.last_name)
+                $('.designation').html(details.employee_company_details.designation)
+                $('.department').html(details.employee_company_details.department)
+
+                $('.total_salary').html(parseFloat(details.employee_company_details.total_salary).toFixed(2))
+                $('.basic_salary').html(parseFloat(details.employee_company_details.basic_salary).toFixed(2))
+                $('.joining_date').html(details.employee_company_details.date_of_joining)
+                var lp = '';
+                $.each(response.leave_policies, function (index, value) {
+                    lp += '<option value=' + value.emp_leave_policy_id + '>' + value
+                        .leave_policy_name + ' ('+ value.type+ ') (Remaining: ' + value.balance.toFixed(2) + ')'+'</option>';
+                });
+                $('#select2insidemodal').html(lp);
+                $("#global-loader").hide();
+            }
+            else{
+                $("#global-loader").hide();
+            }
+        })
+        .fail(function (err) {
+            console.log(err);
+            $('#message').html(err);
+        })
+    }
+});
+//EnD Leave Policy
+</script>
+
+<!-- custom js -->
+{% endblock %}

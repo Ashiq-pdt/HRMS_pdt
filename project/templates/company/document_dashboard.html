@@ -1,0 +1,392 @@
+<!-- templates/admin/index.html -->
+
+{% extends "layout/base.html" %}
+
+{% block content %}
+<!--Page header-->
+<div class="page-header d-xl-flex d-block">
+    <div class="page-leftheader">
+        <div class="page-title">Document<span class="font-weight-normal text-muted ms-2">Dashboard</span></div>
+    </div>
+    <div class="page-rightheader ms-md-auto">
+        <div class="d-flex align-items-end flex-wrap my-auto end-content breadcrumb-end">
+
+            <div class="d-lg-flex d-block">
+                <div class="btn-list">
+                    <button class="btn btn-light" data-bs-toggle="tooltip" data-bs-placement="top" title="E-mail"> <i
+                            class="feather feather-mail"></i> </button>
+                    <button class="btn btn-light" data-bs-placement="top" data-bs-toggle="tooltip" title="Contact"> <i
+                            class="feather feather-phone-call"></i> </button>
+                    <button class="btn btn-primary" data-bs-placement="top" data-bs-toggle="tooltip" title="Info"> <i
+                            class="feather feather-info"></i> </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<!--End Page header-->
+
+<!--Row-->
+<div class="row">
+    <div class="col-xl-12 col-md-12 col-lg-12">
+        <div class="card">
+            <div class="card-header  border-0 responsive-header">
+                <h4 class="card-title">Document Expiry Details</h4>
+                <div class="card-options me-3">
+                    <div class="btn-list">
+                        <a href="{{url_for('company.document_dashboard')}}"
+                            class="btn btn-outline-light text-dark float-start me-4 d-flex  my-sm-0 my-1"><span
+                                class="dot-label me-2 my-auto {{'bg-primary' if request.args.get('no_of_days')==None else 'bg-light4'}}"></span>0-30 Days</a>
+                        <a href="{{url_for('company.document_dashboard',no_of_days=90)}}"
+                            class="btn btn-outline-light text-dark float-start me-4 d-flex my-sm-0 my-1"><span
+                                class="dot-label {{'bg-primary' if request.args.get('no_of_days')=='90' else 'bg-light4'}} me-2 my-auto"></span>31-90 Days</a>
+                        <a href="{{url_for('company.document_dashboard',no_of_days=120)}}"
+                            class="btn btn-outline-light text-dark float-start me-4 d-flex  my-sm-0 my-1"><span
+                                class="dot-label {{'bg-primary' if request.args.get('no_of_days')=='120' else 'bg-light4'}} me-2 my-auto"></span>91-120 Days</a>
+                        <a href="{{url_for('company.document_dashboard',no_of_days='120+')}}"
+                            class="btn btn-outline-light text-dark float-start me-4 d-flex my-sm-0 my-1"><span
+                                class="dot-label {{'bg-primary' if request.args.get('no_of_days')=='120+' else 'bg-light4'}} me-2 my-auto"></span>120+ Days</a>
+                    </div>
+                </div>
+            </div>
+            <div class="row mt-3">
+                <div class="col-xl-6 col-md-12 col-lg-12">
+                    <div class="card">
+                        <div class="card-header  border-0">
+                            <h4 class="card-title">By Department</h4>
+                            <div class="card-options me-3">
+                                <div class="btn-list">
+                                    <a href="#"
+                                        class="btn btn-outline-light text-dark float-start me-4 d-flex  my-sm-0 my-1"><span
+                                            class="dot-label bg-primary me-2 my-auto"></span>Expiring Documents</a>
+                                    <!-- <a href="#"
+                                        class="btn btn-outline-light text-dark float-start me-4 d-flex my-sm-0 my-1"><span
+                                            class="dot-label bg-light4 me-2 my-auto"></span>Total Documents</a> -->
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <canvas id="deptchart" class="h-400 "></canvas>
+                         
+                        </div>
+                    </div>
+                </div>
+                <div class="col-xl-6 col-md-12 col-lg-12">
+                    <div class="card">
+                        <div class="card-header  border-0">
+                            <h4 class="card-title">By Document Type</h4>
+                            <div class="card-options me-3">
+                                <div class="btn-list">
+                                    <a href="#"
+                                        class="btn btn-outline-light text-dark float-start me-4 d-flex  my-sm-0 my-1"><span
+                                            class="dot-label bg-primary me-2 my-auto"></span>Expiring Documents</a>
+                                    <!-- <a href="#"
+                                        class="btn btn-outline-light text-dark float-start me-4 d-flex my-sm-0 my-1"><span
+                                            class="dot-label bg-light4 me-2 my-auto"></span>Total Documents</a> -->
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <canvas id="doctypechart" class="h-400 "></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-xl-12 col-md-12 col-lg-12">
+                    <div class="card">
+                        <div class="card-header  border-0">
+                            <h4 class="card-title">Employees List </h4>
+                        </div>
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table  table-vcenter text-nowrap table-bordered border-bottom"
+                                    id="hr-table">
+                                    <thead>
+                                        <tr>
+                                            <th class="border-bottom-0 w-5">No</th>
+                                            <th class="border-bottom-0 w-10">Employee Name</th>
+                                            <th class="border-bottom-0">Department</th>
+                                            <th class="border-bottom-0 text-center">Expiry Document Details</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% set items = namespace(counter=0) %}
+                                        {% for item in company_details.employees %}
+                                            {% if item.documents|selectattr('document_expiry_on', 'greaterthan',date_from)|selectattr('document_expiry_on', 'lessthan',date_till)|selectattr('document_type', 'ne','offer_letter')|list|length >= 1 %}
+                                                {% set items.counter = items.counter + 1 %}
+                                                 <tr>
+                                                    <td>{{items.counter}}</td>
+                                                    <td>
+                                                        <div class="d-flex">
+                                                            <div class="me-3 mt-0 mt-sm-1 d-block">
+                                                                <h6 class="mb-1 fs-14">{{item.first_name +' '+item.last_name}}
+                                                                </h6>
+                                                                <p class="text-muted mb-0 fs-12">{{item.personal_email}}</p>
+                                                            </div>
+                                                        </div>
+                                                    </td>
+                                                    <td>{{item.employee_company_details.department}}</td>
+                                                    <td>
+                                                        <table class="table table-vcenter text-nowrap table-bordered border-bottom bg-none" id="hr-table">
+                                                            <thead>
+                                                                <tr>
+                                                                    <th class="border-bottom-0 w-5">No</th>
+                                                                    <th class="border-bottom-0 w-5 ">Document Type</th>
+                                                                    <th class="border-bottom-0 w-10">Document Expiry Date</th>
+                                                                    <th class="border-bottom-0">Remaining Days for Expiry</th>
+                                                                </tr>
+                                                            </thead>
+                                                            <tbody>
+                                                                {% for document in item.documents|selectattr('document_expiry_on', 'greaterthan',date_from)|selectattr('document_expiry_on', 'lessthan',date_till)|selectattr('document_type', 'ne','offer_letter')  %}
+                                                                <tr>
+                                                                    <td>{{loop.index}}</td>
+                                                                    <td>
+                                                                        {% if document.document_type == 'passport_copy' %}
+                                                                            Passport
+                                                                        {% elif document.document_type == 'id_proof' %}
+                                                                            Emirates ID
+                                                                        {% elif document.document_type == 'visa_copy' %}
+                                                                            Visa
+                                                                        {% else %}
+                                                                            Other
+                                                                        {% endif %}
+                                                                    </td>
+                                                                    <td>
+                                                                        {{document.document_expiry_on.strftime('%d %B %Y')}}
+                                                                    </td>
+                                                                    <td>
+                                                                        {{(document.document_expiry_on-date_from).days}} Days
+                                                                    </td>
+                                                                </tr>
+                                                                {% endfor %}
+                                                            </tbody>
+                                                        </table>
+                                                    </td>
+
+                                                </tr>
+                                            {% endif %}
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+</div>
+{% endblock %}
+
+{% block script %}
+{{ super() }}
+<!-- INTERNAL Index js-->
+<!-- <script src="{{ url_for('static', filename='assets/plugins/othercharts/jquery.sparkline.min.js') }}"></script> -->
+
+<!-- INTERNAL Chartjs rounded-barchart -->
+<script src="{{ url_for('static', filename='assets/plugins/chart.min/chart.min.js') }}"></script>
+<!-- <script src="{{ url_for('static', filename='assets/plugins/chart.min/rounded-barchart.js') }}"></script> -->
+
+<!-- INTERNAL Index js-->
+<script src="{{ url_for('static', filename='assets/js/document_dashboard.js') }}"></script>
+<!-- custom js -->
+<!-- Color Theme js -->
+<script src="{{ url_for('static', filename='assets/js/themeColors.js') }}"></script>
+<!-- <script src="{{ url_for('static', filename='assets/js/custom.js') }}"></script> -->
+<script>
+    // Data Table 
+    $('#hr-table').DataTable({
+        "order": [
+            [0, "desc"]
+        ],
+        order: [],
+        language: {
+            searchPlaceholder: 'Search...',
+            sSearch: '',
+
+        }
+    });
+</script>
+<script>
+    function chartbar() {
+    'use strict';
+
+    // Bar-Chart 
+    var ctx = document.getElementById("deptchart").getContext('2d');
+    var myChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels : [{% for item in departments.departments %}
+                         "{{ item.department_name }}",
+                     {% endfor %}],
+            datasets: [
+                {
+                    barPercentage: .8,
+                    categoryPercentage: 0.38,
+                    data: [{% for item in departments.departments %}
+                            {% set ns = namespace(counter=0) %}
+                                {% for employees in company_details.employees|selectattr('employee_company_details.department', 'equalto', item.department_name)%} 
+                                    {% for document in employees.documents|selectattr('document_expiry_on', 'greaterthan',date_from)|selectattr('document_expiry_on', 'lessthan',date_till)|selectattr('document_type', 'ne','offer_letter') %} 
+                                            {% set ns.counter = ns.counter + 1 %}
+                                        {% endfor %}
+                                    {% endfor %}
+                                {{ns.counter}},
+                            {% endfor %}],
+                    borderWidth: 0,
+                    backgroundColor: myVarVal,
+                    borderColor: myVarVal,
+                    pointBackgroundColor: myVarVal,
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            layout: {
+                padding: {
+                    left: 0,
+                    right: 0,
+                    top: 0,
+                    bottom: 0
+                }
+            },
+            tooltips: {
+                enabled: false,
+            },
+            scales: {
+                yAxes: [{
+                    gridLines: {
+                        display: true,
+                        drawBorder: false,
+                        zeroLineColor: 'rgba(142, 156, 173,0.1)',
+                        color: "rgba(142, 156, 173,0.1)",
+                    },
+                    scaleLabel: {
+                        display: false,
+                    },
+                    ticks: {
+                        min: 0,
+                        stepSize: 1,
+                        max: 10,
+                        fontColor: "#8492a6",
+                        fontFamily: 'Poppins',
+                    },
+                }],
+                xAxes: [{
+                    barValueSpacing: -2,
+                    barDatasetSpacing: 0,
+                    barRadius: 15,
+                    stacked: false,
+                    ticks: {
+                        beginAtZero: true,
+                        fontColor: "#8492a6",
+                        fontFamily: 'Poppins',
+                    },
+                    gridLines: {
+                        color: "rgba(142, 156, 173,0.1)",
+                        display: false
+                    },
+
+                }]
+            },
+            legend: {
+                display: false
+            },
+            elements: {
+                point: {
+                    radius: 0
+                }
+            }
+        }
+    });
+    var ctx2 = document.getElementById("doctypechart").getContext('2d');
+    var myChart = new Chart(ctx2, {
+        type: 'bar',
+        data: {
+            labels: ['Passport','Emirates','Visa','Other'],
+            datasets: [
+                {
+                    barPercentage: .8,
+                    categoryPercentage: 0.38,
+                    data:  [ {% for item in ['passport_copy','id_proof','visa_copy','other'] %}
+                                {% set ns = namespace(counter=0) %}
+                                {% for employees in company_details.employees%} 
+                                    {% for document in employees.documents|selectattr('document_expiry_on', 'greaterthan',date_from)|selectattr('document_expiry_on', 'lessthan',date_till)|selectattr('document_type', 'ne','offer_letter')|selectattr('document_type', 'equalto', item)  %} 
+                                        {% set ns.counter = ns.counter + 1 %}
+                                    {% endfor %}
+                                {% endfor %}
+                                {{ns.counter}},
+                            {% endfor %}],
+                    borderWidth: 0,
+                    backgroundColor: myVarVal,
+                    borderColor: myVarVal,
+                    pointBackgroundColor: myVarVal,
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            layout: {
+                padding: {
+                    left: 0,
+                    right: 0,
+                    top: 0,
+                    bottom: 0
+                }
+            },
+            tooltips: {
+                enabled: false,
+            },
+            scales: {
+                yAxes: [{
+                    gridLines: {
+                        display: true,
+                        drawBorder: false,
+                        zeroLineColor: 'rgba(142, 156, 173,0.1)',
+                        color: "rgba(142, 156, 173,0.1)",
+                    },
+                    scaleLabel: {
+                        display: false,
+                    },
+                    ticks: {
+                        min: 0,
+                        stepSize: 1,
+                        max: 10,
+                        fontColor: "#8492a6",
+                        fontFamily: 'Poppins',
+                    },
+                }],
+                xAxes: [{
+                    barValueSpacing: -2,
+                    barDatasetSpacing: 0,
+                    barRadius: 15,
+                    stacked: false,
+                    ticks: {
+                        beginAtZero: true,
+                        fontColor: "#8492a6",
+                        fontFamily: 'Poppins',
+                    },
+                    gridLines: {
+                        color: "rgba(142, 156, 173,0.1)",
+                        display: false
+                    },
+
+                }]
+            },
+            legend: {
+                display: false
+            },
+            elements: {
+                point: {
+                    radius: 0
+                }
+            }
+        }
+    });
+};
+chartbar()
+</script>
+{% endblock %}

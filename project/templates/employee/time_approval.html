@@ -1,0 +1,761 @@
+<!-- templates/employee/index.html -->
+
+{% extends "layout/base.html" %}
+{% block head %}
+{{ super() }}
+<!-- INTERNAL Daterangepicker css-->
+<link rel="stylesheet" href="{{ url_for('static', filename='assets/plugins/daterangepicker/daterangepicker.css') }}">
+{% endblock %}
+
+{% block content %}
+<!--Page header-->
+<div class="page-header d-xl-flex d-block">
+    <div class="page-leftheader">
+        <div class="page-title">Recent Time Approvals</div>
+    </div>
+    <div class="page-rightheader ms-md-auto">
+        <div class="d-flex align-items-end flex-wrap my-auto end-content breadcrumb-end">
+            <div class="btn-list">
+                <button class="btn btn-light" data-bs-toggle="tooltip" data-bs-placement="top" title="E-mail"> <i
+                        class="feather feather-mail"></i> </button>
+                <button class="btn btn-light" data-bs-placement="top" data-bs-toggle="tooltip" title="Contact"> <i
+                        class="feather feather-phone-call"></i> </button>
+                <button class="btn btn-primary" data-bs-placement="top" data-bs-toggle="tooltip" title="Info"> <i
+                        class="feather feather-info"></i> </button>
+            </div>
+        </div>
+    </div>
+</div>
+<!--End Page header-->
+
+<!-- Row -->
+<div class="row">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header border-bottom-0">
+                <h4 class="card-title">Recent Time Request Awaiting Your Approval</h4>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    {% if time_requests|selectattr('request_status','equalto','pending')|list|length >0 %}
+                    {% for item in time_requests|selectattr('request_status','equalto','pending')|sort(attribute='attendance_id.attendance_date',reverse=True) %}
+                        {% if loop.index <= 4 %}
+                            <div class="col-xl-3 col-lg-6 col-md-6">
+                                <div class="card border p-0 shadow-none">
+                                    <div class="card-header border-0">
+                                        <h3 class="card-title text-info fs-12">{{item.request_type|capitalize()}} Request</h3>
+                                        <div class="ms-auto">
+                                            <span class="badge badge-md badge-warning-light fs-16">{{item.attendance_id.attendance_date.strftime('%d/%m/%Y')}}</span>
+                                        </div>
+                                    </div>
+                                    <div class="d-flex p-2">
+                                        <div class="ps-3">
+                                            <h5 class="mb-0 mt-2 text-dark fs-16">
+                                                {{item.attendance_id.employee_details_id.first_name + ' ' +item.attendance_id.employee_details_id.last_name}}
+                                            </h5>
+                                            <p class="text-muted fs-10 mt-1 mb-0">
+                                                {{item.attendance_id.employee_details_id.employee_company_details.department}}
+                                                <span class="my-auto fs-9 font-weight-normal  ms-1 me-1 text-black-20">/</span>
+                                                {{item.attendance_id.employee_details_id.employee_company_details.designation}}
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <div class="card-body pt-1 pb-1 bg-light">
+                                        <div class="mt-2 mb-0">
+                                            <div class="h6 mb-1">
+                                                <span class="feather feather-clock"></span> 
+                                                {{item.request_type|capitalize()}} By : 
+                                                {% if item.request_type == "late" %}
+                                                    {{item.attendance_id.late_by_minutes}} 
+                                                {% elif item.request_type == "early" %}
+                                                    {{item.attendance_id.early_by_minutes}} 
+                                                {% else %}
+                                                    {{item.attendance_id.ot_by_minutes}} 
+                                                {% endif %}
+                                                <span
+                                                    class="badge badge-md badge-primary-light"> minutes </span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="p-4">
+                                        {% if item.request_type == "late" %}
+                                            <label class="form-label">Clock In Note: </label>
+                                            <p class="text-muted leave-text">{{item.attendance_id.clock_in_note if item.attendance_id.clock_in_note else 'No note specified by the employee'}}</p>
+                                        {% else %}
+                                            <label class="form-label">Clock Out Note: </label>
+                                            <p class="text-muted leave-text">{{item.attendance_id.clock_out_note if item.attendance_id.clock_out_note else 'No note specified by the employee'}}</p>
+                                        {% endif %}
+                                        
+                                    </div>
+                                    <div class="card-footer p-0 border-top-0">
+                                        <div class="btn-group w-100 leaves-btns">
+                                            <a href="javascript:void(0);"
+                                                class="btn btn-lg btn-outline-light w-55 text-success" data-time_id="{{item._id}}" 
+                                                data-time_minutes={% if item.request_type == "late" %}{{item.attendance_id.late_by_minutes}}{% elif item.request_type == "early" %}
+                                                {{item.attendance_id.early_by_minutes}} 
+                                            {% else %}
+                                                {{item.attendance_id.ot_by_minutes}} 
+                                            {% endif %} data-bs-toggle="modal" data-clock_in =" {{item.attendance_id.employee_check_in_at.strftime('%I:%M %p')}}" data-clock_out =" {{item.attendance_id.employee_check_out_at.strftime('%I:%M %p') if item.attendance_id.employee_check_out_at else ""}}"
+                                                data-bs-target="#previewapprovemodal">Approve</a>
+                                            <a href="javascript:void(0);"
+                                                class="btn btn-lg btn-outline-light w-55 text-danger" data-time_id="{{item._id}}" data-bs-toggle="modal"
+                                                data-bs-target="#rejectleavemodal">Reject</a>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endif %}
+                        {% endfor %}
+                    {% else %}
+                    <div class="expanel expanel-default mt-4 add-expanel">
+                        <div class="expanel-body">
+                            No Recent Time Requests.
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+                    
+            </div>
+        </div>
+    </div>
+</div>
+<!-- End Row -->
+
+<!-- Row -->
+<div class="row">
+    <div class="card" id="tabs-style3">
+        <div class="card-header border-bottom-0">
+            <div class="card-title">
+                Time off Summary
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="panel panel-primary tabs-style-3">
+                <div class="tab-menu-heading">
+                    <div class="tabs-menu ">
+                        <!-- Tabs -->
+                        <ul class="nav panel-tabs">
+                            <li class=""><a href="#tab11" class="active" data-bs-toggle="tab"><i class="fa fa-hourglass-half"></i> Pending Requests (<span class="text-bold">{{time_requests|selectattr('request_status','equalto','pending')|list|count}}</span>)</a></li>
+                            <li><a href="#tab12" data-bs-toggle="tab"><i class="fa fa-check-circle-o"></i> Approved ({{time_requests|selectattr('request_status','equalto','approved')|list|count}})</a></li>
+                            <li><a href="#tab13" data-bs-toggle="tab"><i class="fa fa-times-circle-o"></i> Rejected ({{time_requests|selectattr('request_status','equalto','rejected')|list|count}})</a></li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="panel-body tabs-menu-body">
+                    <div class="tab-content">
+                        <div class="tab-pane active" id="tab11">
+                            <div class="card">
+                                <!-- <div class="card-header  border-0">
+                                    <h4 class="card-title"></h4>
+                                </div> -->
+                                <div class="card-body">
+                                    <div class="table-responsive">
+                                        <table class="table  table-vcenter text-nowrap table-bordered border-bottom hr-leaves" id="hr-leaves">
+                                            <thead>
+                                                <tr>
+                                                    <th class="border-bottom-0 w-5">#No</th>
+                                                    <th class="border-bottom-0 w-5">Emp Name</th>
+                                                    <th class="border-bottom-0 w-5">Department</th>
+                                                    <th class="border-bottom-0">Type</th>
+                                                    <th class="border-bottom-0">In Minutes</th>
+                                                    <th class="border-bottom-0">Reason</th>
+                                                    <th class="border-bottom-0">Dated on</th>
+                                                    <th class="border-bottom-0">Status</th>
+                                                    <th class="border-bottom-0">Actions</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {% for item in time_requests|sort(attribute='attendance_id.attendance_date',reverse=True)|selectattr('request_status','equalto','pending') %}
+                                                    <tr>
+                                                        <td>{{loop.index}}</td>
+                                                        <td>
+                                                            <div class="d-flex">
+                                                                <div class="me-3 mt-0 mt-sm-2 d-block">
+                                                                    <h6 class="mb-1 fs-14"> {{item.attendance_id.employee_details_id.first_name + ' ' +item.attendance_id.employee_details_id.last_name}}</h6>
+                                                                </div>
+                                                            </div>
+                                                        </td>
+                                                        <td>{{item.attendance_id.employee_details_id.employee_company_details.department}}</td>
+                                                        <td>{{item.request_type|capitalize()}}</td>
+                                                        <td> 
+                                                            {% if item.request_type == "late" %}
+                                                                {{item.attendance_id.late_by_minutes}} 
+                                                            {% elif item.request_type == "early" %}
+                                                                {{item.attendance_id.early_by_minutes}} 
+                                                            {% else %}
+                                                                {{item.attendance_id.ot_by_minutes}} 
+                                                            {% endif %}  {% if item.request_status == "approved" %}
+                                                            <span class="badge badge-success"  style="float:right">Approved : 
+                                                                {% if item.request_type == "late" %}
+                                                                    {{item.attendance_id.approved_late_minutes}} 
+                                                                {% elif item.request_type == "early" %}
+                                                                    {{item.attendance_id.approved_early_minutes}} 
+                                                                {% else %}
+                                                                    {{item.attendance_id.approved_ot_minutes}} 
+                                                                {% endif %} 
+                                                            </span>
+                                                            {% endif %}
+                                                        </td>
+                                                        <td>{% if item.request_type == "late" %}
+                                                            <a class="btn btn-light btn-icon btn-sm p-0" href="javascript:void(0);">
+                                                                <i class="text-info ion-chatbubble-working" data-bs-toggle="tooltip"
+                                                                data-bs-placement="top" title="{{item.attendance_id.clock_in_note if item.attendance_id.clock_in_note else 'Not Given any.' }}"></i>
+                                                            </a>
+                                                            {% else %}
+                                                            <a class="btn btn-light btn-icon btn-sm p-0" href="javascript:void(0);">
+                                                                <i class="text-info ion-chatbubble-working" data-bs-toggle="tooltip"
+                                                                data-bs-placement="top" title="{{item.attendance_id.clock_out_note if item.attendance_id.clock_out_note else 'Not Given any.'}}"></i>
+                                                            </a>
+                                                            {% endif %}
+                                                        </td>
+                                                        <td>{{item.attendance_id.attendance_date.strftime('%d/%m/%Y')}}</td>
+                                                        <td>
+                                                            {% if item.request_status == "pending" %}
+                                                                <span class="badge badge-warning">Pending</span>
+                                                            {% elif item.request_status == "approved" %}
+                                                                <span class="badge badge-success">Approved</span>
+                                                            {% elif item.request_status == "rejected" %}
+                                                                <span class="badge badge-danger">Rejected</span>
+                                                            {% endif %}
+                                                            
+                                                        </td>
+                                                        <td class="text-start d-flex">
+                                                            {% if item.request_status == "pending" %}
+                                                                <a href="javascript:void(0);" class="action-btns1" 
+                                                                data-time_id="{{item._id}}" 
+                                                                    data-time_minutes={% if item.request_type == "late" %}{{item.attendance_id.late_by_minutes}}{% elif item.request_type == "early" %}
+                                                                    {{item.attendance_id.early_by_minutes}} 
+                                                                {% else %}
+                                                                    {{item.attendance_id.ot_by_minutes}} 
+                                                                {% endif %} data-bs-toggle="modal"
+                                                                    data-bs-target="#previewapprovemodal" >
+                                                                    <i class="feather feather-check text-success"></i>
+                                                                </a>
+                                                            {% endif %}
+                                                            {% if item.request_status == "pending" and not item.request_status == "approved" %}
+                                                                <a href="javascript:void(0);" class="action-btns1"  title="Rejected" data-time_id="{{item._id}}" data-bs-toggle="modal" data-bs-target="#rejectleavemodal">
+                                                                    <i class="feather feather-x text-danger"></i>
+                                                                 </a>
+                                                            {% endif %}
+                                                        </td>
+                                                    </tr>
+                                                {% endfor %}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="tab-pane" id="tab12">
+                            <div class="card">
+                                <!-- <div class="card-header  border-0">
+                                    <h4 class="card-title"></h4>
+                                </div> -->
+                                <div class="card-body">
+                                    <div class="table-responsive">
+                                        <table class="table  table-vcenter text-nowrap table-bordered border-bottom hr-leaves" id="hr-leaves">
+                                            <thead>
+                                                <tr>
+                                                    <th class="border-bottom-0 w-5">#No</th>
+                                                    <th class="border-bottom-0 w-5">Emp Name</th>
+                                                    <th class="border-bottom-0 w-5">Department</th>
+                                                    <th class="border-bottom-0">Type</th>
+                                                    <th class="border-bottom-0">In Minutes</th>
+                                                    <th class="border-bottom-0">Reason</th>
+                                                    <th class="border-bottom-0">Dated on</th>
+                                                    <th class="border-bottom-0">Status</th>
+                                                    <th class="border-bottom-0">Actions</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {% for item in time_requests|sort(attribute='attendance_id.attendance_date',reverse=True)|selectattr('request_status','equalto','approved') %}
+                                                    <tr>
+                                                        <td>{{loop.index}}</td>
+                                                        <td>
+                                                            <div class="d-flex">
+                                                                <div class="me-3 mt-0 mt-sm-2 d-block">
+                                                                    <h6 class="mb-1 fs-14"> {{item.attendance_id.employee_details_id.first_name + ' ' +item.attendance_id.employee_details_id.last_name}}</h6>
+                                                                </div>
+                                                            </div>
+                                                        </td>
+                                                        <td>{{item.attendance_id.employee_details_id.employee_company_details.department}}</td>
+                                                        <td>{{item.request_type|capitalize()}}</td>
+                                                        <td> 
+                                                            {% if item.request_type == "late" %}
+                                                                {{item.attendance_id.late_by_minutes}} 
+                                                            {% elif item.request_type == "early" %}
+                                                                {{item.attendance_id.early_by_minutes}} 
+                                                            {% else %}
+                                                                {{item.attendance_id.ot_by_minutes}} 
+                                                            {% endif %}  {% if item.request_status == "approved" %}
+                                                            <span class="badge badge-success"  style="float:right">Approved : 
+                                                                {% if item.request_type == "late" %}
+                                                                    {{item.attendance_id.approved_late_minutes}} 
+                                                                {% elif item.request_type == "early" %}
+                                                                    {{item.attendance_id.approved_early_minutes}} 
+                                                                {% else %}
+                                                                    {{item.attendance_id.approved_ot_minutes}} 
+                                                                {% endif %} 
+                                                            </span>
+                                                            {% endif %}
+                                                        </td>
+                                                        <td>{% if item.request_type == "late" %}
+                                                            <a class="btn btn-light btn-icon btn-sm p-0" href="javascript:void(0);">
+                                                                <i class="text-info ion-chatbubble-working" data-bs-toggle="tooltip"
+                                                                data-bs-placement="top" title="{{item.attendance_id.clock_in_note if item.attendance_id.clock_in_note else 'Not Given any.' }}"></i>
+                                                            </a>
+                                                            {% else %}
+                                                            <a class="btn btn-light btn-icon btn-sm p-0" href="javascript:void(0);">
+                                                                <i class="text-info ion-chatbubble-working" data-bs-toggle="tooltip"
+                                                                data-bs-placement="top" title="{{item.attendance_id.clock_out_note if item.attendance_id.clock_out_note else 'Not Given any.'}}"></i>
+                                                            </a>
+                                                            {% endif %}
+                                                        </td>
+                                                        <td>{{item.attendance_id.attendance_date.strftime('%d/%m/%Y')}}</td>
+                                                        <td>
+                                                            {% if item.request_status == "pending" %}
+                                                                <span class="badge badge-warning">Pending</span>
+                                                            {% elif item.request_status == "approved" %}
+                                                                <span class="badge badge-success">Approved</span>
+                                                            {% elif item.request_status == "rejected" %}
+                                                                <span class="badge badge-danger">Rejected</span>
+                                                            {% endif %}
+                                                            
+                                                        </td>
+                                                        <td class="text-start d-flex">
+                                                            {% if item.request_status == "pending" %}
+                                                                <a href="javascript:void(0);" class="action-btns1" 
+                                                                data-time_id="{{item._id}}" 
+                                                                    data-time_minutes={% if item.request_type == "late" %}{{item.attendance_id.late_by_minutes}}{% elif item.request_type == "early" %}
+                                                                    {{item.attendance_id.early_by_minutes}} 
+                                                                {% else %}
+                                                                    {{item.attendance_id.ot_by_minutes}} 
+                                                                {% endif %} data-bs-toggle="modal"
+                                                                    data-bs-target="#previewapprovemodal" >
+                                                                    <i class="feather feather-check text-success"></i>
+                                                                </a>
+                                                            {% endif %}
+                                                            {% if item.request_status == "pending" and not item.request_status == "approved" %}
+                                                                <a href="javascript:void(0);" class="action-btns1"  title="Rejected" data-time_id="{{item._id}}" data-bs-toggle="modal" data-bs-target="#rejectleavemodal">
+                                                                    <i class="feather feather-x text-danger"></i>
+                                                                 </a>
+                                                            {% endif %}
+                                                        </td>
+                                                    </tr>
+                                                {% endfor %}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="tab-pane" id="tab13">
+                            <div class="card">
+                                <!-- <div class="card-header  border-0">
+                                    <h4 class="card-title"></h4>
+                                </div> -->
+                                <div class="card-body">
+                                    <div class="table-responsive">
+                                        <table class="table  table-vcenter text-nowrap table-bordered border-bottom hr-leaves" id="hr-leaves">
+                                            <thead>
+                                                <tr>
+                                                    <th class="border-bottom-0 w-5">#No</th>
+                                                    <th class="border-bottom-0 w-5">Emp Name</th>
+                                                    <th class="border-bottom-0 w-5">Department</th>
+                                                    <th class="border-bottom-0">Type</th>
+                                                    <th class="border-bottom-0">In Minutes</th>
+                                                    <th class="border-bottom-0">Reason</th>
+                                                    <th class="border-bottom-0">Dated on</th>
+                                                    <th class="border-bottom-0">Status</th>
+                                                    <th class="border-bottom-0">Actions</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {% for item in time_requests|sort(attribute='attendance_id.attendance_date',reverse=True)|selectattr('request_status','equalto','rejected') %}
+                                                    <tr>
+                                                        <td>{{loop.index}}</td>
+                                                        <td>
+                                                            <div class="d-flex">
+                                                                <div class="me-3 mt-0 mt-sm-2 d-block">
+                                                                    <h6 class="mb-1 fs-14"> {{item.attendance_id.employee_details_id.first_name + ' ' +item.attendance_id.employee_details_id.last_name}}</h6>
+                                                                </div>
+                                                            </div>
+                                                        </td>
+                                                        <td>{{item.attendance_id.employee_details_id.employee_company_details.department}}</td>
+                                                        <td>{{item.request_type|capitalize()}}</td>
+                                                        <td> 
+                                                            {% if item.request_type == "late" %}
+                                                                {{item.attendance_id.late_by_minutes}} 
+                                                            {% elif item.request_type == "early" %}
+                                                                {{item.attendance_id.early_by_minutes}} 
+                                                            {% else %}
+                                                                {{item.attendance_id.ot_by_minutes}} 
+                                                            {% endif %}  {% if item.request_status == "approved" %}
+                                                            <span class="badge badge-success"  style="float:right">Approved : 
+                                                                {% if item.request_type == "late" %}
+                                                                    {{item.attendance_id.approved_late_minutes}} 
+                                                                {% elif item.request_type == "early" %}
+                                                                    {{item.attendance_id.approved_early_minutes}} 
+                                                                {% else %}
+                                                                    {{item.attendance_id.approved_ot_minutes}} 
+                                                                {% endif %} 
+                                                            </span>
+                                                            {% endif %}
+                                                        </td>
+                                                        <td>{% if item.request_type == "late" %}
+                                                            <a class="btn btn-light btn-icon btn-sm p-0" href="javascript:void(0);">
+                                                                <i class="text-info ion-chatbubble-working" data-bs-toggle="tooltip"
+                                                                data-bs-placement="top" title="{{item.attendance_id.clock_in_note if item.attendance_id.clock_in_note else 'Not Given any.' }}"></i>
+                                                            </a>
+                                                            {% else %}
+                                                            <a class="btn btn-light btn-icon btn-sm p-0" href="javascript:void(0);">
+                                                                <i class="text-info ion-chatbubble-working" data-bs-toggle="tooltip"
+                                                                data-bs-placement="top" title="{{item.attendance_id.clock_out_note if item.attendance_id.clock_out_note else 'Not Given any.'}}"></i>
+                                                            </a>
+                                                            {% endif %}
+                                                        </td>
+                                                        <td>{{item.attendance_id.attendance_date.strftime('%d/%m/%Y')}}</td>
+                                                        <td>
+                                                            {% if item.request_status == "pending" %}
+                                                                <span class="badge badge-warning">Pending</span>
+                                                            {% elif item.request_status == "approved" %}
+                                                                <span class="badge badge-success">Approved</span>
+                                                            {% elif item.request_status == "rejected" %}
+                                                                <span class="badge badge-danger">Rejected</span>
+                                                            {% endif %}
+                                                            
+                                                        </td>
+                                                        <td class="text-start d-flex">
+                                                            {% if item.request_status == "pending" %}
+                                                                <a href="javascript:void(0);" class="action-btns1" 
+                                                                data-time_id="{{item._id}}" 
+                                                                    data-time_minutes={% if item.request_type == "late" %}{{item.attendance_id.late_by_minutes}}{% elif item.request_type == "early" %}
+                                                                    {{item.attendance_id.early_by_minutes}} 
+                                                                {% else %}
+                                                                    {{item.attendance_id.ot_by_minutes}} 
+                                                                {% endif %} data-bs-toggle="modal"
+                                                                    data-bs-target="#previewapprovemodal" >
+                                                                    <i class="feather feather-check text-success"></i>
+                                                                </a>
+                                                            {% endif %}
+                                                            {% if item.request_status == "pending" and not item.request_status == "approved" %}
+                                                                <a href="javascript:void(0);" class="action-btns1"  title="Rejected" data-time_id="{{item._id}}" data-bs-toggle="modal" data-bs-target="#rejectleavemodal">
+                                                                    <i class="feather feather-x text-danger"></i>
+                                                                 </a>
+                                                            {% endif %}
+                                                        </td>
+                                                    </tr>
+                                                {% endfor %}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- End Row-->
+
+<!--Reject Reason Modal -->
+<div class="modal fade" id="rejectleavemodal">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <form class="card-body pt-3" id="time_rejection_form">
+                <div class="modal-header">
+                    <h5 class="modal-title">Add Time Rejection Reason*</h5>
+                    <a type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">×</span>
+                    </a>
+                </div>
+                <div class="modal-body">
+                    <div id="message"></div>
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+                    <input type="hidden" name="time_request_id" id="time_request_id" />
+                    <div class="form-group">
+						<textarea class="form-control" rows="3" placeholder="Time Rejection Reason" name="time_rejection_reason" id="time_rejection_reason"></textarea>
+					</div>
+                </div>
+                <div class="modal-footer">
+                    <a href="javascript:void(0);" class="btn btn-outline-primary" data-bs-dismiss="modal">Close</a>
+                    <a class="btn btn-primary" id="btnRejectTimeRequest">Submit</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+<!-- Reject Reason Modal  -->
+
+<!--Preview & Approve Modal -->
+<div class="modal fade"  id="previewapprovemodal">
+    <div class="modal-dialog" role="document">
+        <form class="card-body pt-3" id="preview_approve_form">
+        
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Preview & Approve Request</h5>
+                <a  class="btn-close" data-bs-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">×</span>
+                </a>
+            </div>
+            <div class="modal-body">
+                <div class="leave-types">
+                    <div class="" id="multiple">
+                        <input type="text" class="form-control" id="edit_time_request_id" name="time_request_id" hidden/>
+
+                        <div class="form-group">
+                            <label class="form-label">Clocked In At:</label>
+                            <div class="input-group">
+                                <input type="text"  class="form-control" placeholder=""  id="clocked_in_at" disabled/>
+                                
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Clocked Out At:</label>
+                            <div class="input-group">
+                                <input type="text"  class="form-control" placeholder="-"  id="clocked_out_at" disabled/>
+                                
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Approval Minutes:</label>
+                            <div class="input-group">
+                                <input type="text"  class="form-control" placeholder="select dates"  id="prev_minutes" disabled/>
+                                
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Where do you want to assign this approval?</label>
+                            <div class="custom-controls-stacked">
+                                <div class="input-group">
+                                    <label class="custom-control custom-radio">
+                                        <input type="radio" class="custom-control-input" name="approval_type" value="payroll" checked>
+                                        <span class="custom-control-label">Assign To Payroll</span>
+                                    </label>
+                                </div>  
+                                <div class="input-group">
+                                    <label class="custom-control custom-radio">
+                                        <input type="radio" class="custom-control-input" name="approval_type" value="timeoff">
+                                        <span class="custom-control-label">Assign To Timeoff</span>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-group mt-3">
+                            <div class="row">
+                                <div class="col-md-9">
+                                    <label class="custom-switch">
+                                        <input type="checkbox" class="custom-switch-input edit_approval_time" name="has_edited" id="edit_approval_time">
+                                        <span class="custom-switch-indicator"></span>
+                                        <span class="custom-switch-description">Edit / Make Changes</span>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+
+                    <div class="edit_time_off_div" style="display:none">
+                        <div class="form-group">
+                            <label class="form-label">Approve Minutes:</label>
+                            <div class="input-group">
+                                <input type="number" name="edit_approve_time" class="form-control" placeholder="Enter Approve Minutes" id="edit_approve_time"/>
+                            </div>
+                        </div>
+                    </div>
+
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <!-- <div class="">
+                    <label class="mb-0 font-weight-semibold">Selected Days:</label>
+                    <span class="badge badge-danger badge-pill ms-2 no_of_days">1</span>
+                    <input type="text" name="no_of_days" id="no_of_days" value="1" class="form-control" hidden/>
+                </div> -->
+                <div class="ms-auto">
+                    <a href="javascript:void(0);" class="btn btn-outline-primary" data-bs-dismiss="modal">Close</a>
+                    <button class="btn btn-success" id="btnAcceptLeaveRequest">Approve</button>
+                </div>
+            </div>
+        </div>
+        </form>
+    </div>
+</div>
+<!-- End Apply Leaves Modal  -->
+{% endblock %}
+
+{% block script %}
+{{ super() }}
+<!-- INTERNAL Index js-->
+<!-- <script src="{{ url_for('static', filename='assets/plugins/apexchart/apexcharts.js') }}"></script> -->
+
+<!-- INTERNAL Daterangepicker js-->
+<script src=".{{ url_for('static', filename='assets/plugins/daterangepicker/moment.min.js') }}"></script>
+<script src=".{{ url_for('static', filename='assets/plugins/daterangepicker/daterangepicker.js') }}"></script>
+
+<script src="{{ url_for('static', filename='assets/js/employee/emp-myleaves.js') }}"></script>
+<script>
+// Data Table
+$(document).ready(function () {
+    var table = $('.hr-leaves').DataTable({
+        "order": [
+            [0, "desc"]
+        ],
+        order: [],
+        columnDefs: [{
+            orderable: false,
+        }],
+        language: {
+            searchPlaceholder: 'Search...',
+            sSearch: '',
+        },
+        initComplete: function () {
+            this.api()
+                .columns([2,3])
+                .every(function () {
+                    var column = this;
+                    var select = $('<select class="form-control-sm select2 sm mx-2"><option value="">All</option></select>')
+                        .appendTo($(column.header()))
+                        .on('change', function () {
+                            var val = $.fn.dataTable.util.escapeRegex($(this).val());
+                            column.search(val ? '^' + val + '$' : '', true, false).draw();
+                        });
+                        $( select ).click( function(e) {
+                            e.stopPropagation();
+                        });
+                    column
+                        .data()
+                        .unique()
+                        .sort()
+                        .each(function (d, j) {
+                            select.append('<option value="' + d + '">' + d + '</option>');
+                        });
+                });
+        },
+    });
+});
+</script>
+<script>
+    // Ajax Approve Leave 
+    $(document).on("click", '#btnAcceptLeaveRequest', function (e) {
+        e.preventDefault();
+        var cs = "{{ csrf_token() }}";
+        swal({
+            title: "Are you sure?",
+            text: "You want to approve this employee time request?",
+            icon: "warning",
+            buttons: true,
+            dangerMode: true,
+        }).then((willDelete) => {
+            if (willDelete) {
+                $("#global-loader").show();
+                $.ajax({
+                        headers: {
+                            'X-CSRF-TOKEN': cs
+                        },
+                        url: '/approvetimerequest',
+                        data: $('#preview_approve_form').serialize(),
+                        type: 'POST',
+                    })
+                    .done(function (data) {
+                        //$('#markattendancemodal').modal('toggle');
+                        $("#global-loader").hide();
+                        swal({
+                            title: "Success",
+                            text: "Successfully Approved Time!",
+                            icon: "success",
+                        }).then(function () {
+                            $("#global-loader").show();
+                            location.reload();
+                        });
+                    })
+                    .fail(function (err) {
+                        console.log(err);
+                        $('#message').html(err);
+                    })
+            }
+        });
+    });
+    //EnD Ajax Approve Leave
+
+    // Ajax Reject Leave 
+    $(document).on("click", '#btnRejectTimeRequest', function (e) {
+        e.preventDefault();
+        var cs = "{{ csrf_token() }}";
+        var time_request_id = $('#time_request_id').val();
+        var time_reject_reason = $('#time_rejection_reason').val()
+        if(time_reject_reason){
+            swal({
+                title: "Are you sure?",
+                text: "You want to reject this employee time request?",
+                icon: "warning",
+                buttons: true,
+                dangerMode: true,
+            }).then((willDelete) => {
+                if (willDelete) {
+                    $("#global-loader").show();
+                    $.ajax({
+                            headers: {
+                                'X-CSRF-TOKEN': cs
+                            },
+                            url: '/rejecttimerequest',
+                            data: {time_request_id:time_request_id,time_reject_reason:time_reject_reason},
+                            type: 'POST',
+                        })
+                        .done(function (data) {
+                            //$('#markattendancemodal').modal('toggle');
+                            $("#global-loader").hide();
+                            swal({
+                                title: "Success",
+                                text: "Successfully Rejected Leave!",
+                                icon: "success",
+                            }).then(function () {
+                                $("#global-loader").show();
+                                location.reload();
+                            });
+                        })
+                        .fail(function (err) {
+                            console.log(err);
+                            $('#message').html(err);
+                        })
+                }
+            });
+        }
+    });
+    //EnD Ajax Reject Leave
+
+    $(document).on("show.bs.modal", '#rejectleavemodal', function (e) {
+        var time_request_id = $(e.relatedTarget).data('time_id');
+        $("#time_request_id").val(time_request_id);
+    });
+
+    $(document).on("show.bs.modal", '#previewapprovemodal', function (e) {
+        var leave_time_id = $(e.relatedTarget).data('time_id');
+        var clock_in_at = $(e.relatedTarget).data('clock_in');
+        var clock_out_at = $(e.relatedTarget).data('clock_out');
+
+        $("#edit_time_request_id").val(leave_time_id);
+        var minutes = $(e.relatedTarget).data('time_minutes');
+        $("#prev_minutes").val(minutes);
+        $("#clocked_in_at").val(clock_in_at);
+        $("#clocked_out_at").val(clock_out_at);
+        
+        
+    });
+
+    // Toggle Is Day off in Work Timings
+    $('.edit_approval_time').change(function () {
+        if (this.checked) {
+            $('.edit_time_off_div').show();
+        } else {
+            $('.edit_time_off_div').hide();
+        }
+    });
+    //End Toggle
+</script>
+{% endblock %}

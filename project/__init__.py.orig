@@ -1,0 +1,107 @@
+# init.py
+
+from flask import Flask
+from flask_login import LoginManager 
+
+import urllib
+
+from flask_security import Security, MongoEngineUserDatastore, \
+    UserMixin, RoleMixin, login_required
+
+from flask_mongoengine import mongoengine as db
+from flask_wtf.csrf import CSRFProtect
+# init SQLAlchemy so we can use it later in our models
+from celery import Celery
+
+
+def create_celery_app(app=None):
+    app = app or create_app()
+    
+    celery = Celery(app.import_name,broker=app.config['CELERY_BROKER_URL'],backend=app.config['CELERY_RESULT_BACKEND'])
+    celery.conf.update(app.config)
+    TaskBase = celery.Task
+    
+    class ContextTask(TaskBase):
+        abstract = True
+        def __call__(self, *args, **kwargs):
+            with app.app_context():
+                return TaskBase.__call__(self,*args, **kwargs)
+    celery.Task = ContextTask
+    return celery
+
+def create_app(settings_override=None):
+    app = Flask(__name__)
+    
+    app.secret_key = b'\xcc^\x91\xea\x17-\xd0W\x03\xa7\xf8J0\xac8\xc5'
+    app.config['SECURITY_REGISTERABLE'] = 'True'
+    app.config['SECURITY_PASSWORD_SALT'] = 'sahdbshdbacbahbcbshbcabcihbdiadibqiuwd'
+    app.config['SECURITY_SEND_REGISTER_EMAIL'] = False
+    app.config['SECURITY_RECOVERABLE'] = True
+    app.config['SECURITY_CHANGEABLE'] = True
+    app.config['SECURITY_TRACKABLE'] = True
+    app.config['SECURITY_UNAUTHORIZED_VIEW '] = '/logout'
+    
+    app.config.from_object('config.settings')
+    app.config.from_pyfile('settings.py', silent=True)
+
+    if settings_override:
+        app.config.update(settings_override)
+    
+    app.config['UPLOAD_EXTENSIONS'] = ['.jpg', '.png', '.jpeg']
+    app.config['UPLOAD_DOCUMENT_EXTENSIONS'] = ['.jpg', '.png', '.jpeg','.doc','.pdf','.docx']
+    app.config['UPLOAD_FOLDER'] = 'project/static/uploads/profile'
+    app.config['UPLOAD_DOCUMENT_FOLDER'] = 'project/static/uploads/documents/'
+    
+    app.config['UPLOAD_FILE_EXTENSIONS'] = ['.csv']
+    app.config['UPLOAD_FILE_FOLDER'] = 'project/static/uploads/documents/payroll/'
+    
+    app.config['CELERY_BROKER_URL'] = 'redis://127.0.0.1:6379'
+    app.config['CELERY_RESULT_BACKEND'] = 'redis://127.0.0.1:6379'
+    app.config['CELERY_ACCEPT_CONTENT'] = ['json']
+    # app.config['CELERY_TASK_SERIALIZER'] = 'json'
+    # app.config['CELERY_RESULT_SERIALIZER'] = 'json'
+
+    # db.init_app(app)
+    database_name = "pdt_uae_hrm"
+    DB_URI = "mongodb+srv://pdtuae-hrm:"+urllib.parse.quote("pass@123")+"@cluster0.mf10u.mongodb.net/hrm?retryWrites=true&w=majority"
+    db.connect(host=DB_URI)
+
+    login_manager = LoginManager()
+    login_manager.login_view = 'auth.login'
+    login_manager.init_app(app)
+
+    from .models import User,user_datastore
+
+    @login_manager.user_loader
+    def load_user(_id):
+        # since the user_id is just the primary key of our user table, use it in the query for the user
+        # return User.query.get(int(user_id))
+        return User.objects(_id=_id).exclude('employee').first()
+
+    # blueprint for auth routes in our app
+    from .auth import auth as auth_blueprint
+    app.register_blueprint(auth_blueprint)
+
+    # blueprint for non-auth parts of app
+    from .main import main as main_blueprint
+    app.register_blueprint(main_blueprint)
+    
+     # blueprint for employees parts of app
+    from .company.routes import company as company_blueprint
+    app.register_blueprint(company_blueprint)
+    
+    csrf = CSRFProtect(app)  
+    csrf.init_app(app)
+    # Setup Flask-Security
+    # user_datastore = MongoEngineUserDatastore(db, User, Role)
+    security = Security(app, user_datastore)
+    # security.init_app(app,user_datastore)
+
+    # Create a user to test with
+    # @app.before_first_request
+    # def create_user():
+    #     user_datastore.create_user(email='admin@pdt.net', password='password')
+
+    return app
+
+celery = create_celery_app(create_app())

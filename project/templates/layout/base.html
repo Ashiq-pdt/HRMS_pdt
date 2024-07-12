@@ -1,0 +1,431 @@
+<!-- templates/base.html -->
+
+<!DOCTYPE html>
+<html>
+<head>
+    
+		<!-- Meta data -->
+		<meta charset="UTF-8">
+		<meta name='viewport' content='width=device-width, initial-scale=1.0, user-scalable=0'>
+		<meta content="PDT HR Management" name="description">
+		<meta content="Pro Dynamics Technology LLC" name="author">
+		<meta name="keywords" content="admin dashboard, admin panel template, html admin template, dashboard html template, bootstrap 5 dashboard, template admin bootstrap 5 , simple admin panel template, simple dashboard html template,  bootstrap admin panel, task dashboard, job dashboard, bootstrap admin panel, dashboards html, panel in html, bootstrap 5 dashboard, bootstrap 5 dashboard, bootstrap5 dashboard"/>
+
+		<!-- Title -->
+		<title>PDT HR Management</title>
+
+		<!--Favicon -->
+		<link  rel="icon" href="{{ url_for('static', filename='assets/images/brand/favicon.ico') }}" type="image/x-icon"/>
+
+		<!-- Bootstrap css -->
+		<link  href="{{ url_for('static', filename='assets/plugins/bootstrap/css/bootstrap.css') }}" rel="stylesheet" id="style"/>
+
+		<!-- Style css -->
+		<link  href="{{ url_for('static', filename='assets/css/style.css') }}" rel="stylesheet" />
+		<link  href="{{ url_for('static', filename='assets/css/boxed.css') }}" rel="stylesheet" />
+		<!-- Recently Pushed On 11-08-2022 -->
+		<!-- <link  href="{{ url_for('static', filename='assets/css/dark.css') }}" rel="stylesheet" /> -->
+		<!-- <link  href="{{ url_for('static', filename='assets/css/skin-modes.css') }}" rel="stylesheet" />
+		<link  href="{{ url_for('static', filename='assets/css/transparent-style.css') }}" rel="stylesheet"> -->
+		<!-- Animate css -->
+		<!-- <link  href="{{ url_for('static', filename='assets/css/animated.css') }}" rel="stylesheet" /> -->
+		<!-- Recently Pushed On 11-08-2022 -->
+		<link rel="stylesheet" href={{ url_for('static', filename='assets/css/util.css') }} rel="stylesheet">
+
+		<!---Icons css-->
+		<link  href="{{ url_for('static', filename='assets/css/icons.css') }}" rel="stylesheet" />
+		<!-- INTERNAL Jquerytransfer css-->
+		<link  rel="stylesheet" href="{{ url_for('static', filename='assets/plugins/jQuerytransfer/icon_font/icon_font.css') }}">
+		{% block head %}
+		<style>
+			.fc-license-message{
+				display: none;
+			}
+
+			.slide-menu a:before {
+				content: "" !important;
+			}
+			table.dataTable tbody th,
+			table.dataTable tbody td,
+			table.dataTable thead th,
+			table.dataTable thead td {
+				padding: 5px 10px !important;
+			}
+		</style>
+		{% endblock %}
+</head>
+
+<body class="app sidebar-mini ltr">
+    	<!---Global-loader-->
+		<div id="global-loader" >
+			<img src="{{ url_for('static', filename='assets/images/svgs/l1.svg') }}" alt="loader">
+		</div>
+		<!---End Global-loader-->
+
+        <div class="page">
+			<div class="page-main">
+
+                <!--app header-->
+				<div class="app-header header sticky">
+					<div class="container-fluid main-container">
+						<div class="d-flex">
+							<a class="header-brand" href="{{url_for('main.index')}}">
+								<img src="{{ url_for('static', filename='assets/images/brand/cubes-logo.png') }}" class="header-brand-img desktop-lgo" alt="CubesHRMS">
+								<img src="{{ url_for('static', filename='assets/images/brand/cubes-logo.png') }}" class="header-brand-img dark-logo" alt="CubesHRMS">
+								<img src="{{ url_for('static', filename='assets/images/brand/cubes-logo.png') }}" class="header-brand-img mobile-logo" alt="CubesHRMS">
+								<img src="{{ url_for('static', filename='assets/images/brand/cubes-logo.png') }}" class="header-brand-img darkmobile-logo" alt="CubesHRMS">
+							</a>
+							<div class="app-sidebar__toggle" data-bs-toggle="sidebar">
+								<a class="open-toggle"  href="javascript:void(0);">
+									<i class="feather feather-menu"></i>
+								</a>
+								<a class="close-toggle"  href="javascript:void(0);">
+									<i class="feather feather-x"></i>
+								</a>
+							</div>
+							<div class="mt-0">
+								<!-- <form class="form-inline">
+									<div class="search-element">
+										<input type="search" class="form-control header-search" placeholder="Search…" aria-label="Search" tabindex="1">
+										<button class="btn btn-primary-color" >
+											<i class="feather feather-search"></i>
+										</button>
+									</div>
+								</form> -->
+							</div><!-- SEARCH -->
+							<div class="d-flex order-lg-2 my-auto ms-auto">
+								<button class="navbar-toggler nav-link icon navresponsive-toggler vertical-icon ms-auto" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent-4" aria-controls="navbarSupportedContent-4" aria-expanded="false" aria-label="Toggle navigation">
+									<i class="fe fe-more-vertical header-icons navbar-toggler-icon"></i>
+								</button>
+								<div class="mb-0 navbar navbar-expand-lg navbar-nav-right responsive-navbar navbar-dark p-0">
+									<div class="collapse navbar-collapse" id="navbarSupportedContent-4">
+										<div class="d-flex ms-auto">
+											<a class="nav-link  icon p-0 nav-link-lg d-lg-none navsearch"  href="javascript:void(0);" data-bs-toggle="search">
+												<i class="feather feather-search search-icon header-icon"></i>
+											</a>
+											<!-- <div class="dropdown  d-flex">
+												<a class="nav-link icon theme-layout nav-link-bg layout-setting">
+													 <span class="dark-layout"><i class="fe fe-moon"></i></span>
+													<span class="light-layout"><i class="fe fe-sun"></i></span>
+												</a>
+											</div> -->
+											{% if current_user.type == 'company' and 'subscription_end_on' in current_user%}
+												<div class="card-alert mb-0">
+													<span class="menu-btn-switch">
+														<a class="btn btn-primary demo-icon " href="javascript:void(0);"><i class="fe fe-package  fe-spin fe-pulse  fs-15"></i> <span>Subscription Ends on: {{current_user.subscription_end_on.strftime('%d/%m/%Y')}}</span></a>
+													</span>
+												</div>
+											{% endif %}
+											
+											<div class="dropdown header-fullscreen">
+												<a class="nav-link icon full-screen-link">
+													<i class="feather feather-maximize fullscreen-button fullscreen header-icons"></i>
+													<i class="feather feather-minimize fullscreen-button exit-fullscreen header-icons"></i>
+												</a>
+											</div>
+											<div class="dropdown header-notify">
+												<a class="nav-link icon" data-bs-toggle="sidebar-right" id="btnNotification" data-bs-target=".sidebar-right">
+													<i class="feather feather-bell header-icon"></i>
+													<span class="bg-dot"></span>
+												</a>
+											</div>
+											{% if current_user.type == 'employee' %}
+											<div class="dropdown profile-dropdown">
+												<a  href="javascript:void(0);" class="nav-link pe-1 ps-0 leading-none" data-bs-toggle="dropdown" >
+													<span>
+														<i class="feather feather-user fs-40 my-auto" alt="img"  class="avatar avatar-md bradius"></i> 
+													</span>
+												</a>
+												<div class="dropdown-menu dropdown-menu-end dropdown-menu-arrow animated">
+													<div class="p-3 text-center border-bottom">
+														<a href="profile-1.html" class="text-center user pb-0 font-weight-bold">{{session.employee_name}}</a>
+														<p class="text-center user-semi-title">{{session.employee_designation}}</p>
+													</div>
+													<a class="dropdown-item d-flex" href="{{url_for('employee.profile')}}">
+														<i class="feather feather-user me-3 fs-16 my-auto"></i>
+														<div class="mt-1">Profile</div>
+													</a>
+													<!-- <a class="dropdown-item d-flex"  href="javascript:void(0);" data-bs-toggle="modal" data-bs-target="#changepasswordnmodal">
+														<i class="feather feather-edit-2 me-3 fs-16 my-auto"></i>
+														<div class="mt-1">Change Password</div>
+													</a> -->
+													<a class="dropdown-item d-flex" href="{{ url_for('auth.logout') }}">
+														<i class="feather feather-power me-3 fs-16 my-auto"></i>
+														<div class="mt-1">Sign Out</div>
+													</a>
+												</div>
+											</div>
+											{% elif current_user.type == 'company' %}
+											<div class="dropdown profile-dropdown">
+												<a  href="javascript:void(0);" class="nav-link pe-1 ps-0 leading-none" data-bs-toggle="dropdown">
+													<span>
+														<i class="feather feather-user fs-40 my-auto" alt="img" class="avatar avatar-md bradius"></i> 
+													</span>
+												</a>
+												<div class="dropdown-menu dropdown-menu-end dropdown-menu-arrow animated">
+													<div class="p-3 text-center border-bottom">
+														<a href="profile-1.html" class="text-center user pb-0 font-weight-bold">{{session.company_name}}</a>
+													</div>
+													<a class="dropdown-item d-flex" href="profile-1.html">
+														<i class="feather feather-user me-3 fs-16 my-auto"></i>
+														<div class="mt-1">Profile</div>
+													</a>
+													<!-- <a class="dropdown-item d-flex"  href="javascript:void(0);" data-bs-toggle="modal" data-bs-target="#changepasswordnmodal">
+														<i class="feather feather-edit-2 me-3 fs-16 my-auto"></i>
+														<div class="mt-1">Change Password</div>
+													</a> -->
+													<a class="dropdown-item d-flex" href="{{ url_for('auth.logout') }}">
+														<i class="feather feather-power me-3 fs-16 my-auto"></i>
+														<div class="mt-1">Sign Out</div>
+													</a>
+												</div>
+											</div>
+											{% else %}
+											<div class="dropdown profile-dropdown">
+												<a  href="javascript:void(0);" class="nav-link pe-1 ps-0 leading-none" data-bs-toggle="dropdown">
+													<span>
+														<i class="feather feather-user fs-40 my-auto" alt="img" class="avatar avatar-md bradius"></i> 
+													</span>
+												</a>
+												<div class="dropdown-menu dropdown-menu-end dropdown-menu-arrow animated">
+													<div class="p-3 text-center border-bottom">
+														<a href="profile-1.html" class="text-center user pb-0 font-weight-bold">John Thomson</a>
+														<p class="text-center user-semi-title">App Developer</p>
+													</div>
+													<a class="dropdown-item d-flex" href="profile-1.html">
+														<i class="feather feather-user me-3 fs-16 my-auto"></i>
+														<div class="mt-1">Profile</div>
+													</a>
+													<!-- <a class="dropdown-item d-flex"  href="javascript:void(0);" data-bs-toggle="modal" data-bs-target="#changepasswordnmodal">
+														<i class="feather feather-edit-2 me-3 fs-16 my-auto"></i>
+														<div class="mt-1">Change Password</div>
+													</a> -->
+													<a class="dropdown-item d-flex" href="{{ url_for('auth.logout') }}">
+														<i class="feather feather-power me-3 fs-16 my-auto"></i>
+														<div class="mt-1">Sign Out</div>
+													</a>
+												</div>
+											</div>
+											{% endif %}
+										</div>
+									</div>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+				<!--/app header-->
+
+                <!--app-sidebar-->
+				<div class="sticky">
+					<aside class="app-sidebar">
+						<div class="app-sidebar__logo">
+							<a class="header-brand" href="{{url_for('main.index')}}">
+								<img src="{{ url_for('static', filename='assets/images/brand/cubes-logo.png') }}" class="header-brand-img desktop-lgo" alt="CubesHRMS">
+								<img src="{{ url_for('static', filename='assets/images/brand/cubes-logo.png') }}" class="header-brand-img dark-logo" alt="CubesHRMS">
+								<img src="{{ url_for('static', filename='assets/images/brand/cubes-logo.png') }}" class="header-brand-img mobile-logo" alt="CubesHRMS">
+								<img src="{{ url_for('static', filename='assets/images/brand/cubes-logo.png') }}" class="header-brand-img darkmobile-logo" alt="CubesHRMS">
+							</a>
+						</div>
+						<div class="app-sidebar3">
+							<div class="main-menu">
+								<div class="app-sidebar__user">
+									<div class="dropdown user-pro-body text-center">
+										<div class="user-pic">
+											<img src="{{url_for('static', filename='uploads/profile/'+session.profile_pic|default('profile.png',true))}}" alt="user-img" class="avatar-xxl rounded-circle mb-1">
+										</div>	
+										<div class="user-info">
+											<h5 class=" mb-2">{{current_user.email|truncate(15, True)}}</h5>
+											<span class="text-muted app-sidebar__user-name text-sm">{{(current_user.type|upper)}}</span>
+										</div>
+									</div>
+								</div>
+								<div class="slide-left disabled" id="slide-left"><svg xmlns="http://www.w3.org/2000/svg" fill="#7b8191" width="24" height="24" viewBox="0 0 24 24"><path d="M13.293 6.293 7.586 12l5.707 5.707 1.414-1.414L10.414 12l4.293-4.293z"/></svg></div>
+								{% if current_user.type=="company"  %}
+										{% include "layout/company_nav.html" %}
+									{% elif current_user.type=="employee"%}
+										{% include "layout/employee_nav.html" %}
+									{% else %}
+										{% include "layout/admin_nav.html" %}
+								{% endif %}
+							</div>
+						</div>
+					</aside>
+				</div>
+				<!--app-sidebar closed-->
+
+                <div class="app-content main-content">
+					<div class="side-app main-container">
+						{% with messages = get_flashed_messages(with_categories=true) %}
+							{% if messages %}
+							<div class="card-body py-0 pt-1">
+								{% for category, message in messages %}
+									<div class="alert alert-{{ category }} py-2" role="alert">
+										<span>{{ message }}</span>
+										<button class="btn-close" data-bs-dismiss="alert" aria-hidden="true">×</button>
+									</div>
+								{% endfor %}
+							</div>
+							{% endif %}
+						{% endwith %}
+                        {% block content %}
+                        {% endblock %}
+                    </div>
+                </div>
+
+                <!--Footer-->
+                <footer class="footer">
+                    <div class="container">
+                        <div class="row align-items-center flex-row-reverse">
+                            <div class="col-md-12 col-sm-12 mt-3 mt-lg-0 text-center">
+                                Copyright © 2022 <a  href="javascript:void(0);">PDT LLC.</a>. Developed with <span class="fa fa-heart text-danger"></span> by <a  href="javascript:void(0);">Pro Dynamics Technologies LLC.</a> All rights reserved.
+                            </div>
+                        </div>
+                    </div>
+                </footer>
+			<!-- End Footer-->
+			<!--sidebar-right-->
+			<div class="sidebar sidebar-right sidebar-animate">
+				
+				<div class="card-header border-bottom pb-5">
+					<h4 class="card-title">Notifications </h4>
+					<div class="card-options">
+						<a  href="javascript:void(0);" class="btn btn-sm btn-icon btn-light text-primary"  data-bs-toggle="sidebar-right" data-bs-target=".sidebar-right"><i class="feather feather-x"></i> </a>
+					</div>
+				</div>
+				<div class="bg_notification">
+					<div id="global-loader-notification" style="text-align: center;">
+						<img src="{{ url_for('static', filename='assets/images/svgs/l1.svg') }}" alt="loader">
+					</div>
+					<div class="notification_items">
+						
+					</div>
+				</div>
+			</div>
+			<!--/sidebar-right-->
+            </div>
+        </div>
+		<!-- Back to top -->
+<a href="#top" id="back-to-top"><span class="feather feather-chevrons-up"></span></a>
+</body>
+{% block script %}
+	<!-- Jquery js-->
+    <script src="{{ url_for('static', filename='assets/plugins/jquery/jquery.min.js') }}"></script>
+
+    <!--Moment js-->
+    <script src="{{ url_for('static', filename='assets/plugins/moment/moment.js') }}"></script>
+
+    <!-- Bootstrap js-->
+    <script src="{{ url_for('static', filename='assets/plugins/bootstrap/js/popper.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='assets/plugins/bootstrap/js/bootstrap.min.js') }}"></script>
+
+    <!--Othercharts js-->
+    <script src="{{ url_for('static', filename='assets/plugins/othercharts/jquery.sparkline.min.js') }}"></script>
+
+    <!--Sidemenu js-->
+    <script src="{{ url_for('static', filename='assets/plugins/sidemenu/sidemenu.js') }}"></script>
+
+    <!-- P-scroll js-->
+    <script src="{{ url_for('static', filename='assets/plugins/p-scrollbar/p-scrollbar.js') }}"></script>
+    <script src="{{ url_for('static', filename='assets/plugins/p-scrollbar/p-scroll1.js') }}"></script>
+
+    <!--Sidebar js-->
+    <script src="{{ url_for('static', filename='assets/plugins/sidebar/sidebar.js') }}"></script>
+
+    <!-- INTERNAL  Datepicker js -->
+    <script src="{{ url_for('static', filename='assets/plugins/date-picker/jquery-ui.js') }}"></script>
+
+
+    <!-- INTERNAL Timepicker js -->
+    <script src="{{ url_for('static', filename='assets/plugins/time-picker/jquery.timepicker.js') }}"></script>
+    <script src="{{ url_for('static', filename='assets/plugins/time-picker/toggles.min.js') }}"></script>
+
+
+    <!-- INTERNAL jQuery-countdowntimer js -->
+    <script src="{{ url_for('static', filename='assets/plugins/jQuery-countdowntimer/jQuery.countdownTimer.js') }}"></script>
+
+    <!--Sticky js -->
+    <script src="{{ url_for('static', filename='assets/js/sticky.js') }}"></script>
+	
+	<script src="{{ url_for('static', filename='assets/plugins/sweet-alert/jquery.sweet-modal.min.js') }}"></script>
+	<script src="{{ url_for('static', filename='assets/plugins/sweet-alert/sweetalert.min.js') }}"></script>
+    <!-- Custom js-->
+    <script src="{{ url_for('static', filename='assets/js/custom.js') }}"></script>
+
+	<!-- Data tables -->
+	<script src="{{ url_for('static', filename='assets/plugins/datatable/js/jquery.dataTables.min.js') }}"></script>
+	<script src="{{ url_for('static', filename='assets/plugins/datatable/js/dataTables.bootstrap5.js') }}"></script>
+	<script src="{{ url_for('static', filename='assets/plugins/datatable/js/dataTables.buttons.min.js') }}"></script>
+	<script src="{{ url_for('static', filename='assets/plugins/datatable/js/buttons.bootstrap5.min.js') }}"></script>
+	<script src="{{ url_for('static', filename='assets/plugins/datatable/dataTables.responsive.min.js') }}"></script>
+	<script src="{{ url_for('static', filename='assets/plugins/datatable/responsive.bootstrap5.min.js') }}"></script>
+	<script>
+		// // Show the loader when the page starts loading
+		$(window).on('beforeunload', showLoader);
+
+		// Hide the loader when the page has finished loading
+		$(window).on('load', showLoader);
+
+
+		// Show the loader when an action is performed
+		function showLoader() {
+		$('#global-loader').show();
+		}
+
+		// Hide the loader when the action is complete
+		function hideLoader() {
+		$('#global-loader').hide();
+		}
+
+		// Show the loader when an action is performed
+		// $('body').on('click', '*', function() {
+		// $('#global-loader').show();
+		// });
+
+		// // Hide the loader when the action is complete
+		$(document).ajaxComplete(function() {
+		$('#global-loader').hide();
+		});
+
+		// Ajax Add Work Timings
+		$(document).on("click", '#btnNotification', function (e) {
+			e.preventDefault();
+			console.log("Inside Event");
+			$('#global-loader-notification').show();
+			
+			$.ajax({
+				url: '/checkbgtasks/',
+				type: 'GET',
+				dataType: 'json',
+				success: function(data) {
+				console.log("After Call");
+					all_noti = "";
+					$('.bg_notification .notification_items').html('')
+					$.each(data, function (index, value) {
+						console.log(value.task_type);
+						var status = value.status.toLowerCase() === "success" ? " Successful" : (value.status.toLowerCase() === "failed" ? " Failed" : " Initiated" )// convert status to uppercase
+						var statusColor = status === " Successful" ? "text-success" : (status === " Failed" ? "text-danger" : "text-yellow")
+						all_noti += '<div class="list-group-item  align-items-center border-0">' +
+							'<div class="d-flex">' +
+							'<span class="avatar avatar-lg brround me-3 bg-pink-transparent"><span class="feather feather-upload"></span></span>' +
+							'<div class="mt-1">' +
+								'<a href="javascript:void(0);" class="font-weight-semibold fs-16">' + value.message + ' been' +
+								'<span class="' + statusColor + ' font-weight-normal"> '+ status+'</span></a>' +
+								'<span class="clearfix"></span>' +
+								'<span class="text-muted fs-13 ms-auto"><i class="mdi mdi-clock text-muted me-1"></i>'+value.uploaded_on+'</span>' +
+							'</div>' +
+							'</div>' +
+						'</div>';
+						});
+					$('.bg_notification .notification_items').append(all_noti)
+					$('#global-loader-notification').hide();
+				},
+				error: function() {
+					console.log('Error fetching task status.');
+				}
+				});
+		});
+        //EnD Ajax Work timings
+	</script>
+{% endblock %}
+</html>

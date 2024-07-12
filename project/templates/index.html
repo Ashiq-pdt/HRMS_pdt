@@ -1,0 +1,21 @@
+<!-- templates/index.html -->
+
+{% extends "base-111.html" %}
+
+{% block content %}
+  {% with messages = get_flashed_messages() %}
+        {% if messages %}
+            <div class="notification is-danger">
+              <button class="delete"></button>
+                {{ messages[0] }}
+            </div>
+        {% endif %}
+  {% endwith %}
+<h1 class="title">
+  Flask Login Example With MongoDB
+</h1>
+<h2 class="subtitle">
+  
+  Authentication and Authorization in Flask.
+</h2>
+{% endblock %}

@@ -1,0 +1,144 @@
+<!-- <ul class="side-menu">
+    <li class="slide">
+        <a class="side-menu__item" data-bs-toggle="slide" href="javascript:void(0);">
+            <i class="feather feather-home  sidemenu_icon"></i>
+            <span class="side-menu__label">Dashboard</span><i class="angle fa fa-angle-right"></i></a>
+        <ul class="slide-menu">
+            <li class="side-menu-label1"><a href="javascript:void(0);">Dashboards</a></li>
+            <li class="sub-slide">
+                <a class="sub-side-menu__item" data-bs-toggle="sub-slide" href="javascript:void(0);">
+                    <span class="sub-side-menu__label">Employee <span class="nav-list">Dashboard</span></span><i
+                        class="sub-angle fa fa-angle-right"></i>
+                </a>
+                <ul class="sub-slide-menu">
+
+                    <li><a href="index2.html" class="sub-slide-item">Dashboard</a></li>
+                    <li><a href="employee-attendance.html" class="sub-slide-item">Attendance</a></li>
+                    <li><a href="employee-leaves.html" class="sub-slide-item">Apply Leaves </a></li>
+                    <li><a href="employee-myleaves.html" class="sub-slide-item">My Leaves </a></li>
+                    <li><a href="employee-payslips.html" class="sub-slide-item">Payslips </a></li>
+                    <li><a href="employee-expenses.html" class="sub-slide-item">Expenses</a></li>
+                </ul>
+            </li>
+        </ul>
+    </li>
+</ul> -->
+
+
+<ul class="side-menu py-0">
+    <li class="slide">
+        <a class="side-menu__item" data-bs-toggle="slide" href="">
+            <i class="feather feather-aperture  sidemenu_icon"></i>
+            <span class="side-menu__label"> Employee Dashboard</span><i class="angle fa fa-angle-right"></i></a>
+        <ul class="slide-menu">
+            <li><a href="{{url_for('main.index')}}" class="slide-item"><i
+                        class="fe fe-home  sidemenu_icon"></i>Dashboard</a></li>
+            <li><a href="{{url_for('employee.leaves')}}" class="slide-item"><i class="fe fe-check-circle  sidemenu_icon"></i>My
+                Leaves </a></li>
+            <li><a href="{{url_for('employee.attendance_history')}}" class="slide-item"><i class="fe fe-check-circle  sidemenu_icon"></i>Attendance History</a></li>
+
+            <li><a href="{{url_for('employee.reimbursement')}}" class="slide-item"><i class="fe fe-check-circle  sidemenu_icon"></i>Reimbursment</a></li>
+            {% if session['is_approver'] or session['is_super_approver'] %}
+            <li><a href="{{url_for('employee.leaves_approvals')}}" class="slide-item"><i class="fe fe-pocket  sidemenu_icon"></i>Leave Approvals </a></li>
+            {% endif %}
+            {% if session['is_time_approver'] %}
+            <li><a href="{{url_for('employee.time_approvals')}}" class="slide-item"><i class="fe fe-clock  sidemenu_icon"></i>Time Approvals </a></li>
+            {% endif %}
+            <!-- <li><a href="#" class="slide-item"><i
+                        class="fe fe-clipboard  sidemenu_icon"></i>Attendance</a></li>
+            <li><a href="#" class="slide-item"><i class="fe fe-send  sidemenu_icon"></i>Apply
+                    Leaves </a></li>
+            <li><a href="#" class="slide-item"><i class="fe fe-check-circle  sidemenu_icon"></i>My
+                    Leaves </a></li>
+            <li><a href="#" class="slide-item"><i
+                        class="fe fe-dollar-sign  sidemenu_icon"></i>Payslips </a></li>
+            <li><a href="#" class="slide-item"><i
+                        class="fe fe-minus-circle  sidemenu_icon"></i>Expenses</a></li> -->
+        </ul>
+    </li>
+</ul>
+
+{% if current_user.has_role('supervisor') or current_user.has_role('attendancemanager') %}
+    <ul class="side-menu py-0">
+        <li class="slide">
+            <a class="side-menu__item" data-bs-toggle="slide" href="">
+                <i class="fe fe-briefcase  sidemenu_icon"></i>
+                <span class="side-menu__label">Supervisor/Line Manager</span><i class="angle fa fa-angle-right"></i></a>
+            <ul class="slide-menu">
+                <li><a href="{{url_for('company.attendance_report')}}" class="slide-item"><i
+                    class="fe fe-pie-chart  sidemenu_icon"></i>Daily Attendance</a></li>
+            </ul>
+        </li>
+    </ul>
+{% endif %}
+
+<!-- {% if current_user.has_role('attendancemanager') %}
+    <ul class="side-menu py-0">
+        <li class="slide">
+            <a class="side-menu__item" data-bs-toggle="slide" href="">
+                <i class="fe fe-briefcase  sidemenu_icon"></i>
+                <span class="side-menu__label">Attendance Manager</span><i class="angle fa fa-angle-right"></i></a>
+            <ul class="slide-menu">
+                <li><a href="{{url_for('company.attendance_report')}}" class="slide-item"><i
+                    class="fe fe-pie-chart  sidemenu_icon"></i>Daily Attendance</a></li>
+            </ul>
+        </li>
+    </ul>
+{% endif %} -->
+
+{% if current_user.has_role('shiftscheduler') %}
+    <ul class="side-menu py-0">
+        <li class="slide">
+            <a class="side-menu__item" data-bs-toggle="slide" href="">
+                <i class="fe fe-target  sidemenu_icon"></i>
+                <span class="side-menu__label">Shift Scheduler</span><i class="angle fa fa-angle-right"></i></a>
+            <ul class="slide-menu">
+                <li><a href="{{url_for('company.mass_schedule_shift')}}" class="slide-item"><i
+                    class="fe fe-grid  sidemenu_icon"></i>Schedule Shifts</a></li>
+            </ul>
+        </li>
+    </ul>
+{% endif %}
+
+{% if current_user.has_role('peoplemanager') %}
+    <ul class="side-menu py-0">
+        <li class="slide">
+            <a class="side-menu__item" data-bs-toggle="slide" href="">
+                <span class="side-menu__label"><i class="fe fe-users  sidemenu_icon"></i>People Manager</span><i
+                    class="angle fa fa-angle-right"></i>
+            </a>
+            <ul class="slide-menu">
+                <li><a class="slide-item" href="{{url_for('company.employees_list')}}"><i
+                            class="fe fe-layers  sidemenu_icon"></i>Employees List</a></li>
+                <li><a class="slide-item" href="{{url_for('company.add_employee_details')}}"><i
+                            class="fe fe-plus-circle  sidemenu_icon"></i>Add Employee</a></li>
+            </ul>
+        </li>
+    </ul>
+{% endif %}
+
+{% if current_user.has_role('expensemanager') %}
+<ul class="side-menu py-0">
+    <li class="slide">
+        <a class="side-menu__item" data-bs-toggle="slide" href="">
+            <i class="feather feather-command  sidemenu_icon"></i>
+            <span class="side-menu__label">Expense Manager</span><i class="angle fa fa-angle-right"></i></a>
+        <ul class="slide-menu">
+            <li><a href="{{url_for('company.adjustments')}}" class="slide-item"><i
+                        class="fe fe-dollar-sign  sidemenu_icon"></i>Payroll Adjustments</a></li>
+        </ul>
+    </li>
+</ul>
+{% endif %}
+
+<ul class="side-menu py-0">
+    <li class="slide">
+        <a class="side-menu__item" data-bs-toggle="slide" href="">
+            <i class="fe fe-briefcase  sidemenu_icon"></i>
+            <span class="side-menu__label">Settings</span><i class="angle fa fa-angle-right"></i></a>
+        <ul class="slide-menu">
+            <li><a href="{{url_for('employee.profile')}}" class="slide-item"><i
+                class="fe fe-user  sidemenu_icon"></i>My Profile</a></li>
+        </ul>
+    </li>
+</ul>

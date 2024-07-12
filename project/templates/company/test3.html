@@ -1,0 +1,188 @@
+<!-- templates/employee/index.html -->
+
+{% extends "layout/base.html" %}
+{% block head %}
+{{ super() }}
+<!-- INTERNAL Daterangepicker css-->
+<link rel="stylesheet" href="{{ url_for('static', filename='assets/plugins/daterangepicker/daterangepicker.css') }}">
+<style>
+    table.dataTable tbody th,
+    table.dataTable tbody td,
+    table.dataTable thead th,
+    table.dataTable thead td {
+        padding: 5px 10px !important;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!--Page header-->
+<div class="page-header d-xl-flex d-block">
+    <div class="page-leftheader">
+        <div class="page-title"> Biometric Person List </div>
+    </div>
+    <div class="page-rightheader ms-md-auto">
+        <div class="align-items-end flex-wrap my-auto right-content breadcrumb-right">
+            <div class="btn-list">
+                <a class="btn btn-primary markattendanceBtn" href="javascript:void(0);" data-bs-toggle="modal" data-bs-target="#addtodevicemodal" data-clock_type="clockin">
+                    Add Persons From List
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+<!--End Page header-->
+
+<!-- Row -->
+<div class="row">
+    <div class="col-md-12 col-sm-12 col-lg-12 col-xl-12 col-xxl-12">
+        <div class="card">
+            <div class="card-header border-0">
+                <h4 class="card-title">Persons List</h4>
+            </div>
+            <div class="table-responsive mt-5 p-3">
+                <table class="table  table-vcenter text-nowrap table-bordered border-bottom  attendance-history ">
+                    <thead>
+                        <tr>
+                            <th class="text-start border-bottom-0">Employee ID</th>
+                            <th class="text-start border-bottom-0">Name</th>
+                            <th class="text-start border-bottom-0">Type</th>
+                        </tr>
+                    </thead>
+                    <tbody >
+                        {% for match in data%}
+                        <tr class="border-bottom fs-15">
+                            <td class="text-start">{{ match.employeeNo }}</td>
+                            <td class="text-start">{{ match.name }}</td>
+                            <td class="text-start fs-15">
+                                <span class="badge badge-success-light">{{ match.userType|capitalize }}</span>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- End Row-->
+
+<!--Assign Roles Modal -->
+<div class="modal fade" id="addtodevicemodal">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <form class="card-body pt-3" id="add_to_device_form">
+
+                <div class="modal-header">
+                    <h5 class="modal-title">Add Employees to Biometric Device</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">×</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div id="message"></div>
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+                    <input type="hidden" name="deviceIndex" value="{{deviceIndex}}" />
+                    <div class="time_approvers">
+                        <div class="form-group">
+                            <div class="row">
+                                <div class="col-md-12">
+                                    <div class="form-group">
+                                        <label class="form-label"> Select Employee you would add to selected Biometric Device*</label>
+                                        <select class="form-control select2-show-search custom-select" name="employees[]" placeholder="Choose one or more employees" multiple required>
+                                            {% for item in company_details.employees%}
+                                                {% if item.employee_company_details.employee_id in data_ids  %}
+                                                    <!-- <option value="{{item._id}}" class="p-2 text-muted" aria-selected="true">{{item.first_name + ' ' +item.last_name}}</option>  -->
+                                                {% else %}
+                                                    <option value="{{item._id}}" class="p-2">{{item.first_name + ' ' +item.last_name}}</option>
+                                                {% endif %}
+                                            {%endfor%}
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <a href="javascript:void(0);" class="btn btn-outline-primary" data-bs-dismiss="modal">Close</a>
+                    <button class="btn btn-primary" id="btnAAddToDevice">Submit</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+<!-- End Additions Modal  -->
+{% endblock %}
+
+{% block script %}
+{{ super() }}
+<script src="{{ url_for('static', filename='assets/plugins/multi/multi.min.js') }}"></script>
+<script src="{{ url_for('static', filename='assets/plugins/select2/select2.full.min.js') }}"></script>
+<script src="{{ url_for('static', filename='assets/js/select2.js') }}"></script>
+<script>
+	/* Data Table */
+	$('.attendance-history').DataTable({
+		order: [],
+		columnDefs: [ { orderable: false, targets: [0] } ],
+		language: {
+			searchPlaceholder: 'Search...',
+			sSearch: '',
+		}
+	});
+	/* End Data Table */
+
+
+    // Ajax Assign Roles
+    $(document).on("click", '#btnAAddToDevice', function (e) {
+        e.preventDefault();
+        cs = $('#csrf').val()
+        swal({
+            title: "Are you sure?",
+            text: "You want to add these employees to device?",
+            icon: "warning",
+            buttons: true,
+            dangerMode: true,
+        }).then((willDelete) => {
+            if (willDelete) {
+                $("#global-loader").show();
+                $.ajax({
+                        headers: {
+                            'X-CSRF-TOKEN': cs
+                        },
+                        url: '/addpersontodevice',
+                        data: $('#add_to_device_form').serialize(),
+                        type: 'POST',
+                    })
+                    .done(function (data) {
+                        if (data.status == "success") {
+                            $('#addtodevicemodal').modal('toggle');
+                            $("#global-loader").hide();
+
+                            swal({
+                                title: "Success",
+                                text: "Successfully Added Employees to Selected Device!",
+                                icon: "success",
+                            }).then(function () {
+                                $("#global-loader").show();
+                                location.reload();
+                            });
+                        } else {
+                            swal({
+                                title: "Failed",
+                                text: "Please Select Required Fields!",
+                                icon: "warning",
+                            });
+                        }
+
+                    })
+                    .fail(function (err) {
+                        console.log(err);
+                        $('#message').html(err);
+                    })
+            }
+        });
+    });
+    //EnD Assign Roles
+</script>
+{% endblock %}

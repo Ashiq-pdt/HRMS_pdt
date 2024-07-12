@@ -1,0 +1,528 @@
+<!-- templates/employee/index.html -->
+
+{% extends "layout/base.html" %}
+{% block head %}
+{{ super() }}
+<!-- INTERNAL Daterangepicker css-->
+<link rel="stylesheet" href="{{ url_for('static', filename='assets/plugins/daterangepicker/daterangepicker.css') }}">
+{% endblock %}
+
+{% block content %}
+<!--Page header-->
+<div class="page-header d-xl-flex d-block">
+    <div class="page-leftheader">
+        <div class="page-title">Reimbursement</div>
+    </div>
+    <div class="page-rightheader ms-md-auto">
+        <div class="d-flex align-items-end flex-wrap my-auto end-content breadcrumb-end">
+            <div class="btn-list">
+                <a  href="{{url_for('employee.create_reimbursement')}}" class="btn btn-primary me-3">Apply Reimbursement</a>
+                <button class="btn btn-light" data-bs-toggle="tooltip" data-bs-placement="top" title="E-mail"> <i
+                        class="feather feather-mail"></i> </button>
+                <button class="btn btn-light" data-bs-placement="top" data-bs-toggle="tooltip" title="Contact"> <i
+                        class="feather feather-phone-call"></i> </button>
+                <button class="btn btn-primary" data-bs-placement="top" data-bs-toggle="tooltip" title="Info"> <i
+                        class="feather feather-info"></i> </button>
+            </div>
+        </div>
+    </div>
+</div>
+<!--End Page header-->
+
+<!-- Row -->
+<div class="row">
+    <div class="card" id="tabs-style3">
+        <div class="card-header border-bottom-0">
+            <div class="card-title">
+                Reimbursement Summary
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="panel panel-primary tabs-style-3">
+                <div class="tab-menu-heading">
+                    <div class="tabs-menu ">
+                        <!-- Tabs -->
+                        <ul class="nav panel-tabs">
+                            <li class=""><a href="#tab11" class="active" data-bs-toggle="tab"><i class="fa fa-hourglass-half"></i> Pending Requests (<span class="text-bold">{{reimbursement_data|selectattr('reimbursement_status','equalto','pending')|list|count}}</span>)</a></li>
+                            <li><a href="#tab12" data-bs-toggle="tab"><i class="fa fa-check-circle-o"></i> Approved ({{reimbursement_data|selectattr('reimbursement_status','equalto','approved')|list|count}})</a></li>
+                            <li><a href="#tab13" data-bs-toggle="tab"><i class="fa fa-times-circle-o"></i> Rejected ({{reimbursement_data|selectattr('reimbursement_status','equalto','rejected')|list|count}})</a></li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="panel-body tabs-menu-body">
+                    <div class="tab-content">
+                        <div class="tab-pane active" id="tab11">
+                            <div class="card">
+                                <!-- <div class="card-header  border-0">
+                                    <h4 class="card-title"></h4>
+                                </div> -->
+                                <div class="card-body">
+                                    <div class="table-responsive">
+                                        <table class="table  table-vcenter text-nowrap table-bordered border-bottom hr-leaves" id="hr-leaves">
+                                            <thead>
+                                                <tr>
+                                                    <th class="border-bottom-0 w-5">#No</th>
+                                                    <th class="border-bottom-0">Dated On</th>
+                                                    <th class="border-bottom-0">Adjustment Type</th>
+                                                    <th class="border-bottom-0">Amount</th>
+                                                    <th class="border-bottom-0">Status</th>
+                                                    <th class="border-bottom-0">Actions</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {% for item in reimbursement_data|sort(attribute='created_at',reverse=True)|selectattr('reimbursement_status','equalto','pending') %}
+                                                    <tr>
+                                                        <td>{{loop.index}}</td>
+                                                        <td>{{item.reimbursement_on.strftime('%d/%m/%Y')}}</td>
+                                                        <td>{{item.adjustment_reason_id.adjustment_reason|capitalize()}}</td>
+                                                        <td>{{item.reimbursement_amount}}</td>
+                                                        <td>
+                                                            {% if item.reimbursement_status == "pending" %}
+                                                                <span class="badge badge-warning">Pending</span>
+                                                            {% elif item.reimbursement_status == "approved" %}
+                                                                <span class="badge badge-success">Approved</span>
+                                                            {% elif item.reimbursement_status == "rejected" %}
+                                                                <span class="badge badge-danger">Rejected</span>
+                                                            {% endif %}
+                                                            
+                                                        </td>
+                                                        <td class="text-start d-flex">
+                                                            <!-- {% if item.request_status == "pending" %}
+                                                                <a href="javascript:void(0);" class="action-btns1" 
+                                                                data-time_id="{{item._id}}" 
+                                                                    data-time_minutes={% if item.request_type == "late" %}{{item.attendance_id.late_by_minutes}}{% elif item.request_type == "early" %}
+                                                                    {{item.attendance_id.early_by_minutes}} 
+                                                                {% else %}
+                                                                    {{item.attendance_id.ot_by_minutes}} 
+                                                                {% endif %} data-bs-toggle="modal"
+                                                                    data-bs-target="#previewapprovemodal" >
+                                                                    <i class="feather feather-check text-success"></i>
+                                                                </a>
+                                                            {% endif %}
+                                                            {% if item.request_status == "pending" and not item.request_status == "approved" %}
+                                                                <a href="javascript:void(0);" class="action-btns1"  title="Rejected" data-time_id="{{item._id}}" data-bs-toggle="modal" data-bs-target="#rejectleavemodal">
+                                                                    <i class="feather feather-x text-danger"></i>
+                                                                 </a>
+                                                            {% endif %} -->
+                                                        </td>
+                                                    </tr>
+                                                {% endfor %}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="tab-pane" id="tab12">
+                            <div class="card">
+                                <!-- <div class="card-header  border-0">
+                                    <h4 class="card-title"></h4>
+                                </div> -->
+                                <div class="card-body">
+                                    <div class="table-responsive">
+                                        <table class="table  table-vcenter text-nowrap table-bordered border-bottom hr-leaves" id="hr-leaves">
+                                            <thead>
+                                                <tr>
+                                                    <th class="border-bottom-0 w-5">#No</th>
+                                                    <th class="border-bottom-0">Dated On</th>
+                                                    <th class="border-bottom-0">Adjustment Type</th>
+                                                    <th class="border-bottom-0">Amount</th>
+                                                    <th class="border-bottom-0">Status</th>
+                                                    <th class="border-bottom-0">Actions</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {% for item in reimbursement_data|sort(attribute='created_at',reverse=True)|selectattr('reimbursement_status','equalto','approved') %}
+                                                    <tr>
+                                                        <td>{{loop.index}}</td>
+                                                        <td>{{item.reimbursement_on.strftime('%d/%m/%Y')}}</td>
+                                                        <td>{{item.adjustment_reason_id.adjustment_reason|capitalize()}}</td>
+                                                        <td>{{item.reimbursement_amount}}</td>
+                                                        <td>
+                                                            {% if item.reimbursement_status == "pending" %}
+                                                                <span class="badge badge-warning">Pending</span>
+                                                            {% elif item.reimbursement_status == "approved" %}
+                                                                <span class="badge badge-success">Approved</span>
+                                                            {% elif item.reimbursement_status == "rejected" %}
+                                                                <span class="badge badge-danger">Rejected</span>
+                                                            {% endif %}
+                                                            
+                                                        </td>
+                                                        <td class="text-start d-flex">
+                                                            <!-- {% if item.request_status == "pending" %}
+                                                                <a href="javascript:void(0);" class="action-btns1" 
+                                                                data-time_id="{{item._id}}" 
+                                                                    data-time_minutes={% if item.request_type == "late" %}{{item.attendance_id.late_by_minutes}}{% elif item.request_type == "early" %}
+                                                                    {{item.attendance_id.early_by_minutes}} 
+                                                                {% else %}
+                                                                    {{item.attendance_id.ot_by_minutes}} 
+                                                                {% endif %} data-bs-toggle="modal"
+                                                                    data-bs-target="#previewapprovemodal" >
+                                                                    <i class="feather feather-check text-success"></i>
+                                                                </a>
+                                                            {% endif %}
+                                                            {% if item.request_status == "pending" and not item.request_status == "approved" %}
+                                                                <a href="javascript:void(0);" class="action-btns1"  title="Rejected" data-time_id="{{item._id}}" data-bs-toggle="modal" data-bs-target="#rejectleavemodal">
+                                                                    <i class="feather feather-x text-danger"></i>
+                                                                 </a>
+                                                            {% endif %} -->
+                                                        </td>
+                                                    </tr>
+                                                {% endfor %}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="tab-pane" id="tab13">
+                            <div class="card">
+                                <!-- <div class="card-header  border-0">
+                                    <h4 class="card-title"></h4>
+                                </div> -->
+                                <div class="card-body">
+                                    <div class="table-responsive">
+                                        <table class="table  table-vcenter text-nowrap table-bordered border-bottom hr-leaves" id="hr-leaves">
+                                            <thead>
+                                                <tr>
+                                                    <th class="border-bottom-0 w-5">#No</th>
+                                                    <th class="border-bottom-0">Dated On</th>
+                                                    <th class="border-bottom-0">Adjustment Type</th>
+                                                    <th class="border-bottom-0">Amount</th>
+                                                    <th class="border-bottom-0">Status</th>
+                                                    <th class="border-bottom-0">Actions</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {% for item in reimbursement_data|sort(attribute='created_at',reverse=True)|selectattr('reimbursement_status','equalto','rejected') %}
+                                                    <tr>
+                                                        <td>{{loop.index}}</td>
+                                                        <td>{{item.reimbursement_on.strftime('%d/%m/%Y')}}</td>
+                                                        <td>{{item.adjustment_reason_id.adjustment_reason|capitalize()}}</td>
+                                                        <td>{{item.reimbursement_amount}}</td>
+                                                        <td>
+                                                            {% if item.reimbursement_status == "pending" %}
+                                                                <span class="badge badge-warning">Pending</span>
+                                                            {% elif item.reimbursement_status == "approved" %}
+                                                                <span class="badge badge-success">Approved</span>
+                                                            {% elif item.reimbursement_status == "rejected" %}
+                                                                <span class="badge badge-danger">Rejected</span>
+                                                            {% endif %}
+                                                            
+                                                        </td>
+                                                        <td class="text-start d-flex">
+                                                            <!-- {% if item.request_status == "pending" %}
+                                                                <a href="javascript:void(0);" class="action-btns1" 
+                                                                data-time_id="{{item._id}}" 
+                                                                    data-time_minutes={% if item.request_type == "late" %}{{item.attendance_id.late_by_minutes}}{% elif item.request_type == "early" %}
+                                                                    {{item.attendance_id.early_by_minutes}} 
+                                                                {% else %}
+                                                                    {{item.attendance_id.ot_by_minutes}} 
+                                                                {% endif %} data-bs-toggle="modal"
+                                                                    data-bs-target="#previewapprovemodal" >
+                                                                    <i class="feather feather-check text-success"></i>
+                                                                </a>
+                                                            {% endif %}
+                                                            {% if item.request_status == "pending" and not item.request_status == "approved" %}
+                                                                <a href="javascript:void(0);" class="action-btns1"  title="Rejected" data-time_id="{{item._id}}" data-bs-toggle="modal" data-bs-target="#rejectleavemodal">
+                                                                    <i class="feather feather-x text-danger"></i>
+                                                                 </a>
+                                                            {% endif %} -->
+                                                        </td>
+                                                    </tr>
+                                                {% endfor %}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- End Row-->
+
+<!--Reject Reason Modal -->
+<div class="modal fade" id="rejectleavemodal">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <form class="card-body pt-3" id="time_rejection_form">
+                <div class="modal-header">
+                    <h5 class="modal-title">Add Time Rejection Reason*</h5>
+                    <a type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">×</span>
+                    </a>
+                </div>
+                <div class="modal-body">
+                    <div id="message"></div>
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+                    <input type="hidden" name="time_request_id" id="time_request_id" />
+                    <div class="form-group">
+						<textarea class="form-control" rows="3" placeholder="Time Rejection Reason" name="time_rejection_reason" id="time_rejection_reason"></textarea>
+					</div>
+                </div>
+                <div class="modal-footer">
+                    <a href="javascript:void(0);" class="btn btn-outline-primary" data-bs-dismiss="modal">Close</a>
+                    <a class="btn btn-primary" id="btnRejectTimeRequest">Submit</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+<!-- Reject Reason Modal  -->
+
+<!--Preview & Approve Modal -->
+<div class="modal fade"  id="previewapprovemodal">
+    <div class="modal-dialog" role="document">
+        <form class="card-body pt-3" id="preview_approve_form">
+        
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Preview & Approve Request</h5>
+                <a  class="btn-close" data-bs-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">×</span>
+                </a>
+            </div>
+            <div class="modal-body">
+                <div class="leave-types">
+                    <div class="" id="multiple">
+                        <input type="text" class="form-control" id="edit_time_request_id" name="time_request_id" hidden/>
+
+                        <div class="form-group">
+                            <label class="form-label">Clocked In At:</label>
+                            <div class="input-group">
+                                <input type="text"  class="form-control" placeholder=""  id="clocked_in_at" disabled/>
+                                
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Clocked Out At:</label>
+                            <div class="input-group">
+                                <input type="text"  class="form-control" placeholder="-"  id="clocked_out_at" disabled/>
+                                
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Approval Minutes:</label>
+                            <div class="input-group">
+                                <input type="text"  class="form-control" placeholder="select dates"  id="prev_minutes" disabled/>
+                                
+                            </div>
+                        </div>
+
+                        <div class="form-group mt-3">
+                            <div class="row">
+                                <div class="col-md-9">
+                                    <label class="custom-switch">
+                                        <input type="checkbox" class="custom-switch-input edit_approval_time" name="has_edited" id="edit_approval_time">
+                                        <span class="custom-switch-indicator"></span>
+                                        <span class="custom-switch-description">Edit / Make Changes</span>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+
+                    <div class="edit_time_off_div" style="display:none">
+                        <div class="form-group">
+                            <label class="form-label">Approve Minutes:</label>
+                            <div class="input-group">
+                                <input type="number" name="edit_approve_time" class="form-control" placeholder="Enter Approve Minutes" id="edit_approve_time"/>
+                            </div>
+                        </div>
+                    </div>
+
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <!-- <div class="">
+                    <label class="mb-0 font-weight-semibold">Selected Days:</label>
+                    <span class="badge badge-danger badge-pill ms-2 no_of_days">1</span>
+                    <input type="text" name="no_of_days" id="no_of_days" value="1" class="form-control" hidden/>
+                </div> -->
+                <div class="ms-auto">
+                    <a href="javascript:void(0);" class="btn btn-outline-primary" data-bs-dismiss="modal">Close</a>
+                    <button class="btn btn-success" id="btnAcceptLeaveRequest">Approve & Add to Payroll</button>
+                </div>
+            </div>
+        </div>
+        </form>
+    </div>
+</div>
+<!-- End Apply Leaves Modal  -->
+{% endblock %}
+
+{% block script %}
+{{ super() }}
+<!-- INTERNAL Index js-->
+<!-- <script src="{{ url_for('static', filename='assets/plugins/apexchart/apexcharts.js') }}"></script> -->
+
+<!-- INTERNAL Daterangepicker js-->
+<script src=".{{ url_for('static', filename='assets/plugins/daterangepicker/moment.min.js') }}"></script>
+<script src=".{{ url_for('static', filename='assets/plugins/daterangepicker/daterangepicker.js') }}"></script>
+
+<script src="{{ url_for('static', filename='assets/js/employee/emp-myleaves.js') }}"></script>
+<script>
+// Data Table
+$(document).ready(function () {
+    var table = $('.hr-leaves').DataTable({
+        "order": [
+            [0, "desc"]
+        ],
+        order: [],
+        columnDefs: [{
+            orderable: false,
+        }],
+        language: {
+            searchPlaceholder: 'Search...',
+            sSearch: '',
+        },
+        initComplete: function () {
+            this.api()
+                .columns([2,3])
+                .every(function () {
+                    var column = this;
+                    var select = $('<select class="form-control-sm select2 sm mx-2"><option value="">All</option></select>')
+                        .appendTo($(column.header()))
+                        .on('change', function () {
+                            var val = $.fn.dataTable.util.escapeRegex($(this).val());
+                            column.search(val ? '^' + val + '$' : '', true, false).draw();
+                        });
+                        $( select ).click( function(e) {
+                            e.stopPropagation();
+                        });
+                    column
+                        .data()
+                        .unique()
+                        .sort()
+                        .each(function (d, j) {
+                            select.append('<option value="' + d + '">' + d + '</option>');
+                        });
+                });
+        },
+    });
+});
+</script>
+<script>
+    // Ajax Approve Leave 
+    $(document).on("click", '#btnAcceptLeaveRequest', function (e) {
+        e.preventDefault();
+        var cs = "{{ csrf_token() }}";
+        swal({
+            title: "Are you sure?",
+            text: "You want to approve this employee time request?",
+            icon: "warning",
+            buttons: true,
+            dangerMode: true,
+        }).then((willDelete) => {
+            if (willDelete) {
+                $("#global-loader").show();
+                $.ajax({
+                        headers: {
+                            'X-CSRF-TOKEN': cs
+                        },
+                        url: '/approvetimerequest',
+                        data: $('#preview_approve_form').serialize(),
+                        type: 'POST',
+                    })
+                    .done(function (data) {
+                        //$('#markattendancemodal').modal('toggle');
+                        $("#global-loader").hide();
+                        swal({
+                            title: "Success",
+                            text: "Successfully Approved Time!",
+                            icon: "success",
+                        }).then(function () {
+                            $("#global-loader").show();
+                            location.reload();
+                        });
+                    })
+                    .fail(function (err) {
+                        console.log(err);
+                        $('#message').html(err);
+                    })
+            }
+        });
+    });
+    //EnD Ajax Approve Leave
+
+    // Ajax Reject Leave 
+    $(document).on("click", '#btnRejectTimeRequest', function (e) {
+        e.preventDefault();
+        var cs = "{{ csrf_token() }}";
+        var time_request_id = $('#time_request_id').val();
+        var time_reject_reason = $('#time_rejection_reason').val()
+        if(time_reject_reason){
+            swal({
+                title: "Are you sure?",
+                text: "You want to reject this employee time request?",
+                icon: "warning",
+                buttons: true,
+                dangerMode: true,
+            }).then((willDelete) => {
+                if (willDelete) {
+                    $("#global-loader").show();
+                    $.ajax({
+                            headers: {
+                                'X-CSRF-TOKEN': cs
+                            },
+                            url: '/rejecttimerequest',
+                            data: {time_request_id:time_request_id,time_reject_reason:time_reject_reason},
+                            type: 'POST',
+                        })
+                        .done(function (data) {
+                            //$('#markattendancemodal').modal('toggle');
+                            $("#global-loader").hide();
+                            swal({
+                                title: "Success",
+                                text: "Successfully Rejected Leave!",
+                                icon: "success",
+                            }).then(function () {
+                                $("#global-loader").show();
+                                location.reload();
+                            });
+                        })
+                        .fail(function (err) {
+                            console.log(err);
+                            $('#message').html(err);
+                        })
+                }
+            });
+        }
+    });
+    //EnD Ajax Reject Leave
+
+    $(document).on("show.bs.modal", '#rejectleavemodal', function (e) {
+        var time_request_id = $(e.relatedTarget).data('time_id');
+        $("#time_request_id").val(time_request_id);
+    });
+
+    $(document).on("show.bs.modal", '#previewapprovemodal', function (e) {
+        var leave_time_id = $(e.relatedTarget).data('time_id');
+        var clock_in_at = $(e.relatedTarget).data('clock_in');
+        var clock_out_at = $(e.relatedTarget).data('clock_out');
+
+        $("#edit_time_request_id").val(leave_time_id);
+        var minutes = $(e.relatedTarget).data('time_minutes');
+        $("#prev_minutes").val(minutes);
+        $("#clocked_in_at").val(clock_in_at);
+        $("#clocked_out_at").val(clock_out_at);
+        
+        
+    });
+
+    // Toggle Is Day off in Work Timings
+    $('.edit_approval_time').change(function () {
+        if (this.checked) {
+            $('.edit_time_off_div').show();
+        } else {
+            $('.edit_time_off_div').hide();
+        }
+    });
+    //End Toggle
+</script>
+{% endblock %}

@@ -1,0 +1,313 @@
+<!-- templates/admin/index.html -->
+
+{% extends "layout/base.html" %}
+{% block head %}
+{{ super() }}
+<link href="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.0/main.min.css" rel="stylesheet" />
+
+<style>
+
+</style>
+{% endblock %}
+{% block content %}
+
+<!--Page header-->
+<div class="page-header d-xl-flex d-block">
+    <div class="page-leftheader">
+        <div class="page-title">Create New Reimbursement</div>
+    </div>
+    <div class="page-rightheader ms-md-auto">
+        <div class="d-flex align-items-end flex-wrap my-auto end-content breadcrumb-end">
+            <div class="btn-list">
+                <button class="btn btn-light" data-bs-toggle="tooltip" data-bs-placement="top" title="E-mail"> <i
+                        class="feather feather-mail"></i> </button>
+                <button class="btn btn-light" data-bs-placement="top" data-bs-toggle="tooltip" title="Contact"> <i
+                        class="feather feather-phone-call"></i> </button>
+                <button class="btn btn-primary" data-bs-placement="top" data-bs-toggle="tooltip" title="Info"> <i
+                        class="feather feather-info"></i> </button>
+            </div>
+        </div>
+    </div>
+</div>
+<!--End Page header-->
+
+<!-- Row -->
+<div class="row">
+    <div class="col-md-12">
+        <form class="card-body pt-3" method="POST" action="{{url_for('employee.create_reimbursement')}}" enctype="multipart/form-data">
+            <input type="hidden" name="csrf_token" id="csrf_gen" value="{{ csrf_token() }}" />
+            <input class="form-control" placeholder="Month Range" type="text" name="selected_month" id="selected_month" value="{{start_of_month.strftime('%Y-%m-%d')}}" hidden>
+            <div class="card">
+                <div class="card-body">
+                    <h4 class="card-title">Basic Information</h4>
+                </div>
+                <div class="card-body">
+                    <h4 class="card-title"><span class="text-success">Addition</span>/<span class="text-danger">Deduction</span> Summary</h4>
+                    <div class="form-group input-adjustments">
+                        <div class="row">
+                            <!-- <div class="col-md-12 col-lg-2">
+                                <label class="form-label mb-0 mt-2">Reasons</label>
+                            </div> -->
+                            <div class="col-md-12 col-lg-2">
+                                <div class="form-group">
+                                <label class="form-label mb-0 mt-2">Reasons</label>
+
+                                    <select name="adjustment_reason[]"
+                                        class="form-control custom-select" data-placeholder="Select Reason" required>
+                                        <option label="Select Reason" default></option>
+                                    {% for item in company_details.adjustment_reasons|sort(attribute='adjustment_type') %}
+                                        <option value="{{item.id}}" class="{{'text-success' if item.adjustment_type=='addition' else 'text-danger'}}">{{item.adjustment_reason}}</option>
+                                    {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-12 col-lg-2">
+                                <label class="form-label mb-0 mt-2">Reimbursement On</label>
+                                <input type="text" class="form-control fc-datepicker" name="reimburesement_of[]" placeholder="DD/MM/YYYY">
+                            </div>
+                            <!-- <div class="col-md-12 col-lg-1">
+                                <label class="form-label mb-0 mt-2">Amount</label>
+                            </div> -->
+                            <div class="col-md-12 col-lg-2">
+                                <label class="form-label mb-0 mt-2">Amount</label>
+                                <input name="adjustment_amount[]" type="number" step="0.01" id="adjustment_amount" class="form-control" placeholder="0"
+                                    value="0.00">
+                            </div>
+                            <!-- <div class="col-md-12 col-lg-1">
+                                <label for="form-label" class="form-label mb-0 mt-2">Select File</label>
+                            </div> -->
+                            <div class="col-md-12 col-lg-2">
+                                <div class="form-group">
+                                    <label for="form-label" class="form-label mb-0 mt-2">Select File</label>
+                                    <input class="form-control" name="adjustment_document[]" type="file">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="term_months">
+                        <div class="row">
+                            <!-- <div class="col-md-12 col-lg-1 recurring_month" style="display: none;">
+                                <label class="form-label mb-0 mt-2">Term</label>
+                            </div>
+                            <div class="col-md-12 col-lg-2 recurring_month" style="display: none;">
+                                <input name="recurring_month" id="recurring_month" type="number" step="1" class="form-control" placeholder="0"
+                                    value="0">
+                            </div> -->
+                        </div>
+                    </div>
+
+
+                    <div class="add_more_reason">
+                        <div class="row">
+                            <div class="col-md-12 col-lg-9 text-start">
+                                <a class="btn btn-primary btn-success text-white  mt-4 mt-lg-0" id="add_more"><i
+                                        class="fa fa-plus me-1"></i>Add More</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-footer">
+                            <button class="btn btn-primary">Save</button>
+                            <a href="javascript:void(0);" class="btn btn-danger">Cancel</a>
+                </div>
+                
+            </div>
+        </form>
+    </div>
+</div>
+<!-- End Row -->
+
+{% endblock %}
+
+{% block script %}
+{{ super() }}
+<!-- INTERNAL Fullcalendar js-->
+<script src="{{ url_for('static', filename='assets/plugins/bootstrap-datepicker/bootstrap-datepicker.js') }}"></script>
+<!-- Select2 js -->
+<script src="{{ url_for('static', filename='assets/plugins/select2/select2.full.min.js') }}"></script>
+<script src="{{ url_for('static', filename='assets/js/select2.js') }}"></script>
+<script>
+    fpm = $('#filter-datepicker-month').bootstrapdatepicker({
+        format: "MM yyyy",
+        startdate: '+0m',
+        startView: "months",
+        minViewMode: "months",
+        orientation: 'bottom',
+        autoclose: true
+    })
+    // To get the month and year in route
+    fpm.on('changeDate', function (e) {
+        $('.action-btns').attr("data-selected_month", e.dates)
+        $('#selected_month').val(moment(new Date(e.dates)).format('YYYY-MM-DD'))
+    });
+
+ 
+    $(function(){
+        'use strict'
+        // Select2 by showing the search
+        $('.select2-show-search').select2({
+            minimumResultsForSearch: '',
+            placeholder: "Search",
+            orientation: 'bottom',
+            width: '100%'
+        });
+         $('.select2').on('click', () => {
+            let selectField = document.querySelectorAll('.select2-search__field')
+            selectField.forEach((element,index)=>{
+            element?.focus();
+            })
+        });
+        
+    });
+
+    $(document).ready(function () {
+        var id = 1;
+        $("#add_more").click(function () {
+            var showId = ++id;
+            $(".input-adjustments").append('<div class="row extra-inputs">\
+                <div class="col-md-12 col-lg-2">\
+                    <div class="form-group">\
+                        <label class="form-label mb-0 mt-2">Reasons</label>\
+                        <select name="adjustment_reason[]" class="form-control custom-select" data-placeholder="Select Reason" required>\
+                            <option label="Select Reason" selected></option>\
+                            {% for item in company_details.adjustment_reasons|sort(attribute='adjustment_type') %}\
+                                      <option value="{{item.id}}" class="{{'text-success' if item.adjustment_type=='addition' else 'text-danger'}}">{{item.adjustment_reason}}</option>\
+                            {% endfor %}\
+                        </select>\
+                    </div>\
+                </div>\
+                <div class="col-md-12 col-lg-2">\
+                    <label class="form-label mb-0 mt-2">Reimbursement On</label>\
+                    <input type="text" class="form-control fc-datepicker" name="reimburesement_of[]" placeholder="DD/MM/YYYY">\
+                </div>\
+                <div class="col-md-12 col-lg-2">\
+                    <label class="form-label mb-0 mt-2">Amount</label>\
+                    <input name="adjustment_amount[]" type="number" step="0.01" class="form-control" placeholder="0" required>\
+                </div>\
+                <div class="col-md-12 col-lg-2">\
+                    <div class="form-group">\
+                        <label for="form-label" class="form-label mb-0 mt-2">Select File</label>\
+                        <input class="form-control" name="adjustment_document[]" type="file">\
+                    </div>\
+                </div>\
+                <div class="col-md-12 col-lg-2">\
+                    <label for="form-label" class="form-label mb-0 mt-2">&nbsp;</label>\
+                    <a  href="#" class="btn btn-danger" id="removeRegular"><i class="fa fa-times"></i></a>\
+                </div>\
+            </div>');
+            $( ".fc-datepicker" ).datepicker({
+                dateFormat:"dd/mm/yy"
+            });
+        });
+        $(".input-adjustments").on('click', '#removeRegular', function () {
+            $(this).parent().parent().remove();
+        });
+        
+    });
+    $( ".fc-datepicker" ).datepicker({
+        dateFormat:"dd/mm/yy"
+    });
+     // Ajax Leave Policy
+     $(document).on("change", '#recurring_payment', function (e) {
+        //e.preventDefault();
+        var recurring_payment = $('#recurring_payment ').is(':checked')
+        if (recurring_payment){
+            $("#removeRegular").toggle()
+            $(".add_more_reason").toggle()
+            $(".extra-inputs").toggle()
+            $(".recurring_month").toggle()
+        }
+        else{
+            $("#removeRegular").toggle()
+            $(".add_more_reason").toggle()
+            $(".extra-inputs").toggle()
+            $(".recurring_month").toggle()
+            $(".term_months").hide()
+            $('.recurring_total_amount').val('')
+            $('#recurring_month').val('')
+        }
+    });
+    //EnD Leave Policy
+
+    // Ajax Leave Policy
+    $(document).on("change", '#recurring_month', function (e) {
+        //e.preventDefault();
+        $(".term_months .row").html('')
+        $(".term_months").show()
+        var recurring_month = $('#recurring_month').val()
+
+        var selected_month = $('#filter-datepicker-month').val()
+        var actualDate = new Date(selected_month)
+        console.log(actualDate)
+
+        if (recurring_month){
+            $('#adjustment_amount').val('')
+            for (var i = 0; i < recurring_month; i++) {
+                $(".term_months .row").append('<div class="col-md-12 col-lg-3  pt-2  mb-0 mt-2 text-end">'+ordinal_suffix_of(i+1)+' Term on</div><div class="col-md-12 col-lg-2 pt-2 text-end">\
+                    <input name="rec_month[]"  type="text" class="form-control" value="'+new Date(actualDate.getFullYear(), actualDate.getMonth() + i).toLocaleDateString('en-us', { year:"numeric", month:"long"})+'" readonly>\
+                </div>\
+                <div class="col-md-12 col-lg-5 pt-2">\
+                    <input name="monthly_amount[]"  type="number" step="1" class="form-control monthly_amount" placeholder="0"\
+                        value="0" readonly>\
+                </div><div class="col-md-12 col-lg-2"></div>')
+            }
+            $(".term_months .row").append('<div class="col-md-12 col-lg-3  pt-2  mb-0 mt-2 text-end">Total Amount</div><div class="col-md-12 col-lg-2 pt-2 text-end">\
+                <label class="form-label mb-0 mt-2 text-center">--</label>\
+            </div>\
+            <div class="col-md-12 col-lg-5 pt-2">\
+                <input name="recurring_total_amount"  type="number" step="1" class="form-control recurring_total_amount" placeholder="0"\
+                    value="0" readonly>\
+            </div><div class="col-md-12 col-lg-2"></div>')
+        }
+        else{
+            
+        }
+    });
+
+
+    // Ajax Leave Policy
+    $(document).on("keyup", '#adjustment_amount', function (e) {
+        //e.preventDefault();
+        var recurring_month = $('#recurring_month').val()
+        var adjustment_amount = $('#adjustment_amount').val()
+
+        if (recurring_month && adjustment_amount){
+            recurring_amount = adjustment_amount/recurring_month
+            $('.monthly_amount').val(recurring_amount)
+            $('.recurring_total_amount').val(adjustment_amount)
+        }
+        else{
+            $('.monthly_amount').val(0)
+            $('.recurring_total_amount').val(0)
+        }
+       
+    });
+
+    // Ajax Leave Policy
+    $(document).on("change", '.monthly_amount', function (e) {
+        //e.preventDefault();
+        var recurring_total_amount = $('.recurring_total_amount').val()
+
+        var sum = 0;
+        $('.monthly_amount').each(function(){
+            sum += parseFloat(this.value);
+        });
+        $('.recurring_total_amount').val(sum)
+    });
+
+    function ordinal_suffix_of(i) {
+        var j = i % 10,
+            k = i % 100;
+        if (j == 1 && k != 11) {
+            return i + "st";
+        }
+        if (j == 2 && k != 12) {
+            return i + "nd";
+        }
+        if (j == 3 && k != 13) {
+            return i + "rd";
+        }
+        return i + "th";
+    }
+</script>
+{% endblock %}

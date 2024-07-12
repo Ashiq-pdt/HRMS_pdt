@@ -1,0 +1,770 @@
+<!-- templates/employee/index.html -->
+
+{% extends "layout/base.html" %}
+{% block head %}
+{{ super() }}
+<style>
+    .blink_text {
+        animation-name: blinker;
+        animation-duration: 1s;
+        animation-timing-function: linear;
+        animation-iteration-count: infinite;
+       }
+
+       @keyframes blinker {
+        0% { opacity: 1.0; }
+        50% { opacity: 0.0; }
+        100% { opacity: 1.0; }
+       }
+</style>
+
+{% endblock %}
+{% block content %}
+<!--Page header-->
+<div class="page-header d-xl-flex d-block">
+    <div class="page-leftheader">
+        <div class="page-title">Employee<span class="font-weight-normal text-muted ms-2">Dashboard</span></div>
+    </div>
+    <div class="page-rightheader ms-md-auto">
+        <div class="d-flex align-items-end flex-wrap my-auto end-content breadcrumb-end">
+            <!-- <a href="javascript:void(0);" class="btn btn-primary me-3 mt-3 mt-lg-0 mb-3 mb-md-0" data-bs-toggle="modal"
+                data-bs-target="#applyleaves">Apply Leaves</a> -->
+            <div class="d-lg-flex d-block">
+                <div class="btn-list">
+                    <!-- <button class="btn btn-primary distance_met">Clock In</button> -->
+                    <!-- <div class="input-group">
+                        <div class="input-group-prepend">
+                            <div class="input-group-text">
+                                <i class="feather feather-map-pin"></i>
+                            </div>
+                        </div>
+                        <input id="location_accuracy" type="text" placeholder="09:30am" class="form-control input-small ui-timepicker-input" disabled>
+                    </div> -->
+                    <!-- <button class="btn btn-light" data-bs-toggle="tooltip" data-bs-placement="top" title="E-mail"> <i
+                            class="feather feather-mail"></i> </button>
+                    <button class="btn btn-light" data-bs-placement="top" data-bs-toggle="tooltip" title="Contact"> <i
+                            class="feather feather-phone-call"></i> </button>
+                    <button class="btn btn-primary" data-bs-placement="top" data-bs-toggle="tooltip" title="Info"> <i
+                            class="feather feather-info"></i> </button> -->
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<!--End Page header-->
+
+<!--Row-->
+<div class="row">
+    <div class="col-xl-3 col-md-12 col-lg-12 d-flex">
+        <div class="card">
+            <div class="card-body py-2">
+                <div class="countdowntimer mt-0">
+                    <span id="clocktimer2" class="border-0"></span>
+                    <label class="form-label">Current Time</label>
+                </div>
+                <div class="btn-list text-center mt-2">
+                    <button class="btn btn-primary clock_in_btn" data-bs-toggle="modal"
+                        data-bs-target="#clockinmodal">Clock In</button>
+                    <button class="btn btn-success startbreakBtn breakBtn {{'d-none' if (break_data) or (session.already_checked_in == False) else ''}}" data-btn-type="start">Start Break</button>
+                    <button class="btn btn-secondary endbreakBtn breakBtn {{'d-none' if not break_data else ''}}" data-btn-type="end" data-break-id="{{break_data._id if break_data else ''}}">End Break</button>
+                    <button class="btn btn-danger clock_out_btn" data-bs-toggle="modal" data-bs-target="#clockoutmodal" {{'disabled' if ((break_data) or (session.already_checked_in == False)) else ''}}>Clock
+                        Out</button>
+                </div>
+                <div class="tags text-center pt-2 d-none clock_in_status">
+                    <span class="tag">Clocked In At:</span>
+                </div>
+                <div class="tags text-center pt-2 d-none clock_out_status">
+                    <span class="tag">Clocked Out At:</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-12 col-lg-3 d-flex">
+        <div class="card">
+            <div class="card-body text-center list-icons">
+                <i class="feather feather-box fill-white text-primary icon-dropshadow-primary"></i>
+                <p class="card-text mt-3 mb-0">Total Present</p>
+                <p class="h2 text-center font-weight-bold">{{present_count}}</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-12 col-lg-3 d-flex">
+        <div class="card">
+            <div class="card-body text-center list-icons">
+                <i class="feather feather-briefcase fill-white text-primary icon-dropshadow-primary"></i>
+                <p class="card-text mt-3 mb-0">Total Absent</p>
+                <p class="h2 text-center font-weight-bold">{{absent_count}}</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-12 col-lg-3 d-flex">
+        <div class="card">
+            <div class="card-body text-center list-icons">
+                <i class="fa fa-hourglass-2 fill-white text-primary icon-dropshadow-primary"></i>
+                <p class="card-text mt-3 mb-0">Late</p>
+                <p class="h2 text-center font-weight-bold">{{late_count}}</p>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- /Row-->
+
+<!--Row-->
+<div class="row">
+    {% if upcoming_schedule %}
+        <div class="col-xxl-4 col-xl-6 col-md-6 col-lg-6">
+            <div class="card">
+                <div class="card-header border-bottom-0">
+                    <h4 class="card-title">Upcoming Shift Assignment</h4>
+                </div>
+                <div class="card-body">
+                    <ul class="timeline">
+                        {% for item in upcoming_schedule[:7] %}
+                            {% if item.work_timings.is_day_off%}
+                                <li class="success ps-6">
+                                    <span>You have been assigned a </span>
+                                    <a target="_blank" href="javascript:void(0);" class="font-weight-semibold fs-16 mb-2">
+                                        Day off
+                                    </a>
+                                    <span class="font-weight-normal text-default"> on {{item.schedule_from.strftime('%d/%m/%Y')}}</span>
+                                </li>
+                            {% else %}
+                            <li class="success ps-6">
+                                <span>You have been scheduled to work at</span>
+                                <a target="_blank" href="javascript:void(0);" class="font-weight-semibold fs-16 mb-2">
+                                    {{item.working_office.office_name}}
+                                </a>
+                                <span class="font-weight-normal text-default">from {{item.work_timings.office_start_at}} to {{item.work_timings.office_end_at}} on {{item.schedule_from.strftime('%d/%m/%Y')}}</span>
+                            </li>
+                            {% endif %}
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+        </div>
+    {% endif %}
+
+    <div class="col-xl-4 col-lg-6 col-md-6 50vh" >
+        <div class="card mb-0 h-90 overflowy-scroll">
+            <div class="card-header border-0">
+                <h4 class="card-title">Notices/Memos</h4>
+            </div>
+            <div class="pt-2" style="max-height: 50vh;overflow-y: scroll;">
+                <div class="list-group">
+                    {% if company_memos %}
+                        {% for item in company_memos|sort(attribute='created_at',reverse=true)%}
+                            <div class="list-group-item d-flex pt-3 pb-3 border-0 m-0 p-0">
+                                <div class="col-2">
+                                    <div class="calendar-icon icons">
+                                        <div class="date_time bg-pink-transparent"> <span class="date">{{item.created_at.strftime('%d')}}</span> <span
+                                                class="month">{{item.created_at.strftime('%b')}}</span>
+                                             </div>
+                                    </div>
+                                </div>
+                                <div class="col-2">
+                                    {% if item.memo_priority == "high" %}
+                                            <span class="badge badge-danger blink_text">High</span>
+                                        {% elif item.memo_priority == "medium" %}
+                                            <span class="badge badge-primary">Medium</span>
+                                        {% else %}
+                                            <span class="badge badge-warning">Low</span>
+                                        {% endif %}
+                                </div>
+                                <div class="col-6">
+                                    <div class="h5 fs-14 mb-1">{{item.memo_title}}</div> <small class="text-muted">{{item.memo_description}}</small>
+                                </div>
+                                {% if item.memo_attachment %}
+                                    <div class="col-2">
+                                        <div class="calendar-icon icons">
+                                            <div class="date_time"><a href="{{url_for('static', filename='uploads/memo/documents/'+item.memo_attachment)}}" class="btn btn-icon btn-secondary" download><i class="fe fe-download"></i></a></div>
+                                        </div>
+                                    </div>
+                                {% endif %}
+                            </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="card p-4 pb-0">
+                            <div class="d-flex comming_events calendar-icon icons">
+                                <span>No Notices/Memos Found.</span>
+                            </div>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+    </div>
+    <div class="col-xl-4 col-lg-6 col-md-6 pb-5 vh-60">
+        <div class="card h-95">
+            <div class="card-header border-0">
+                <h4 class="card-title">Up Coming Holidays / Company Events</h4>
+            </div>
+            <div class="card-body mt-1 pb-3">
+                {% if holiday_details %}
+                    {% for item in holiday_details[:5] %}
+                        <div class="mb-5">
+                            <div class="d-flex comming_holidays calendar-icon icons">
+                                <span class="date_time {{['bg-success-transparent','bg-orange-transparent','bg-pink-transparent','bg-warning-transparent','bg-purple-transparent','bg-info-transparent']|random}} bradius me-3"><span class="date fs-20">{{item.occasion_date.strftime('%d')}}</span>
+                                    <span class="month fs-13">{{item.occasion_date.strftime('%b')}}</span>
+                                </span>
+                                <div class="me-3 mt-0 mt-sm-1 d-block">
+                                    <h6 class="mb-1 font-weight-semibold">{{item.occasion_for}}</h6>
+                                    <span class="clearfix"></span>
+                                    <small>{{item.occasion_date.strftime('%A')}}</small>
+                                </div>
+                                <p class="float-end text-muted  mb-0 fs-13 ms-auto bradius my-auto">{{(item.occasion_date-todayDate).days}} days left</p>
+                            </div>
+                        </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="card p-4 pb-0">
+                        <div class="d-flex comming_events calendar-icon icons">
+                            <span>No Holidays Data Found.</span>
+                        </div>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-4 col-lg-6 col-md-6">
+        <div class="card">
+            <div class="card-header border-0">
+                <h4 class="card-title">Recent Attendance History</h4>
+                <div class="page-rightheader ms-md-auto">
+                    <div class="d-flex align-items-end flex-wrap my-auto end-content breadcrumb-end">
+                        <div class="btn-list">
+                            <a href="/attendancehistory" class="btn btn-primary"> <i
+                                    class="feather feather-info"></i> View History</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="table-responsive leave_table fs-13 mt-5 p-3">
+                <table class="table  table-vcenter text-nowrap table-bordered border-bottom  attendance-history ">
+                    <thead class="border-top">
+                        <tr>
+                            <th class="text-start">Attendance Date</th>
+                            <th class="text-start">Status</th>
+                            <th class="text-start">Clock In At</th>
+                            <th class="text-center">Clock Out At</th>
+                            <th class="text-center">Total Hours Worked</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in employee_attendance_data[:5] %}
+                            <tr class="border-bottom fs-15">
+                                <td class="text-center d-flex"><span
+                                        class=" fs-15">{{item.attendance_date.strftime('%d %B %Y')}}</span></td>
+                                <td class=" fs-15">{% if item.attendance_status == 'present' %}
+                                    <span class="badge badge-success-light">Present</span>
+                                    {% elif item.attendance_status == 'absent' %}
+                                    <span class="badge badge-danger-light">Absent</span>
+                                    {% elif item.attendance_status == 'dayoff' %}
+                                    <span class="badge badge-pink-light">Day off {{'('+item.leave_name+')' if item.leave_name else '(Week Off)'}}</span>
+                                    {% elif item.attendance_status == 'holiday' %}
+                                    <span class="badge badge-warning-light">Holiday({{item.occasion_for}})</span>
+                                    {% else %}
+                                    <span class="badge badge-pink-light">Week off</span>
+                                    {% endif %}</td>
+                                <td class=" fs-15">{{item.employee_check_in_at.strftime('%H:%M %p') if item.employee_check_in_at else '-'}}</td>
+                                <td class="text-center fs-15">{{item.employee_check_out_at.strftime('%H:%M %p') if item.employee_check_out_at else '-'}}</td>
+                                <td class="text-center">{{item.total_hrs_worked if item.total_hrs_worked else (item.employee_check_out_at-item.employee_check_in_at if item.employee_check_out_at else '-')}}</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+</div>
+<!-- Modals Start -->
+{% include "company/modals/employee_modals.html" %}
+<!-- Modal End -->
+{% endblock %}
+
+{% block script %}
+{{ super() }}
+<!-- INTERNAL Index js-->
+<!-- INTERNAL jQuery-countdowntimer js -->
+<script src="{{ url_for('static', filename='assets/plugins/jQuery-countdowntimer/jQuery.countdownTimer.js') }}">
+</script>
+<script>
+    //________ Countdonwtimer
+    $("#clocktimer2,#clocktimer3").countdowntimer({
+        currentTime: true,
+        size: "md",
+        borderColor: "transparent",
+        backgroundColor: "transparent",
+        fontColor: "#313e6a",
+        // timeZone : "+1"
+    });
+    // Function to fetch the user's current location asynchronously
+    function getCurrentLocation() {
+            return new Promise((resolve, reject) => {
+                if (navigator.geolocation) {
+                    navigator.geolocation.getCurrentPosition(
+                        position => {
+                            const latitude = position.coords.latitude;
+                            const longitude = position.coords.longitude;
+                            resolve({ latitude, longitude });
+                        },
+                        error => {
+                            reject(error);
+                        }
+                    );
+                } else {
+                    reject(new Error('Geolocation is not supported by this browser.'));
+                }
+            });
+        }
+
+        function getDistanceFromLatLonInMeter(lat1, lon1, lat2, lon2) {
+            const R = 6371; // Radius of the earth in km
+            const dLat = deg2rad(lat2 - lat1); // deg2rad below
+            const dLon = deg2rad(lon2 - lon1);
+            const a =
+                Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+                Math.cos(deg2rad(lat1)) * Math.cos(deg2rad(lat2)) *
+                Math.sin(dLon / 2) * Math.sin(dLon / 2);
+            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+            const d = (R * 1000) * c; // Distance in Meter
+            return d;
+        }
+
+        function deg2rad(deg) {
+            return deg * (Math.PI / 180);
+        }
+    window.onload = function() {
+    // Call getCurrentLocation() to fetch the user's location when the page loads
+        // getCurrentLocation()
+        //     .then(location => {
+        //         const current_lat = location.latitude;
+        //         const current_lng = location.longitude;
+        //         $('.current_longitude').attr('value',current_lng)
+        //         $('.current_latitude').attr('value',current_lat)
+        //         // Use the latitude and longitude data as needed
+        //         // For example, you can call your existing function here or perform other actions
+        //     })
+        //     .catch(error => {
+        //         // Handle errors when fetching the location
+        //         console.error('Error fetching location:', error.message);
+        //             console.log(error);
+        //             $('.clock_in_btn').attr('disabled', true)
+        //             //$('.clock_out_btn').attr('disabled', true)
+        //             $('.clock_in_status').removeClass('d-none')
+        //             $('.clock_in_status span').addClass('tag-red')
+        //             $('.clock_in_status span').html("Please enable GPS and allow to access your Location")
+        //     });
+
+        if("{{session.already_checked_in}}" == "True"){
+            $('.clock_in_btn').attr('disabled', true)
+            $('.clock_out_btn').attr('disabled', false)
+            if("{{session.is_absent}}" == "False"){
+                $('.clock_in_status').removeClass('d-none')
+                $('.clock_in_status span').addClass('bg-primary')
+                $('.clock_in_status span').html("Clocked In At:" + " " +"{{session.checked_in_time.strftime('%d %B %Y , %H:%M:%S %p') if session.checked_in_time else ""}}")
+            }
+        }
+        if("{{session.has_next_day_clockout}}" == "True"){
+            $('.clock_in_btn').attr('disabled', true)
+            $('.clock_out_btn').attr('disabled', false)
+            if("{{session.is_absent}}" == "False"){
+                $('.clock_in_status').removeClass('d-none')
+                $('.clock_in_status span').addClass('bg-primary')
+                $('.clock_in_status span').html("Clocked In At:" + " " +"{{session.checked_in_time.strftime('%d %B %Y , %H:%M:%S %p') if session.checked_in_time else ""}}")
+            }
+        }
+       
+        if("{{session.already_checked_out}}" == "True"){
+            $('.clock_out_btn').attr('disabled', true)
+            $('.startbreakBtn').addClass('d-none')
+            $('.startbreakBtn').attr('disabled', true)
+            if("{{session.is_absent}}" == "False"){
+                $('.clock_out_status').removeClass('d-none')
+                $('.clock_out_status span').addClass('bg-danger')
+                $('.clock_out_status span').html("Clocked out At:" + " " +"{{session.checked_out_time.strftime('%d %B %Y , %H:%M:%S %p') if session.checked_out_time else ""}}")
+            }
+        }
+        if("{{session.on_break}}" == "True"){
+            $('.clock_out_btn').attr('disabled', true)
+        }
+        // var geoOptions = {
+        //     enableHighAccuracy: true,
+        //     timeout: 10000,
+        //     maximumAge: 0
+        //   };
+        // navigator.geolocation.watchPosition(
+        //     function (position) {
+        //         $('.current_longitude').attr('value',position.coords.longitude)
+        //         $('.current_latitude').attr('value',position.coords.latitude)
+        //         current_lat = position.coords.latitude
+        //         current_lng = position.coords.longitude
+        //         console.log("current_lat on Load: ",current_lat);
+        //         console.log("current_lng on Load: ",current_lng);
+
+        //         //$('#location_accuracy').val(position.coords.accuracy)
+        //         checkin_lat = "{{session.office_lat}}"
+        //         checkin_lng = "{{session.office_lng}}"
+        //         radius = "{{session.office_radius}}"
+        //         //if ("{{session.allowed_outside}}"=="False") {
+        //           //  const distance = getDistanceFromLatLonInMeter(checkin_lat, checkin_lng, current_lat, current_lng);
+        //             //if (distance > radius || "{{session.already_checked_in}}" == "True") {
+        //               //  $('.clock_in_btn').attr('disabled', true)
+        //                 //if("{{session.already_checked_in}}" == "True"){
+        //                   //  $('.clock_in_status').removeClass('d-none')
+        //                     //$('.clock_in_status span').addClass('tag-green')
+        //                     //$('.clock_in_status span').html("Clocked In At:" + " " +"{{session.checked_in_time.strftime('%d %B %Y , %H:%M:%S %p') if session.checked_in_time else ""}}")
+        //                 //}
+        //                 //else{
+        //                   //  $('.clock_in_status').removeClass('d-none')
+        //                    // $('.clock_in_status span').addClass('tag-red')
+        //                    // $('.clock_out_btn').attr('disabled', true)
+        //                     //$('.clock_in_status span').html("Outside Clock In Radius, approx " + distance.toFixed(2) + " meters away.")
+        //                // }
+        //             //}
+        //         //}
+        //     },
+        //     function errorCallback(error) {
+        //         console.log(error);
+        //         $('.clock_in_btn').attr('disabled', true)
+        //         //$('.clock_out_btn').attr('disabled', true)
+        //         $('.clock_in_status').removeClass('d-none')
+        //         $('.clock_in_status span').addClass('tag-red')
+        //         $('.clock_in_status span').html("Please enable GPS and allow to access your Location")
+        //     },geoOptions);
+
+        
+
+    };
+
+</script>
+
+<script>
+    // Ajax Add Offices
+    $(document).on("click", '#btnClockIn', function (e) {
+        e.preventDefault();
+        cs = $('#csrf_clockin').val()
+
+        swal({
+            title: "Are you sure?",
+            text: "You want Clock In?",
+            icon: "warning",
+            buttons: true,
+            dangerMode: true,
+        }).then((willDelete) => {
+            if (willDelete) {
+                $("#global-loader").show();
+                $.ajax({
+                        headers: {
+                            'X-CSRF-TOKEN': cs
+                        },
+                        url: '/employee/clockin/',
+                        data: $('#clockin_form').serialize(),
+                        type: 'POST',
+                    })
+                    .done(function (data) {
+                        if(data.status == "success"){
+                            $("#global-loader").hide();
+                            $('.clock_in_btn').attr('disabled',true)
+                            $('.clock_out_btn').attr('disabled',false)
+                            $('#clockinmodal').modal('toggle');
+
+                            $('.startbreakBtn').attr('disabled',false)
+                            $('.startbreakBtn').removeClass('d-none')
+
+                            $('.clock_in_status').removeClass('d-none')
+                            $('.clock_in_status span').addClass('bg-primary')
+                            $('.clock_in_status span').html("Clocked In At:" + " " +data.checked_in_time)
+
+                            swal({
+                                title: "Success",
+                                text: "Hurrrayyyyy! You Successfully Clocked In Today!",
+                                icon: "success",
+                            }).then(function(){
+                                $("#global-loader").show();
+                                location.reload();
+                                });
+                        }
+                    })
+                    .fail(function (err) {
+                        swal({
+                            title: "Error",
+                            text: "Ohh Noo! There seems to be some problem while Cloking In. Please try Again.",
+                            icon: "error",
+                        });
+                    })
+            }
+        });
+    });
+    //EnD Ajax Work timings
+</script>
+
+<script>
+    // Ajax Add Offices
+    $(document).on("click", '#btnClockOut', function (e) {
+        e.preventDefault();
+        var cs = "{{ csrf_token() }}";
+        swal({
+            title: "Are you sure?",
+            text: "You want Clock Out?",
+            icon: "warning",
+            buttons: true,
+            dangerMode: true,
+        }).then((willDelete) => {
+            if (willDelete) {
+                $("#global-loader").show();
+                $.ajax({
+                        headers: {
+                            'X-CSRF-TOKEN': cs
+                        },
+                        url: '/employee/clockout/',
+                        data: $('#clockout_form').serialize(),
+                        type: 'POST',
+                    })
+                    .done(function (data) {
+                        if(data.status == "success"){
+                            $("#global-loader").hide();
+                            $('.clock_out_btn').attr('disabled',true);
+                            $('.startbreakBtn').attr('disabled',true)
+                            $('.breakBtn').attr('disabled',true);
+
+                            $('.clock_out_status').removeClass('d-none')
+                            $('.clock_out_status span').addClass('bg-danger')
+                            $('.clock_out_status span').html("Clocked out At:" + " " +data.checked_out_time)
+
+                            $('#clockoutmodal').modal('toggle');
+                            if(data.has_overtime){
+                                $('#clockotmodal').modal('toggle');
+                                $('.clocked_in').attr('value',data.checked_in_time);
+                                $('.clocked_out').attr('value',data.checked_out_time);
+                                $('.extra_hours').attr('value',data.ot_by_minutes);
+                                $('.employee_attendance_id').attr('value',data.attendance_id);
+                            }
+                            else{
+                                swal({
+                                    title: "Success",
+                                    text: "Hurrrayyyyy! You Successfully Clocked Out Today!",
+                                    icon: "success",
+                                }).then(function(){
+                                    $("#global-loader").show();
+                                    location.reload();
+                                    });
+                            }
+                        }
+                    })
+                    .fail(function (err) {
+                        swal({
+                            title: "Error",
+                            text: "Ohh Noo! There seems to be some problem while Cloking In. Please try Again.",
+                            icon: "error",
+                        });
+                    })
+            }
+        });
+    });
+    //EnD Ajax Work timings
+
+    // Ajax break btn
+    $(document).on("click", '.breakBtn', function (e) {
+        e.preventDefault();
+        var cs = "{{ csrf_token() }}";
+        var break_type = $(this).attr("data-btn-type"); //Start or end
+        var company_id = "{{session.company_id}}";
+        var employee_details_id = "{{session.employee_details_id}}";
+        var break_id = $(this).attr("data-break-id");
+        swal({
+            title: "Are you sure?",
+            text: "You want to Start Break Time?",
+            icon: "warning",
+            buttons: true,
+            dangerMode: true,
+        }).then((willDelete) => {
+            if (willDelete) {
+                $("#global-loader").show();
+                $.ajax({
+                        headers: {
+                            'X-CSRF-TOKEN': cs
+                        },
+                        url: '/employee/break/',
+                        data: {break_type:break_type,company_id:company_id,employee_details_id:employee_details_id,break_id:break_id},
+                        type: 'POST',
+                    })
+                    .done(function (data) {
+                        if(data.status == "success"){
+                            $("#global-loader").hide();
+                            if(break_type=='start'){
+                                $('.startbreakBtn').attr('disabled',true)
+                                $('.startbreakBtn').addClass('d-none')
+
+                                $('.clock_out_btn').attr('disabled',true);
+
+                                $('.endbreakBtn').attr('data-break-id',data.break_id)
+                                $('.endbreakBtn').attr('disabled',false)
+                                $('.endbreakBtn').removeClass('d-none')
+
+                                message = "Hurrrayyyyy! You Successfully Started Break!"
+                            }
+                            else{
+                                $('.endbreakBtn').attr('disabled',true)
+                                $('.endbreakBtn').addClass('d-none')
+
+                                $('.clock_out_btn').attr('disabled',false);
+
+                                $('.startbreakBtn').attr('disabled',false)
+                                $('.startbreakBtn').removeClass('d-none')
+                                message = "Hurrrayyyyy! You Took " + data.break_minutes.toFixed(0) + " Minutes Break!"
+                            }
+                            //$('#clockoutmodal').modal('toggle');
+                            swal({
+                                title: "Success",
+                                text: message,
+                                icon: "success",
+                            });
+                        }
+                        else{
+                            $("#global-loader").hide();
+                            swal({
+                                title: "Error",
+                                text: "Ohh Noo! There seems to be some problem. Please try Again.",
+                                icon: "error",
+                            }).then(function(){
+                                $("#global-loader").show();
+                                location.reload();
+                            });
+                        }
+                    })
+                    .fail(function (err) {
+                        swal({
+                            title: "Error",
+                            text: "Ohh Noo! There seems to be some problem while Cloking In. Please try Again.",
+                            icon: "error",
+                        });
+                    })
+            }
+        });
+    });
+    //EnD break btn
+
+     // Ajax OT Request
+     $(document).on("click", '#btnApplyOt', function (e) {
+        e.preventDefault();
+        var cs = "{{ csrf_token() }}";
+        swal({
+            title: "Are you sure?",
+            text: "You want request compensation for extra hours?",
+            icon: "warning",
+            buttons: true,
+            dangerMode: true,
+        }).then((willDelete) => {
+            if (willDelete) {
+                $("#global-loader").show();
+                $.ajax({
+                        headers: {
+                            'X-CSRF-TOKEN': cs
+                        },
+                        url: '/request/extratime/',
+                        data: $('#clockot_form').serialize(),
+                        type: 'POST',
+                    })
+                    .done(function (data) {
+                        if(data.status == "success"){
+                            $("#global-loader").hide();
+                            $('#clockotmodal').modal('toggle');
+                            swal({
+                                title: "Success",
+                                text: "Hurrrayyyyy! You Successfully Clocked Out & Requested for Extra Hours!",
+                                icon: "success",
+                            }).then(function(){
+                                $("#global-loader").show();
+                                location.reload();
+                                });
+                        }
+                    })
+                    .fail(function (err) {
+                        swal({
+                            title: "Error",
+                            text: "Ohh Noo! There seems to be some problem while Cloking In. Please try Again.",
+                            icon: "error",
+                        });
+                    })
+            }
+        });
+    });
+    //EnD Ajax OT Request
+</script>
+<script>
+        // bind change event handler
+        $('#working_from').on('change', function() {
+            // update disabled property
+            outside_office_val = $('#working_from :selected').attr("data-outside_office")
+            selecy = $('#working_from :selected').val()
+            // Show loader
+            $("#global-loader").show();
+            getCurrentLocation()
+                .then(location => {
+                    const current_lat = location.latitude;
+                    const current_lng = location.longitude;
+                    // console.log("Current Latitude:", current_lat);
+                    // console.log("Current Longitude:", current_lng);
+                    if (selecy) {
+                        if (outside_office_val == "False") {
+                            // Check with office radius
+                            checkin_lat = "{{session.office_lat}}"
+                            checkin_lng = "{{session.office_lng}}"
+                            radius = "{{session.office_radius}}"
+                            const distance = getDistanceFromLatLonInMeter(checkin_lat, checkin_lng, current_lat, current_lng);
+                            var diff_distance = distance - radius
+                            if (distance > radius) {
+                                $('#btnClockIn').attr('disabled', true)
+                                $('.radius_status').removeClass('d-none')
+                                $('.radius_status span').html("You are outside office radius. Please hit the reload button.")
+                            } else {
+                                $('#btnClockIn').attr('disabled', false)
+                                $('.radius_status').addClass('d-none')
+                            }
+                        } else {
+                            $('#btnClockIn').attr('disabled', false)
+                            $('.radius_status').addClass('d-none')
+                        }
+                        // Hide loader after processing
+                        $("#global-loader").hide();
+                    } else {
+                        $('#btnClockIn').attr('disabled', true)
+                    }
+                })
+                .catch(error => {
+                    console.error('Error fetching location:', error.message);
+                    // Hide loader in case of error
+                    $("#global-loader").hide();
+                });
+
+            // trigger change event to set initial value
+        }).change();
+
+        $('#btnRefresh').on('click', function(event) {
+            event.preventDefault(); // Prevents the default action of the button click, such as submitting a form or following a link
+            selecy = $('#working_from :selected').val();
+            if (selecy) {
+                // Call the getCurrentLocation function
+                getCurrentLocation()
+                    .then(location => {
+                        // Success callback function when position is successfully retrieved
+                        // Update latitude and longitude values in the corresponding input fields
+                        $('.current_latitude').val(location.latitude);
+                        $('.current_longitude').val(location.longitude);
+                        console.log(location.latitude);
+                        console.log(location.longitude);
+                        // Trigger the change event on the 'working_from' select element to recheck the location
+                        $('#working_from').trigger('change');
+                    })
+                    .catch(error => {
+                        // Error callback function when geolocation retrieval fails
+                        // Log the error message to the console for debugging purposes
+                        console.log(error.message);
+                    });
+            }
+        });
+
+</script>
+{% endblock %}

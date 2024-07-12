@@ -1,0 +1,6 @@
+employee_id,leave_type,open_balance
+10006,Sick Leave,4
+10006,Maternity Leave,40
+10006,Unpaid Leaves,7
+10006,Compassionate Leave,10
+10006,Vacation,20

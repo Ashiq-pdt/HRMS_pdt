@@ -1,0 +1,5 @@
+function chartbar() {
+	'use strict';
+
+	
+};

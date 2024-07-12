@@ -1,0 +1,283 @@
+<!-- templates/admin/index.html -->
+
+{% extends "layout/base.html" %}
+{% block head %}
+{{ super() }}
+<link href="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.0/main.min.css" rel="stylesheet" />
+
+<style>
+
+</style>
+{% endblock %}
+{% block content %}
+
+<!--Page header-->
+<div class="page-header d-xl-flex d-block">
+    <div class="page-leftheader">
+        <div class="page-title">Create New Leave Adjustment</div>
+    </div>
+    <div class="page-rightheader ms-md-auto">
+        <div class="d-flex align-items-end flex-wrap my-auto end-content breadcrumb-end">
+            <div class="btn-list">
+                <button class="btn btn-light" data-bs-toggle="tooltip" data-bs-placement="top" title="E-mail"> <i
+                        class="feather feather-mail"></i> </button>
+                <button class="btn btn-light" data-bs-placement="top" data-bs-toggle="tooltip" title="Contact"> <i
+                        class="feather feather-phone-call"></i> </button>
+                <button class="btn btn-primary" data-bs-placement="top" data-bs-toggle="tooltip" title="Info"> <i
+                        class="feather feather-info"></i> </button>
+            </div>
+        </div>
+    </div>
+</div>
+<!--End Page header-->
+
+<!-- Row -->
+<div class="row">
+    <div class="col-md-12">
+        <form class="card-body pt-3" method="POST" action="{{url_for('company.create_leave_adjustments')}}">
+            <input type="hidden" name="csrf_token" id="csrf_gen" value="{{ csrf_token() }}" />
+            <input class="form-control" placeholder="Month Range" type="text" name="selected_month" id="selected_month" value="{{start_of_month.strftime('%Y-%m-%d')}}" hidden>
+            <div class="card">
+                <div class="card-body">
+                    <h4 class="card-title">Basic Information</h4>
+                    <div class="form-group ">
+                        <div class="row">
+                            <div class="col-md-12 col-lg-2">
+                                <label class="form-label mb-0 mt-2">Employee Name</label>
+                            </div>
+                            <div class="col-md-12 col-lg-5">
+                                <div class="form-group">
+                                    <select name="employee_name" class="form-control select2-show-search custom-select" id="employee_id"
+                                        data-placeholder="Select Employee" required>
+                                        <option label="Select Employee" selected></option>
+                                        {% for item in company_details.employees %}
+                                            {% if item.employee_leave_policies %}
+                                                <option value="{{item.id}}">{{item.first_name + ' ' + item.last_name}}</option>
+                                            {% endif %}
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <h4 class="card-title"><span class="text-success">Addition</span>/<span class="text-danger">Deduction</span> Summary</h4>
+                    <div class="form-group input-adjustments">
+                        <div class="row">
+                            <div class="col-md-12 col-lg-1">
+                                <label class="form-label mb-0 mt-2">Leave Type</label>
+                            </div>
+                            <div class="col-md-12 col-lg-2">
+                                <div class="form-group">
+                                    <select name="adjustment__leave_type[]"
+                                        class="form-control custom-select leave_policy" data-placeholder="Select Leave Type" required>
+                                        <option label="Select Leave Type" default></option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-12 col-lg-2">
+                                <label class="form-label mb-0 mt-2">Adjustment in Days</label>
+                            </div>
+                            <div class="col-md-12 col-lg-1">
+                                <input name="adjustment_days[]" type="number" step="0.01" class="form-control" placeholder="0"
+                                    value="0.00">
+                            </div>
+                            <div class="col-md-12 col-lg-1">
+                                <label class="form-label mb-0 mt-2">Comment</label>
+                            </div>
+                            <div class="col-md-12 col-lg-3 mt-1">
+                                <textarea class="form-control" rows="2" name="adjustment_comment[]" placeholder="Some text here..."></textarea>
+                            </div>
+                            <div class="col-md-12 col-lg-2">
+                                <a href="#" class="btn btn-danger" id="removeRegular"><i class="fa fa-times"></i></a>
+                            </div>
+                        </div>
+                    </div>
+
+
+                    <div class="add_more_reason">
+                        <div class="row">
+                            <div class="col-md-12 col-lg-9 text-start">
+                                <a class="btn btn-primary btn-success text-white  mt-4 mt-lg-0" id="add_more"><i
+                                        class="fa fa-plus me-1"></i>Add More</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-footer">
+                            <button class="btn btn-primary">Save</button>
+                            <a href="javascript:void(0);" class="btn btn-danger">Cancel</a>
+                </div>
+                
+            </div>
+        </form>
+    </div>
+</div>
+<!-- End Row -->
+
+{% endblock %}
+
+{% block script %}
+{{ super() }}
+<!-- INTERNAL Fullcalendar js-->
+<script src="{{ url_for('static', filename='assets/plugins/bootstrap-datepicker/bootstrap-datepicker.js') }}"></script>
+<!-- Select2 js -->
+<script src="{{ url_for('static', filename='assets/plugins/select2/select2.full.min.js') }}"></script>
+<script src="{{ url_for('static', filename='assets/js/select2.js') }}"></script>
+<script>
+    fpm = $('#filter-datepicker-month').bootstrapdatepicker({
+        format: "MM yyyy",
+        endDate: '+0m',
+        startView: "months",
+        minViewMode: "months",
+        orientation: 'bottom',
+        autoclose: true
+    })
+    // To get the month and year in route
+    fpm.on('changeDate', function (e) {
+        $('.action-btns').attr("data-selected_month", e.dates)
+        $('#selected_month').val(moment(new Date(e.dates)).format('YYYY-MM-DD'))
+    });
+    $(function(){
+        'use strict'
+        // Select2 by showing the search
+        $('.select2-show-search').select2({
+            minimumResultsForSearch: '',
+            placeholder: "Search",
+            orientation: 'bottom',
+            width: '100%'
+        });
+         $('.select2').on('click', () => {
+            let selectField = document.querySelectorAll('.select2-search__field')
+            selectField.forEach((element,index)=>{
+            element?.focus();
+            })
+        });
+        
+    });
+
+    $(document).ready(function () {
+        var id = 1;
+        $("#add_more").click(function () {
+            var showId = ++id;
+            $(".input-adjustments").append('<div class="row">\
+                <div class="col-md-12 col-lg-1">\
+                    <label class="form-label mb-0 mt-2">Leave Type</label>\
+                </div>\
+                <div class="col-md-12 col-lg-2">\
+                    <div class="form-group">\
+                        <select name="adjustment__leave_type[]" class="form-control custom-select leave_policy" data-placeholder="Select Leave Type" required>\
+                            <option label="Select Leave Type" selected></option>\
+                        </select>\
+                    </div>\
+                </div>\
+                <div class="col-md-12 col-lg-2">\
+                    <label class="form-label mb-0 mt-2">Adjustment in Days</label>\
+                </div>\
+                <div class="col-md-12 col-lg-1">\
+                    <input name="adjustment_days[]" type="number" step="0.01" class="form-control" placeholder="0" required>\
+                </div>\
+                <div class="col-md-12 col-lg-1">\
+                    <label class="form-label mb-0 mt-2">Comment</label>\
+                </div>\
+                <div class="col-md-12 col-lg-3 mt-1">\
+                    <textarea class="form-control" rows="2" name="adjustment_comment[]" placeholder="Some text here..."></textarea>\
+                </div>\
+                <div class="col-md-12 col-lg-2">\
+                    <a  href="#" class="btn btn-danger" id="removeRegular"><i class="fa fa-times"></i></a>\
+                </div>\
+            </div>');
+        });
+        $(".input-adjustments").on('click', '#removeRegular', function () {
+            $(this).parent().parent().remove();
+        });
+    });
+
+     // Ajax Time Approvers Policy
+     $(document).on("change", '#employee_id', function (e) {
+        e.preventDefault();
+        cs = "{{csrf_token()}}"
+        var selected_employee = $('#employee_id :selected').val()
+        $("#global-loader").show();
+        if(selected_employee !=''){
+            $.ajax({
+                headers: {
+                    'X-CSRF-TOKEN': cs
+                },
+                url: '/getemployeesleavepolicies',
+                data: {selected_employee:selected_employee},
+                type: 'GET',
+            })
+            .done(function (data) {
+                if (data.status==="success"){
+                    var employee_data = '';
+                    var manager_data = '';
+                    //var over_all_emp = JSON.parse(data.details).length + JSON.parse(data.managers).length
+                        $.each(data.details, function (index, value) {
+                            employee_data += '<option value='+ value.emp_leave_policy_id+'>'+value.leave_policy_name +' (Balance: '+ value.balance + ')</option>';
+                        });
+                        $('.leave_policy').empty()
+                        $('.leave_policy').append('<optgroup label="Leave Policies">'+employee_data+'</optgroup>')
+                        $("#global-loader").hide();
+                }
+                else{
+                    $("#global-loader").hide();
+                    $('.time_approvers').addClass('d-none')
+                    $('.time_approvers').empty()
+                    $('.time_approvers').append('<span class="font-italic text-danger">*No Users found in this Department.</span>')
+                }
+                
+            })
+            .fail(function (err) {
+                console.log(err);
+                $('#message').html(err);
+            })
+        }
+       
+    });
+    //EnD Leave Policy
+
+    $(document).on("click", '#add_more', function (e) {
+        e.preventDefault();
+        cs = "{{csrf_token()}}"
+        var selected_employee = $('#employee_id :selected').val()
+        if(selected_employee !=''){
+            $("#global-loader").show();
+            $.ajax({
+                headers: {
+                    'X-CSRF-TOKEN': cs
+                },
+                url: '/getemployeesleavepolicies',
+                data: {selected_employee:selected_employee},
+                type: 'GET',
+            })
+            .done(function (data) {
+                if (data.status==="success"){
+                    var employee_data = '';
+                    var manager_data = '';
+                    //var over_all_emp = JSON.parse(data.details).length + JSON.parse(data.managers).length
+                        $.each(data.details, function (index, value) {
+                            employee_data += '<option value='+ value.emp_leave_policy_id+'>'+value.leave_policy_name +' (Balance: '+ value.balance + ')</option>';
+                        });
+                        $('.leave_policy').empty()
+                        $('.leave_policy').append('<optgroup label="Leave Policies">'+employee_data+'</optgroup>')
+                        $("#global-loader").hide();
+                }
+                else{
+                    $("#global-loader").hide();
+                    $('.time_approvers').addClass('d-none')
+                    $('.time_approvers').empty()
+                    $('.time_approvers').append('<span class="font-italic text-danger">*No Users found in this Department.</span>')
+                }
+                
+            })
+            .fail(function (err) {
+                console.log(err);
+                $('#message').html(err);
+            })
+        }
+        
+    });
+</script>
+{% endblock %}

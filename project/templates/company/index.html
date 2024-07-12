@@ -1,0 +1,273 @@
+<!-- templates/admin/index.html -->
+
+{% extends "layout/base.html" %}
+{% block head %}
+{{ super() }}
+<style>
+    .blink_text {
+        animation-name: blinker;
+        animation-duration: 1s;
+        animation-timing-function: linear;
+        animation-iteration-count: infinite;
+       }
+       
+       @keyframes blinker {  
+        0% { opacity: 1.0; }
+        50% { opacity: 0.0; }
+        100% { opacity: 1.0; }
+       }
+</style>
+
+{% endblock %}
+{% block content %}
+<!--Page header-->
+<div class="page-header d-xl-flex d-block">
+    <div class="page-leftheader">
+        <div class="page-title">HR<span class="font-weight-normal text-muted ms-2">Dashboard</span></div>
+    </div>
+    <div class="page-rightheader ms-md-auto">
+        <div class="d-flex align-items-end flex-wrap my-auto end-content breadcrumb-end">
+            
+            <div class="d-lg-flex d-block">
+                <div class="btn-list">
+                    
+                    <button type="button" class="btn btn-light" data-bs-toggle="tooltip" data-bs-placement="top"
+                        title="E-mail"> <i class="feather feather-mail"></i> </button>
+                    <button type="button" class="btn btn-light" data-bs-toggle="tooltip" data-bs-placement="top"
+                        title="Contact"> <i class="feather feather-phone-call"></i> </button>
+                    <button type="button" class="btn btn-primary" data-bs-toggle="tooltip" data-bs-placement="top"
+                        title="Info"> <i class="feather feather-info"></i> </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<!--End Page header-->
+<!--Row-->
+<div class="row">
+    <div class="col-xl-9 col-md-12 col-lg-12">
+        <div class="row">
+            <div class="col-xl-6 col-lg-6 col-md-12">
+                <div class="card">
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-8">
+                                <div class="mt-0 text-start"> <span class="fs-14 font-weight-semibold">Total
+                                        Employees</span>
+                                    <h3 class="mb-0 mt-1 mb-2">{{company_details.employees|length}}</h3>
+                                </div>
+                            </div>
+                            <div class="col-4">
+                                <div class="icon1 bg-success my-auto  float-end"> <i class="feather feather-users"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-xl-6 col-lg-6 col-md-12">
+                <div class="card">
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-8">
+                                <div class="mt-0 text-start"> <span class="fs-14 font-weight-semibold">Departments</span>
+                                    <h3 class="mb-0 mt-1 mb-2">{{company_details.departments|length}}</h3>
+                                </div>
+                            </div>
+                            <div class="col-4">
+                                <div class="icon1 bg-primary my-auto  float-end"> <i class="feather feather-box"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- <div class="col-xl-4 col-lg-4 col-md-12">
+                <div class="card">
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-8">
+                                <div class="mt-0 text-start"> <span class="fs-14 font-weight-semibold">Employees Present</span>
+                                    <h3 class="mb-0 mt-1  mb-2">12</h3>
+                                </div>
+                            </div>
+                            <div class="col-4">
+                                <div class="icon1 bg-secondary brround my-auto  float-end"> <i
+                                        class="feather feather-users"></i> </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div> -->
+            <div class="col-xl-6 col-md-12 col-lg-12">
+                <div class="card">
+                    <div class="card-header border-0 responsive-header">
+                        <h4 class="card-title">Employees per Department</h4>
+                        <div class="card-options">
+                            <div class="btn-list">
+                                <a href="javascript:void(0);"
+                                    class="btn  btn-outline-light text-dark float-start d-flex my-sm-0 my-1"><span
+                                        class="dot-label bg-primary me-2 my-auto"></span>Employees</a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <canvas id="chartLine"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-xl-6 col-md-12 col-lg-12">
+                <div class="">
+                    <div class="card chart-donut1">
+                        <div class="card-header  border-0">
+                            <h4 class="card-title">Employees by Gender </h4>
+                        </div>
+                        <div class="card-body">
+                            <div id="employees" class="mx-auto apex-dount"></div>
+                            <div class="sales-chart pt-5 pb-3 d-flex mx-auto text-center justify-content-center ">
+                                <div class="d-flex me-5"><span class="dot-label bg-primary me-2 my-auto"></span>Male</div>
+                                <div class="d-flex"><span class="dot-label bg-secondary  me-2 my-auto"></span>Female</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-3 col-lg-12 col-md-12" >
+        <div class="card mb-0 h-60 overflowy-scroll">
+            <div class="card-header border-0">
+                <h4 class="card-title">Notices/Memos</h4>
+            </div>
+            <div class="pt-2" style="max-height: 50vh;overflow-y: scroll;">
+                <div class="list-group">
+                    {% if company_details.company_memos %}
+                        {% for item in company_details.company_memos|sort(attribute='created_at',reverse=true)%}
+                            <div class="list-group-item d-flex pt-3 pb-3 border-0 m-0 p-0">
+                                <div class="col-2">
+                                    <div class="calendar-icon icons">
+                                        <div class="date_time bg-pink-transparent"> <span class="date">{{item.created_at.strftime('%d')}}</span> <span
+                                                class="month">{{item.created_at.strftime('%b')}}</span>
+                                             </div>
+                                    </div>
+                                </div>
+                                <div class="col-2">
+                                    {% if item.memo_priority == "high" %}
+                                            <span class="badge badge-danger blink_text">High</span>
+                                        {% elif item.memo_priority == "medium" %}
+                                            <span class="badge badge-primary">Medium</span>
+                                        {% else %}
+                                            <span class="badge badge-warning">Low</span>
+                                        {% endif %} 
+                                </div>
+                                <div class="col-6">
+                                    <div class="h5 fs-14 mb-1">{{item.memo_title}}</div> <small class="text-muted">{{item.memo_description}}</small>
+                                </div>
+                                {% if item.memo_attachment %}
+                                    <div class="col-2">
+                                        <div class="calendar-icon icons">
+                                            <div class="date_time"><a href="{{url_for('static', filename='uploads/memo/documents/'+item.memo_attachment)}}" class="btn btn-icon btn-secondary" download><i class="fe fe-download"></i></a></div>
+                                        </div>
+                                    </div>
+                                {% endif %}
+                            </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="card p-4 pb-0">
+                            <div class="d-flex comming_events calendar-icon icons">
+                                <span>No Notices/Memos Found.</span>
+                            </div>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <div class="mb-4">
+            <div class="card-header border-bottom-0 pt-2 ps-0">
+                <h4 class="card-title">Public Holidays</h4>
+            </div>
+            <ul class="vertical-scroll">
+                {% if company_details.holidays %}
+                    {% for item in company_details.holidays %}
+                        <li class="item">
+                            <div class="card p-4 pb-0">
+                                <div class="d-flex comming_events calendar-icon icons">
+                                    <span class="date_time {{['bg-success-transparent','bg-orange-transparent','bg-pink-transparent','bg-info-transparent']|random}} bradius me-3"><span
+                                            class="date fs-18">{{item.occasion_date.strftime('%d')}}</span>
+                                        <span class="month fs-10">{{item.occasion_date.strftime('%b')}}</span>
+                                    </span>
+                                    <div class="me-3 mt-4  d-block">
+                                        <h6 class="mb-1">{{item.occasion_for}}</h6>
+                                    </div>
+                                </div>
+                            </div>
+                        </li>
+                    {% endfor %}
+                {% else %}
+                <li class="item">
+                    <div class="card p-4 pb-0">
+                        <div class="d-flex comming_events calendar-icon icons">
+                            <span>No Holidays Data Found.</span>
+                        </div>
+                    </div>
+                </li>
+                {% endif %}
+                
+            </ul>
+        </div>
+    </div>
+    
+</div>
+
+<div class="row">
+    <div class="col-xl-12 col-lg-12 col-md-12">
+        <div class="card">
+            <div class="card-header border-0 responsive-header">
+                <h4 class="card-title">Documents Expiry Statistics</h4>
+                <div class="card-options">
+                    <div class="btn-list">
+                        <!-- <a  href="javascript:void(0);" class="btn  btn-outline-light text-dark float-start d-flex my-auto"><span class="dot-label bg-primary me-2 my-auto"></span>Assigned Ticket</a> -->
+                        <a  href="javascript:void(0);" class="btn  btn-outline-light text-dark float-start d-flex my-auto"><span class="dot-label bg-secondary me-2 my-auto"></span>Expiring Documents</a>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="chart-wrapper">
+                    <canvas id="ticketoverview" class="h-300"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block script %}
+{{ super() }}
+<!-- INTERNAL Chartjs rounded-barchart -->
+<script src="{{ url_for('static', filename='assets/plugins/chart.min/chart.min.js') }}"></script>
+<!-- INTERNAL Apexchart js-->
+<script src="{{ url_for('static', filename='assets/plugins/apexchart/apexcharts.js') }}"></script>
+<!-- INTERNAL Index js-->
+<script src="{{ url_for('static', filename='assets/js/document_dashboard.js') }}"></script>
+ <!-- INTERNAL Index js-->
+<script>
+    {% include "js/dashboard.js" %}
+</script>
+<!-- <script src="{{ url_for('static', filename='assets/js/support/support-agentdash.js') }}"></script> -->
+<script src="{{ url_for('static', filename='assets/js/themeColors.js') }}"></script>
+<script src="{{ url_for('static', filename='assets/plugins/vertical-scroll/jquery.bootstrap.newsbox.js') }}"></script>
+<script src="{{ url_for('static', filename='assets/plugins/vertical-scroll/vertical-scroll.js') }}"></script> 
+
+
+<script>
+    if(document.querySelector('#employees') !== null){
+        index1();
+    }
+    if(document.querySelector('#chartLine') !== null){
+        index();
+    }
+</script>
+<!-- <script src="{{ url_for('static', filename='assets/js/custom.js') }}"></script> -->
+{% endblock %}

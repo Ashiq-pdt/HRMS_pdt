@@ -1,0 +1,965 @@
+<!-- templates/admin/index.html -->
+
+{% extends "layout/base.html" %}
+
+{% block content %}
+<!--Page header-->
+<div class="page-header d-xl-flex d-block">
+    <div class="page-leftheader">
+        <div class="page-title">Mass Upload</div>
+    </div>
+    <div class="page-rightheader ms-md-auto">
+        <div class="d-flex align-items-end flex-wrap my-auto end-content breadcrumb-end">
+            <div class="btn-list">
+                <button class="btn btn-light" data-bs-toggle="tooltip" data-bs-placement="top" title="E-mail"> <i
+                        class="feather feather-mail"></i> </button>
+                <button class="btn btn-light" data-bs-placement="top" data-bs-toggle="tooltip" title="Contact"> <i
+                        class="feather feather-phone-call"></i> </button>
+                <button class="btn btn-primary" data-bs-placement="top" data-bs-toggle="tooltip" title="Info"> <i
+                        class="feather feather-info"></i> </button>
+            </div>
+        </div>
+    </div>
+</div>
+<!--End Page header-->
+
+<!-- Row -->
+<div class="row">
+    <div class="col-md-12 col-xl-12">
+        <!--Row-->
+        <div class="row">
+            <div class="col-md-12">
+                <div class="card">
+                    <div class="card-header border-bottom-0">
+                        <h3 class="card-title ">Mass Upload Data</h3>
+                    </div>
+                    <div class="card-body">
+                        <!-- Accordion begin -->
+                        <ul class="demo-accordion accordionjs m-0" data-active-index="false">
+
+                            <!-- Section 1  -->
+                            <!-- <li class="">
+                                <div class="card-header  border-0">
+                                    <h3>Generate Payroll With Monthly Attendance</h3>
+                                </div>
+                                <form id="upload-file" method="post" enctype="multipart/form-data">
+                                    <input type="hidden" name="csrf_token" id="csrf_token" value="{{ csrf_token() }}" />
+                                    <div class="card">
+                                        <div class="card-header border-bottom-0">
+                                            <h3 class="card-title">File Upload</h3>
+                                        </div>
+
+                                        <div class="card-body">
+
+                                            <div class="row">
+                                                <div class="col-md-2 col-lg-2 py-4">
+                                                    <div class="form-group">
+                                                        <label class="form-label">Select Month:</label>
+                                                        <div class="input-group">
+                                                            <div class="input-group-prepend">
+                                                                <div class="input-group-text">
+                                                                    <span class="feather feather-clock"></span>
+                                                                </div>
+                                                            </div>
+                                                            <input class="form-control" id="datepicker-month"
+                                                                placeholder="Select Month" type="text">
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-4 col-lg-4">
+                                                    <div class="col-lg-12 col-sm-12">
+                                                        <input type="file" class="dropify" id="file_upload"
+                                                            name="file_upload" data-height="90" data-width="10"
+                                                            required />
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="card-footer">
+                                            <button href="javascript:void(0);" class="btn btn-primary "
+                                                id="btnProcessPayroll">Upload</button>
+                                            <a href="{{url_for('static', filename='/sample/sample_payroll.csv')}}"
+                                                class="btn btn-info" download>Download Sample File</a>
+                                        </div>
+                                    </div>
+                                </form>
+                            </li> -->
+                            <!-- Section 1 Employee Details -->
+                            <li>
+                                <div class="card-header  border-0">
+                                    <h3>Employee Details</h3>
+                                </div>
+                                <form id="upload-file-employee" method="post" enctype="multipart/form-data">
+                                    <input type="hidden" name="csrf_token" id="csrf_token" value="{{ csrf_token() }}" />
+                                    <div class="card">
+                                        <div class="card-header border-bottom-0">
+                                            <h3 class="card-title">File Upload</h3>
+                                        </div>
+
+                                        <div class="card-body">
+
+                                            <div class="row">
+                                                <div class="col-md-4 col-lg-4">
+                                                    <div class="col-lg-12 col-sm-12">
+                                                        <input type="file" class="dropify" id="employee_file_upload"
+                                                            name="file_upload" data-height="90" data-width="10"
+                                                            required />
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-3 col-lg-3">
+                                                    <div class="form-group">
+                                                        <label class="form-label">Documents Folder (Absolute
+                                                            Path):</label>
+                                                        <div class="input-group">
+                                                            <div class="input-group-prepend">
+                                                                <div class="input-group-text">
+                                                                    <span class="feather feather-folder"></span>
+                                                                </div>
+                                                            </div>
+                                                            <input class="form-control" id="file_path" name="file_path"
+                                                                placeholder="C:/Users/UserName/Desktop/upload_images"
+                                                                type="text">
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="card-footer">
+                                            <button href="javascript:void(0);" class="btn btn-primary "
+                                                id="btnProcessEmployee">Upload</button>
+                                            <a href="{{url_for('static', filename='/sample/employee_template.csv')}}"
+                                                class="btn btn-info" download>Download Sample File</a>
+                                        </div>
+                                    </div>
+                                </form>
+                            </li>
+
+                            <!-- Section 2 Monthly Payroll -->
+                            <li>
+                                <div class="card-header  border-0">
+                                    <h3>Monthly Payroll</h3>
+                                </div>
+                                <form id="upload-file-payroll" method="post" enctype="multipart/form-data">
+                                    <input type="hidden" name="csrf_token" id="csrf_token_mp"
+                                        value="{{ csrf_token() }}" />
+                                    <div class="card">
+                                        <div class="card-header border-bottom-0">
+                                            <h3 class="card-title">Generate Monthly Payroll</h3>
+                                        </div>
+
+                                        <div class="card-body">
+
+                                            <div class="row">
+                                                <div class="col-md-2 col-lg-2 py-4">
+                                                    <div class="form-group">
+                                                        <label class="form-label">Select Month:</label>
+                                                        <div class="input-group">
+                                                            <div class="input-group-prepend">
+                                                                <div class="input-group-text">
+                                                                    <span class="feather feather-clock"></span>
+                                                                </div>
+                                                            </div>
+                                                            <input class="form-control generate_payroll"
+                                                                id="datepicker-month" placeholder="Select Month"
+                                                                type="text">
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-2 col-lg-3 py-4">
+                                                    <div class="form-group">
+                                                        <label class="form-label">Select Sub Company:</label>
+                                                        <div class="input-group">
+                                                            <select class="w-100 form-control form-select" name="sub_company" id="sub_company">
+                                                                <option value="" selected disabled>Select Sub Company</option>
+                                                                {% if company_details.sub_companies|length > 0 %}
+                                                                {% for item in company_details.sub_companies %}
+                                                                <option value="{{ item.id }}">{{ item.company_name }}</option>
+                                                                {% endfor %}
+                                                                <option value='' >Full Company</option>
+                                                                {% endif %}
+                                                            </select>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="card-footer">
+                                            <button class="btn btn-primary " id="btnGeneratePayroll">Generate
+                                                Payroll</button>
+                                            <button class="btn btn-primary " id="btnGenerateAttendance">Generate
+                                                Attendance & Adjustments</button>
+                                        </div>
+                                    </div>
+                                </form>
+                            </li>
+
+                            <!-- Section 3 Missing Attendance -->
+                            <li>
+                                <div class="card-header  border-0">
+                                    <h3>Missing Attendance</h3>
+                                </div>
+                                <form id="upload-file-attendance" method="post" enctype="multipart/form-data">
+                                    <input type="hidden" name="csrf_token" id="csrf_token" value="{{ csrf_token() }}" />
+                                    <div class="card">
+                                        <div class="card-header border-bottom-0">
+                                            <h3 class="card-title">Upload Missing Attendance</h3>
+                                        </div>
+
+                                        <div class="card-body">
+
+                                            <div class="row">
+                                                <div class="col-md-2 col-lg-2 py-4">
+                                                    <div class="form-group">
+                                                        <label class="form-label">Select Month:</label>
+                                                        <div class="input-group">
+                                                            <div class="input-group-prepend">
+                                                                <div class="input-group-text">
+                                                                    <span class="feather feather-clock"></span>
+                                                                </div>
+                                                            </div>
+                                                            <input class="form-control" id="datepicker-month"
+                                                                placeholder="Select Month" type="text">
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-4 col-lg-4">
+                                                    <div class="col-lg-12 col-sm-12">
+                                                        <input type="file" class="dropify" id="attendance_file_upload"
+                                                            name="file_upload" data-height="90" data-width="10"
+                                                            required />
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="card-footer">
+                                            <button href="javascript:void(0);" class="btn btn-primary "
+                                                id="btnMissingAttendance">Upload</button>
+                                            <a href="{{url_for('static', filename='/sample/sample_payroll.csv')}}"
+                                                class="btn btn-info" download>Download Sample File</a>
+                                        </div>
+                                    </div>
+                                </form>
+                            </li>
+
+                            <!-- Section 4 Opening Account -->
+                            <li>
+                                <div class="card-header  border-0">
+                                    <h3>Leave Opening Account</h3>
+                                </div>
+                                <form id="upload-file-leave-balance" method="post" enctype="multipart/form-data">
+                                    <input type="hidden" name="csrf_token" id="csrf_token" value="{{ csrf_token() }}" />
+                                    <div class="card">
+                                        <div class="card-header border-bottom-0">
+                                            <h3 class="card-title">Upload Leave Opening Account</h3>
+                                        </div>
+                                        <div class="card-body">
+                                            <div class="row">
+
+                                                <div class="col-md-4 col-lg-4">
+                                                    <div class="col-lg-12 col-sm-12">
+                                                        <input type="file" class="dropify" id="leave_opening_balance"
+                                                            name="file_upload" data-height="90" data-width="10"
+                                                            required />
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="card-footer">
+                                            <button href="javascript:void(0);" class="btn btn-primary "
+                                                id="btnLeaveOpeningBalance">Upload</button>
+                                            <a href="{{url_for('static', filename='/sample/sample_open_leaves.csv')}}"
+                                                class="btn btn-info" download>Download Sample File</a>
+                                        </div>
+                                    </div>
+                                </form>
+                            </li>
+
+                            <!-- Section 5 Bank Details -->
+                            <li>
+                                <div class="card-header  border-0">
+                                    <h3>Bank Details for WPS</h3>
+                                </div>
+                                <form id="upload-file-bank-details" method="post" enctype="multipart/form-data">
+                                    <input type="hidden" name="csrf_token" id="csrf_token" value="{{ csrf_token() }}" />
+                                    <div class="card">
+                                        <div class="card-header border-bottom-0">
+                                            <h3 class="card-title">Upload Bank Details for WPS</h3>
+                                        </div>
+                                        <div class="card-body">
+                                            <div class="row">
+
+                                                <div class="col-md-4 col-lg-4">
+                                                    <div class="col-lg-12 col-sm-12">
+                                                        <input type="file" class="dropify" id="bank_details"
+                                                            name="file_upload" data-height="90" data-width="10"
+                                                            required />
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="card-footer">
+                                            <button href="javascript:void(0);" class="btn btn-primary "
+                                                id="btnBankDetails">Upload</button>
+                                        </div>
+                                    </div>
+                                </form>
+                            </li>
+
+                            <!-- Section 6 Individual Payroll  -->
+                            <li>
+                                <div class="card-header  border-0">
+                                    <h3>Individual Payroll</h3>
+                                </div>
+                                <form id="individual-payroll" method="post">
+                                    <input type="hidden" name="csrf_token" id="csrf_token" value="{{ csrf_token() }}" />
+                                    <div class="card">
+                                        <div class="card-header border-bottom-0">
+                                            <h3 class="card-title">Generate Individual Payroll</h3>
+                                        </div>
+
+                                        <div class="card-body">
+
+                                            <div class="row">
+                                                <div class="col-md-4 col-lg-3 py-4">
+                                                    <div class="form-group">
+                                                        <label class="form-label">Select Employee:</label>
+                                                        <select class="form-control select2-show-search custom-select"
+                                                            name="employee_id" data-placeholder="Select Employee">
+                                                            <option label="Select Employee"></option>
+                                                            {% for item in
+                                                            departments.employees|selectattr('employee_company_details.type',
+                                                            'equalto', '0') %}
+                                                            <option value="{{item._id}}" {% if item._id==selected_emp
+                                                                %}selected{% endif %}>
+                                                                {{item.first_name + ' ' + item.last_name}}</option>
+                                                            {% endfor %}
+                                                        </select>
+                                                    </div>
+                                                </div>
+
+                                                <div class="col-md-4 col-lg-3  py-4">
+                                                    <div class="form-group">
+                                                        <label class="form-label">Select Payroll Type:</label>
+                                                        <select name="payroll_type" id="payroll_type"
+                                                            class="form-control" data-placeholder="Select Payroll Type">
+                                                            <option>Select Payroll Type</option>
+                                                            <option value="date_wise">Prorated Wise</option>
+                                                            <option value="month_wise">Month WIse</option>
+                                                        </select>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-4 col-lg-3 py-4 pay_month_wise">
+                                                    <div class="form-group">
+                                                        <label class="form-label">Select Month:</label>
+                                                        <div class="input-group">
+                                                            <div class="input-group-prepend">
+                                                                <div class="input-group-text">
+                                                                    <span class="feather feather-clock"></span>
+                                                                </div>
+                                                            </div>
+                                                            <input class="form-control" id="datepicker-month-wise"
+                                                                placeholder="Select Month" type="text"
+                                                                name="selected_month_wise">
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                <div class="col-md-4 col-lg-3 py-4 pay_date_wise">
+                                                    <div class="form-group">
+                                                        <label class="form-label">Select Till Date:</label>
+                                                        <div class="input-group">
+                                                            <div class="input-group-prepend">
+                                                                <div class="input-group-text">
+                                                                    <span class="feather feather-calendar"></span>
+                                                                </div>
+                                                            </div><input class="form-control fc-datepicker"
+                                                                placeholder="MM/DD/YYYY" type="text"
+                                                                name="selected_date_wise">
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="card-footer">
+                                            <button class="btn btn-primary "
+                                                id="btnGenerateIndividualPayroll">Generate</button>
+                                        </div>
+                                    </div>
+                                </form>
+                            </li>
+
+                            <!-- Section 7 Salary Adjustments  -->
+                            <li>
+                                <div class="card-header  border-0">
+                                    <h3>Salary Adjustments</h3>
+                                </div>
+                                <form id="upload-file-attendance" method="post" enctype="multipart/form-data">
+                                    <input type="hidden" name="csrf_token" id="csrf_token" value="{{ csrf_token() }}" />
+                                    <div class="card">
+                                        <div class="card-header border-bottom-0">
+                                            <h3 class="card-title">Upload Salary Adjustments</h3>
+                                        </div>
+
+                                        <div class="card-body">
+                                            <div class="row">
+                                                <div class="col-md-2 col-lg-2 py-4">
+                                                    <div class="form-group">
+                                                        <label class="form-label">Select Month:</label>
+                                                        <div class="input-group">
+                                                            <div class="input-group-prepend">
+                                                                <div class="input-group-text">
+                                                                    <span class="feather feather-clock"></span>
+                                                                </div>
+                                                            </div>
+                                                            <input class="form-control" id="datepicker-month"
+                                                                placeholder="Select Month" type="text">
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-4 col-lg-4">
+                                                    <div class="col-lg-12 col-sm-12">
+                                                        <input type="file" class="dropify"
+                                                            id="sal_adjustment_file_upload" name="file_upload"
+                                                            data-height="90" data-width="10" required />
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="card-footer">
+                                            <button href="javascript:void(0);" class="btn btn-primary "
+                                                id="btnMissingAttendance">Upload</button>
+                                            <a href="{{url_for('static', filename='/sample/employees_salary_adjustment.csv')}}"
+                                                class="btn btn-info" download>Download Sample File</a>
+                                        </div>
+                                    </div>
+                                </form>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!--End Row-->
+
+    </div>
+</div>
+</div>
+<!-- End Row -->
+<!-- Modals Start -->
+<!-- Modal End -->
+{% endblock %}
+
+{% block script %}
+{{ super() }}
+<!-- INTERNAL Index js-->
+<script src="{{ url_for('static', filename='assets/plugins/accordion/accordion.min.js') }}"></script>
+<script src="{{ url_for('static', filename='assets/plugins/sweet-alert/jquery.sweet-modal.min.js') }}"></script>
+<script src="{{ url_for('static', filename='assets/plugins/sweet-alert/sweetalert.min.js') }}"></script>
+
+
+<!-- INTERNAL File-Uploads Js-->
+<script src="{{ url_for('static', filename='assets/plugins/fancyuploder/jquery.ui.widget.js') }}"></script>
+<script src="{{ url_for('static', filename='assets/plugins/fancyuploder/jquery.fileupload.js') }}"></script>
+<script src="{{ url_for('static', filename='assets/plugins/fancyuploder/jquery.iframe-transport.js') }}"></script>
+<script src="{{ url_for('static', filename='assets/plugins/fancyuploder/jquery.fancy-fileupload.js') }}"></script>
+<script src="{{ url_for('static', filename='assets/plugins/fancyuploder/fancy-uploader.js') }}"></script>
+<script src="{{ url_for('static', filename='assets/plugins/fileupload/js/dropify.js') }}"></script>
+<script src="{{ url_for('static', filename='assets/js/filupload.js') }}"></script>
+<!-- Datepicker js -->
+<script src="{{ url_for('static', filename='assets/plugins/date-picker/jquery-ui.js') }}"></script>
+<!-- INTERNAL Bootstrap-Datepicker js-->
+<script src="{{ url_for('static', filename='assets/plugins/bootstrap-datepicker/bootstrap-datepicker.js') }}"></script>
+<script src="{{ url_for('static', filename='assets/plugins/select2/select2.full.min.js') }}"></script>
+
+
+<script>
+    $(document).ready(function () {
+        $('.pay_month_wise').hide();
+        $('.pay_date_wise').hide();
+        $('#payroll_type').change(
+            function () {
+                if (this.value == "month_wise") {
+                    $('.pay_month_wise').show();
+                    $('.pay_date_wise').hide();
+                }
+                else {
+                    $('.pay_date_wise').show();
+                    $('.pay_month_wise').hide();
+                }
+            }
+        )
+    });
+
+    $(document).on("click", '#btnProcessPayroll', function (e) {
+        e.preventDefault();
+        cs = "{{csrf_token()}}";
+        var form_data = new FormData();
+        var selected_date = $(this).attr("data-selected_date")
+        if (document.getElementById('file_upload').files[0] && selected_date) {
+            form_data.append("files", document.getElementById('file_upload').files[0]);
+            form_data.append("selected_month", moment(new Date(selected_date)).format('YYYY-MM-DD'));
+            swal({
+                title: "Are you sure?",
+                text: "You want to create payroll?",
+                icon: "info",
+                buttons: true,
+                dangerMode: true,
+            }).then((willDelete) => {
+                if (willDelete) {
+                    $("#global-loader").show();
+                    $.ajax({
+                        headers: {
+                            'X-CSRF-TOKEN': cs
+                        },
+                        url: '/compute/payroll',
+                        cache: false,
+                        contentType: false,
+                        processData: false,
+                        data: form_data,
+                        type: 'post',
+                    })
+                        .done(function (data) {
+                            $("#global-loader").fadeOut("slow");
+                            if (data == "True") {
+                                $('#upload-file')[0].reset();
+                                $(".dropify-clear").trigger("click");
+                                swal({
+                                    title: "Success",
+                                    text: "Successfully Added Payroll to Queue. Check Queue Status!",
+                                    icon: "success",
+                                });
+                            } else {
+                                swal({
+                                    title: "Error",
+                                    text: "Cannot Process Empty File",
+                                    icon: "error",
+                                });
+                            }
+                        })
+                        .fail(function (err) {
+                            console.log(err);
+                            $('#message').html(err);
+                        })
+                }
+            });
+        }
+    });
+
+    $(document).on("click", '#btnProcessEmployee', function (e) {
+        e.preventDefault();
+        cs = "{{csrf_token()}}"
+        file_path = $('#file_path').val()
+        var form_data = new FormData();
+        if (document.getElementById('employee_file_upload').files[0]) {
+            form_data.append("files", document.getElementById('employee_file_upload').files[0]);
+            form_data.append("file_path", file_path);
+            swal({
+                title: "Are you sure?",
+                text: "You want to create these employees?",
+                icon: "info",
+                buttons: true,
+                dangerMode: true,
+            }).then((willDelete) => {
+                if (willDelete) {
+                    $("#global-loader").show();
+                    $.ajax({
+                        headers: {
+                            'X-CSRF-TOKEN': cs
+                        },
+                        url: '/bulk/addemployees',
+                        cache: false,
+                        contentType: false,
+                        processData: false,
+                        data: form_data,
+                        type: 'post',
+                    })
+                        .done(function (data) {
+                            $("#global-loader").fadeOut("slow");
+                            if (data == "True") {
+                                $('#upload-file-employee')[0].reset();
+                                $(".dropify-clear").trigger("click");
+                                swal({
+                                    title: "Success",
+                                    text: "Successfully Added Employee Data to Queue. Check Queue Status!",
+                                    icon: "success",
+                                });
+                            } else {
+                                swal({
+                                    title: "Error",
+                                    text: "Cannot Process Empty File",
+                                    icon: "error",
+                                });
+                            }
+                        })
+                        .fail(function (err) {
+                            console.log(err);
+                            $('#message').html(err);
+                        })
+                }
+            });
+        }
+    });
+
+    $(document).on("click", '#btnGeneratePayroll', function (e) {
+        e.preventDefault();
+        cs = "{{csrf_token()}}";
+        var form_data = new FormData();
+        var selected_date = $(this).attr("data-selected_date")
+        var sub_company = document.querySelector("#sub_company").value
+        if (selected_date) {
+            form_data.append("selected_month", moment(new Date(selected_date)).format('YYYY-MM-DD'));
+            form_data.append("sub_company", sub_company);
+            swal({
+                title: "Are you sure?",
+                text: "You want to generate payroll?",
+                icon: "info",
+                buttons: true,
+                dangerMode: true,
+            }).then((willDelete) => {
+                if (willDelete) {
+                    $("#global-loader").show();
+                    $.ajax({
+                        headers: {
+                            'X-CSRF-TOKEN': cs
+                        },
+                        url: '/generate/payroll',
+                        cache: false,
+                        contentType: false,
+                        processData: false,
+                        data: form_data,
+                        type: 'POST',
+                    })
+                        .done(function (data) {
+                            console.log(data)
+                            $("#global-loader").fadeOut("slow");
+                            if (data.sucess == "True") {
+                                //$('#upload-file')[0].reset();
+                                // $(".dropify-clear").trigger("click");
+                                swal({
+                                    title: "Success",
+                                    text: "Successfully Generated Payroll!",
+                                    icon: "success",
+                                });
+                            } else {
+                                swal({
+                                    title: "Error",
+                                    text: data.message,
+                                    icon: "error",
+                                });
+                            }
+                        })
+                        .fail(function (err) {
+                            console.log(err);
+                            $('#message').html(err);
+                        })
+                }
+            });
+        }
+    });
+
+    $(document).on("click", '#btnMissingAttendance', function (e) {
+        e.preventDefault();
+        cs = "{{csrf_token()}}"
+        var form_data = new FormData();
+        var selected_date = $(this).attr("data-selected_date")
+        if (document.getElementById('attendance_file_upload').files[0] && selected_date) {
+            form_data.append("files", document.getElementById('attendance_file_upload').files[0]);
+            form_data.append("selected_month", moment(new Date(selected_date)).format('YYYY-MM-DD'));
+            swal({
+                title: "Are you sure?",
+                text: "You want to create missing attendance records?",
+                icon: "info",
+                buttons: true,
+                dangerMode: true,
+            }).then((willDelete) => {
+                if (willDelete) {
+                    $("#global-loader").show();
+                    $.ajax({
+                        headers: {
+                            'X-CSRF-TOKEN': cs
+                        },
+                        url: '/upload/attendance',
+                        cache: false,
+                        contentType: false,
+                        processData: false,
+                        data: form_data,
+                        type: 'post',
+                    })
+                        .done(function (data) {
+                            $("#global-loader").fadeOut("slow");
+                            if (data == "True") {
+                                $('#upload-file-attendance')[0].reset();
+                                $(".dropify-clear").trigger("click");
+                                swal({
+                                    title: "Success",
+                                    text: "Successfully Added Attendance Data to Queue. Check Queue Status!",
+                                    icon: "success",
+                                });
+                            } else {
+                                swal({
+                                    title: "Error",
+                                    text: "Cannot Process Empty File",
+                                    icon: "error",
+                                });
+                            }
+                        })
+                        .fail(function (err) {
+                            console.log(err);
+                            $('#message').html(err);
+                        })
+                }
+            });
+        }
+    });
+
+    $(document).on("click", '#btnLeaveOpeningBalance', function (e) {
+        e.preventDefault();
+        cs = "{{csrf_token()}}"
+        var form_data = new FormData();
+        if (document.getElementById('leave_opening_balance').files[0]) {
+            form_data.append("files", document.getElementById('leave_opening_balance').files[0]);
+            swal({
+                title: "Are you sure?",
+                text: "You want to create open leaves records?",
+                icon: "info",
+                buttons: true,
+                dangerMode: true,
+            }).then((willDelete) => {
+                if (willDelete) {
+                    $("#global-loader").show();
+                    $.ajax({
+                        headers: {
+                            'X-CSRF-TOKEN': cs
+                        },
+                        url: '/bulk/createopenleaves',
+                        cache: false,
+                        contentType: false,
+                        processData: false,
+                        data: form_data,
+                        type: 'post',
+                    })
+                        .done(function (data) {
+                            $("#global-loader").fadeOut("slow");
+                            if (data == "True") {
+                                $('#upload-file')[0].reset();
+                                $(".dropify-clear").trigger("click");
+                                swal({
+                                    title: "Success",
+                                    text: "Successfully Created Open Leaves. Check Queue Status!",
+                                    icon: "success",
+                                });
+                            } else {
+                                swal({
+                                    title: "Error",
+                                    text: "Cannot Process Empty File",
+                                    icon: "error",
+                                });
+                            }
+                        })
+                        .fail(function (err) {
+                            console.log(err);
+                            $('#message').html(err);
+                        })
+                }
+            });
+        }
+    });
+
+    $(document).on("click", '#btnGenerateAttendance', function (e) {
+        e.preventDefault();
+        cs = "{{csrf_token()}}"
+        var form_data = new FormData();
+        var selected_date = $(this).attr("data-selected_date")
+        if (selected_date) {
+            form_data.append("selected_month", moment(new Date(selected_date)).format('YYYY-MM-DD'));
+
+            swal({
+                title: "Are you sure?",
+                text: "You want to generate attendance for the selected month?",
+                icon: "info",
+                buttons: true,
+                dangerMode: true,
+            }).then((willDelete) => {
+                if (willDelete) {
+                    $("#global-loader").show();
+                    $.ajax({
+                        headers: {
+                            'X-CSRF-TOKEN': cs
+                        },
+                        url: '/process/attendance',
+                        cache: false,
+                        contentType: false,
+                        processData: false,
+                        data: form_data,
+                        type: 'post',
+                    })
+                        .done(function (data) {
+                            $("#global-loader").fadeOut("slow");
+                            if (data == "True") {
+                                $('#upload-file')[0].reset();
+                                $(".dropify-clear").trigger("click");
+                                swal({
+                                    title: "Success",
+                                    text: "Successfully Generated Payroll!",
+                                    icon: "success",
+                                });
+                            } else {
+                                swal({
+                                    title: "Error",
+                                    text: "Cannot Generate",
+                                    icon: "error",
+                                });
+                            }
+                        })
+                        .fail(function (err) {
+                            console.log(err);
+                            $('#message').html(err);
+                        })
+                }
+            });
+        }
+    });
+
+    $(document).on("click", '#btnBankDetails', function (e) {
+        e.preventDefault();
+        cs = "{{csrf_token()}}"
+        var form_data = new FormData();
+        if (document.getElementById('bank_details').files[0]) {
+            form_data.append("files", document.getElementById('bank_details').files[0]);
+            swal({
+                title: "Are you sure?",
+                text: "You want to create these bank records?",
+                icon: "info",
+                buttons: true,
+                dangerMode: true,
+            }).then((willDelete) => {
+                if (willDelete) {
+                    $("#global-loader").show();
+                    $.ajax({
+                        headers: {
+                            'X-CSRF-TOKEN': cs
+                        },
+                        url: '/bulk/bankdetails',
+                        cache: false,
+                        contentType: false,
+                        processData: false,
+                        data: form_data,
+                        type: 'post',
+                    })
+                        .done(function (data) {
+                            $("#global-loader").fadeOut("slow");
+                            if (data == "True") {
+                                $('#upload-file')[0].reset();
+                                $(".dropify-clear").trigger("click");
+                                swal({
+                                    title: "Success",
+                                    text: "Successfully Created Open Leaves. Check Queue Status!",
+                                    icon: "success",
+                                });
+                            } else {
+                                swal({
+                                    title: "Error",
+                                    text: "Cannot Process Empty File",
+                                    icon: "error",
+                                });
+                            }
+                        })
+                        .fail(function (err) {
+                            console.log(err);
+                            $('#message').html(err);
+                        })
+                }
+            });
+        }
+    });
+
+    $(document).on("click", '#btnGenerateIndividualPayroll', function (e) {
+        e.preventDefault();
+        cs = "{{csrf_token()}}"
+        swal({
+            title: "Are you sure?",
+            text: "You want to generate individual payroll?",
+            icon: "info",
+            buttons: true,
+            dangerMode: true,
+        }).then((willDelete) => {
+            if (willDelete) {
+                $("#global-loader").show();
+                $.ajax({
+                    headers: {
+                        'X-CSRF-TOKEN': cs
+                    },
+                    url: '/generate/individualpayroll',
+                    data: $('#individual-payroll').serialize(),
+                    type: 'post',
+                })
+                    .done(function (data) {
+                        $("#global-loader").fadeOut("slow");
+                        if (data == "True") {
+                            //$('#upload-file')[0].reset();
+                            // $(".dropify-clear").trigger("click");
+                            swal({
+                                title: "Success",
+                                text: "Successfully Generated Payroll!",
+                                icon: "success",
+                            });
+                        } else {
+                            swal({
+                                title: "Error",
+                                text: "Cannot Generate",
+                                icon: "error",
+                            });
+                        }
+                    })
+                    .fail(function (err) {
+                        console.log(err);
+                        $('#message').html(err);
+                    })
+            }
+        });
+    });
+
+</script>
+<script>
+    // Date picker
+    dp = $('#datepicker-month,.generate_payroll').bootstrapdatepicker({
+        format: "MM",
+        viewMode: "months",
+        minViewMode: "months",
+        multidate: false,
+        multidateSeparator: "-",
+    })
+
+    dp.on('changeDate', function (e) {
+        $('#btnProcessPayroll,#btnGeneratePayroll,#btnMissingAttendance,#btnGenerateAttendance').attr("data-selected_date", e.dates)
+    });
+
+    fpm = $(".fc-datepicker").datepicker({
+        dateFormat: "dd/mm/yy"
+    });
+
+    dp = $('#datepicker-month-wise').bootstrapdatepicker({
+        format: "MM yyyy",
+        startdate: '+0m',
+        startView: "months",
+        minViewMode: "months",
+        orientation: 'bottom',
+        autoclose: true
+    })
+</script>
+<script>
+    $(function (e) {
+        'use strict';
+        $(".demo-accordion").accordionjs();
+    });
+
+    // Select2 by showing the search
+    $('.select2-show-search').select2({
+        minimumResultsForSearch: '',
+        placeholder: "Search",
+        dropdownPosition: 'below',
+        width: '100%'
+    });
+</script>
+
+{% endblock %}

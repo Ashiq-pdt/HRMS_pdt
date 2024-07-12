@@ -1,0 +1,215 @@
+<!-- templates/admin/index.html -->
+{% extends "layout/base.html" %}
+{% block head %}
+{{ super() }}
+<style>
+    body {
+        margin: 0;
+    }
+
+    .sb-title {
+        position: relative;
+        top: -12px;
+        font-family: Roboto, sans-serif;
+        font-weight: 500;
+    }
+
+    .sb-title-icon {
+        position: relative;
+        top: -5px;
+    }
+
+    .card-container {
+        display: flex;
+        height: 500px;
+        width: 600px;
+    }
+
+    .panel {
+        background: white;
+        width: 300px;
+        padding: 20px;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-around;
+    }
+
+    .half-input-container {
+        display: flex;
+        justify-content: space-between;
+    }
+
+    .half-input {
+        max-width: 120px;
+    }
+
+    .map {
+        width: 300px;
+    }
+
+    h2 {
+        margin: 0;
+        font-family: Roboto, sans-serif;
+    }
+
+    input {
+        height: 30px;
+    }
+
+    input {
+        border: 0;
+        border-bottom: 1px solid black;
+        font-size: 14px;
+        font-family: Roboto, sans-serif;
+        font-style: normal;
+        font-weight: normal;
+    }
+
+    input:focus::placeholder {
+        color: white;
+    }
+
+    .button-cta {
+        height: 40px;
+        width: 40%;
+        background: #3367d6;
+        color: white;
+        font-size: 15px;
+        text-transform: uppercase;
+        font-family: Roboto, sans-serif;
+        border: 0;
+        border-radius: 3px;
+        box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.48);
+        cursor: pointer;
+    }
+</style>
+
+{% endblock %}
+
+{% block content %}
+<div class="card-container">
+    <div class="panel">
+        <div>
+            <img class="sb-title-icon" src="https://fonts.gstatic.com/s/i/googlematerialicons/location_pin/v5/24px.svg"
+                alt="">
+            <span class="sb-title">Address Selection</span>
+        </div>
+        <input type="text" class="" placeholder="Name of the office" id="office_name" />
+
+        <input type="text" placeholder="Location of the Office" id="location-input" />
+        <input type="text" placeholder="Radius (In meters)" id="location-radius" value="100" />
+
+        <!-- <input type="text" placeholder="Apt, Suite, etc (optional)"/>
+      <input type="text" placeholder="City" id="locality-input"/>
+      <div class="half-input-container">
+        <input type="text" class="half-input" placeholder="State/Province" id="administrative_area_level_1-input"/>
+        <input type="text" class="half-input" placeholder="Zip/Postal code" id="postal_code-input"/>
+      </div>
+      <input type="text" placeholder="Country" id="country-input"/> -->
+        <button class="button-cta">Add Office</button>
+    </div>
+    <div class="map" id="gmp-map"></div>
+</div>
+{% endblock %}
+{% block script %}
+{{ super() }}
+<script
+    src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDeeEzz6bIkKS91kBSsTpbp0C8TcMvoC8Y&callback=initMap&libraries=places&v=weekly"
+    async defer></script>
+<script>
+    "use strict";
+
+    function initMap() {
+        const CONFIGURATION = {
+            "ctaTitle": "Add Office",
+            "mapOptions": {
+                "center": {
+                    "lat": 37.4221,
+                    "lng": -122.0841
+                },
+                "fullscreenControl": true,
+                "mapTypeControl": false,
+                "streetViewControl": true,
+                "zoom": 15,
+                "zoomControl": true,
+                "maxZoom": 22
+            },
+            "mapsApiKey": "AIzaSyDeeEzz6bIkKS91kBSsTpbp0C8TcMvoC8Y",
+            "capabilities": {
+                "addressAutocompleteControl": true,
+                "mapDisplayControl": true,
+                "ctaControl": true
+            }
+        };
+        const componentForm = [
+            'location',
+            'locality',
+            'administrative_area_level_1',
+            'country',
+            'postal_code',
+        ];
+
+        const getFormInputElement = (component) => document.getElementById(component + '-input');
+        const map = new google.maps.Map(document.getElementById("gmp-map"), {
+            zoom: CONFIGURATION.mapOptions.zoom,
+            center: {
+                lat: 37.4221,
+                lng: -122.0841
+            },
+            mapTypeControl: false,
+            fullscreenControl: CONFIGURATION.mapOptions.fullscreenControl,
+            zoomControl: CONFIGURATION.mapOptions.zoomControl,
+            streetViewControl: CONFIGURATION.mapOptions.streetViewControl
+        });
+        const marker = new google.maps.Marker({
+            map: map,
+            draggable: false
+        });
+        const autocompleteInput = getFormInputElement('location');
+        const autocomplete = new google.maps.places.Autocomplete(autocompleteInput, {
+            fields: ["formatted_address", "geometry", "name"],
+            strictBounds: false,
+            radius: '500',
+            types: ["establishment"],
+        });
+        autocomplete.addListener('place_changed', function () {
+            marker.setVisible(true);
+            const place = autocomplete.getPlace();
+            if (!place.geometry) {
+                // User entered the name of a Place that was not suggested and
+                // pressed the Enter key, or the Place Details request failed.
+                window.alert('No details available for input: \'' + place.name + '\'');
+                return;
+            }
+            renderAddress(place);
+        });
+
+        function renderAddress(place) {
+            //25.257086413374925, 55.29565498923244
+            25.2570717
+            55.29565590000001
+            map.setCenter(place.geometry.location);
+            console.log(map.getCenter().lat())
+            console.log(map.getCenter().lng())
+            marker.setPosition(place.geometry.location);
+            marker.setVisible(true);
+            const cityCircle = new google.maps.Circle({
+                strokeColor: "#FF0000",
+                strokeOpacity: 0.8,
+                strokeWeight: 2,
+                fillColor: "#0DCD93",
+                fillOpacity: 0.35,
+                map,
+                center: place.geometry.location,
+                radius: parseInt($('#location-radius').val()),
+            });
+
+            console.log(cityCircle)
+            var rad = $('#location-radius').keyup(function () {
+                cityCircle.setRadius(parseInt($('#location-radius').val()));
+            });
+        }
+
+    }
+</script>
+{% endblock %}

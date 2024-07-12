@@ -1,0 +1,263 @@
+<!--Apply Leaves Modal -->
+<div class="modal fade" id="applyleaves">
+	<div class="modal-dialog" role="document">
+		<div class="modal-content">
+			<div class="modal-header">
+				<h5 class="modal-title">Apply Leaves</h5>
+				<button class="btn-close" data-bs-dismiss="modal" aria-label="Close">
+					<span aria-hidden="true">×</span>
+				</button>
+			</div>
+			<div class="modal-body">
+				<div class="leave-types">
+					<div class="form-group">
+						<label class="form-label">Leaves Dates</label>
+						<select name="projects" class="form-control custom-select select2" id="daterange-categories">
+							<option value="single">Single Leaves</option>
+							<option value="multiple">Multiple Leaves</option>
+						</select>
+					</div>
+					<div class="leave-content active" id="single">
+						<div class="form-group">
+							<label class="form-label">Date Range:</label>
+							<div class="input-group">
+								<input type="text" name="singledaterange" class="form-control"
+									placeholder="select dates" />
+								<div class="input-group-append">
+									<div class="input-group-text">
+										<i class="bx bx-calendar"></i>
+									</div>
+								</div>
+							</div>
+						</div>
+					</div>
+					<div class="leave-content" id="multiple">
+						<div class="form-group">
+							<label class="form-label">Date Range:</label>
+							<div class="input-group">
+								<input type="text" name="daterange" class="form-control" placeholder="select dates" />
+								<div class="input-group-append">
+									<div class="input-group-text">
+										<i class="bx bx-calendar"></i>
+									</div>
+								</div>
+							</div>
+						</div>
+					</div>
+					<div class="form-group">
+						<label class="form-label">Leaves Types</label>
+						<select name="projects" class="form-control custom-select select2" data-placeholder="Select">
+							<option label="Select"></option>
+							<option value="1">Half Day Leave</option>
+							<option value="2">Casual Leaves</option>
+							<option value="3">Sick Leaves</option>
+							<option value="4">Maternity Leaves</option>
+							<option value="5">Paternity Leaves</option>
+							<option value="6">Annual Leaves</option>
+							<option value="6">Unpaid Leaves</option>
+							<option value="8">Other Leaves</option>
+						</select>
+					</div>
+					<div class="form-group">
+						<label class="form-label">Reason:</label>
+						<textarea class="form-control" rows="5">Some text here...</textarea>
+					</div>
+				</div>
+			</div>
+			<div class="modal-footer">
+				<div class="">
+					<label class="mb-0 font-weight-semibold">Selected Days:</label>
+					<span class="badge badge-danger badge-pill ms-2">2</span>
+				</div>
+				<div class="ms-auto">
+					<a href="javascript:void(0);" class="btn btn-outline-primary" data-bs-dismiss="modal">Close</a>
+					<a href="javascript:void(0);" class="btn btn-primary">Submit</a>
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
+<!-- End Apply Leaves Modal  -->
+
+<!--Clock-IN Modal -->
+<div class="modal fade" id="clockinmodal">
+	<div class="modal-dialog" role="document">
+		<form class="card-body pt-3" id="clockin_form">
+			<input type="hidden" name="csrf_token" id="csrf_clockin" value="{{ csrf_token() }}" />
+			<div class="modal-content">
+				<div class="modal-header">
+					<h5 class="modal-title"><span class="feather feather-clock  me-1"></span>Clock In</h5>
+					<a class="btn-close" data-bs-dismiss="modal" aria-label="Close">
+						<span aria-hidden="true">×</span>
+					</a>
+				</div>
+				<div class="modal-body">
+					<div class="countdowntimer">
+						<span id="clocktimer" name="clocktimer" class="border-0"></span>
+						<label class="form-label">Current Time</label>
+					</div>
+					<div class="form-group d-none">
+						<label class="form-label ">Current Longitude</label>
+						<input type="text" class="form-control current_longitude" name="current_longitude" value="" readonly>
+					</div>
+					<div class="form-group d-none">
+						<label class="form-label">Current Latitude</label>
+						<input type="text" class="form-control current_latitude" name="current_latitude" value="" readonly>
+					</div>
+					<div class="form-group d-none">
+						<label class="form-label">Company Id</label>
+						<input type="text" class="form-control" name="company_id" value="{{session.company_id}}" readonly>
+					</div>
+					<div class="form-group d-none">
+						<label class="form-label">Working Office</label>
+						<input type="text" class="form-control" name="working_office" value="{{session.working_office}}" readonly>
+					</div>
+					<!-- <div class="form-group">
+						<label class="form-label">Has Next Day Clockout</label>
+						<input type="text" class="form-control" name="has_next_day_clockout" value="{{session.has_next_day_clockout}}" readonly>
+					</div> -->
+					<div class="form-group d-none">
+						<label class="form-label">Employee Details Id</label>
+						<input type="text" class="form-control" name="employee_details_id" value="{{session.employee_details_id}}" readonly>
+					</div>
+					<div class="form-group">
+						<label class="form-label">Clock In From</label>
+						<select name="working_from" class="form-control custom-select select2" id="working_from">
+							<option label="Select"></option>
+							{% for item in clock_in_options %}
+								{% if item.clock_in_from|lower == "home"|lower or "home" in item.clock_in_from|lower  %}
+									{% if session["home_allowed"] %}
+										<option value={{item._id}} data-outside_office={{item.outside_office}}>{{item.clock_in_from}}</option>
+									{% endif %}
+								{% else %}
+									<option value={{item._id}} data-outside_office={{item.outside_office}}>{{item.clock_in_from}}</option>
+								{% endif %}
+								<!-- <option value={{item._id}} data-outside_office={{item.outside_office}}>{{item.clock_in_from}}</option> -->
+							{% endfor %}
+							<!-- <option value="office">Office</option>
+							<option value="home">Home</option>
+							<option value="other">Others</option> -->
+						</select>
+					</div>
+					<div class="form-group">
+						<label class="form-label">Note:</label>
+						<textarea class="form-control" rows="3" placeholder="Write Note here, If any...." name="notes"></textarea>
+					</div>
+
+					<div class="tags text-left pt-2 radius_status">
+						<span class="tag text-danger"></span>
+					</div>
+				</div>
+				<div class="modal-footer">
+					<button class="btn btn-primary" id="btnRefresh">Reload</button>
+					<a href="javascript:void(0);" class="btn btn-outline-primary" data-bs-dismiss="modal">Close</a>
+					<button class="btn btn-primary" id="btnClockIn" disabled="true">Clock In</button>
+				</div>
+			</div>
+		</form>
+	</div>
+</div>
+<!-- End Clock-IN Modal  -->
+
+<!--Clock-IN Modal -->
+<div class="modal fade" id="clockoutmodal">
+	<div class="modal-dialog" role="document">
+		<form class="card-body pt-3" id="clockout_form">
+			<input type="hidden" name="csrf_token" id="csrf_clockout" value="{{ csrf_token() }}" />
+			<div class="modal-content">
+				<div class="modal-header">
+					<h5 class="modal-title"><span class="feather feather-clock  me-1"></span>Clock In</h5>
+					<a class="btn-close" data-bs-dismiss="modal" aria-label="Close">
+						<span aria-hidden="true">×</span>
+					</a>
+				</div>
+				<div class="modal-body">
+					<div class="countdowntimer">
+						<span id="clocktimer3" name="clocktimer" class="border-0"></span>
+						<label class="form-label">Current Time</label>
+					</div>
+					<div class="form-group d-none">
+						<label class="form-label ">Current Longitude</label>
+						<input type="text" class="form-control current_longitude" name="current_longitude" value="" readonly>
+					</div>
+					<div class="form-group d-none">
+						<label class="form-label">Current Latitude</label>
+						<input type="text" class="form-control current_latitude" name="current_latitude" value="" readonly>
+					</div>
+					<div class="form-group d-none">
+						<label class="form-label">Company Id</label>
+						<input type="text" class="form-control" name="company_id" value="{{session.company_id}}" readonly>
+					</div>
+					<div class="form-group d-none">
+						<label class="form-label">Employee Details Id</label>
+						<input type="text" class="form-control" name="employee_details_id" value="{{session.employee_details_id}}" readonly>
+					</div>
+					<div class="form-group">
+						<label class="form-label">Note:</label>
+						<textarea class="form-control" rows="3" placeholder="Write Note here, If any...." name="notes"></textarea>
+					</div>
+				</div>
+				<div class="modal-footer">
+					<a href="javascript:void(0);" class="btn btn-outline-primary" data-bs-dismiss="modal">Close</a>
+					<button class="btn btn-primary" id="btnClockOut">Clock Out</button>
+				</div>
+			</div>
+		</form>
+	</div>
+</div>
+<!-- End Clock-IN Modal  -->
+
+
+<!--Clock-OT Modal -->
+<div class="modal fade" id="clockotmodal">
+	<div class="modal-dialog" role="document">
+		<form class="card-body pt-3" id="clockot_form">
+			<input type="hidden" name="csrf_token" id="csrf_clockot" value="{{ csrf_token() }}" />
+			<div class="modal-content">
+				<div class="modal-header">
+					<h5 class="modal-title"><span class="feather feather-clock  me-1"></span>Overtime</h5>
+					<a class="btn-close" data-bs-dismiss="modal" aria-label="Close">
+						<span aria-hidden="true">×</span>
+					</a>
+				</div>
+				<div class="modal-body">
+					<div class="countdowntimer mt-0 mb-2">
+						<label class="form-label fs-15">Hey, It seems you have worked extra hours, Do you want to request for compensation?</label>
+					</div>
+					<div class="form-group">
+						<label class="form-label ">Clock In</label>
+						<input type="text" class="form-control clocked_in" name="clocked_in" value="" readonly>
+					</div>
+					<div class="form-group">
+						<label class="form-label">Clock Out</label>
+						<input type="text" class="form-control clocked_out" name="clocked_out" value="" readonly>
+					</div>
+					<div class="form-group d-none">
+						<label class="form-label">Company Id</label>
+						<input type="text" class="form-control" name="company_id" value="{{session.company_id}}" readonly>
+					</div>
+					<div class="form-group d-none">
+						<label class="form-label">Employee Details Id</label>
+						<input type="text" class="form-control" name="employee_details_id" value="{{session.employee_details_id}}" readonly>
+					</div>
+					<div class="form-group d-none">
+						<label class="form-label">Attendance Id</label>
+						<input type="text" class="form-control employee_attendance_id" name="employee_attendance_id" value="" readonly>
+					</div>
+					<div class="form-group">
+						<label class="form-label">Extra Hours worked in minutes</label>
+						<input type="text" class="form-control extra_hours" name="extra_hours" value="" readonly>
+					</div>
+					<div class="tags text-left pt-2">
+						<span class="tag text-danger">Note: Your Request is subject to approval from the assigned approver of your department.</span>
+					</div>
+				</div>
+				<div class="modal-footer">
+					<a href="javascript:void(0);" class="btn btn-outline-primary" data-bs-dismiss="modal">Close</a>
+					<button class="btn btn-primary" id="btnApplyOt">Send Request</button>
+				</div>
+			</div>
+		</form>
+	</div>
+</div>
+<!-- End Clock OT Modal  -->

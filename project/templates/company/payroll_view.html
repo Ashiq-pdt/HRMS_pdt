@@ -1,0 +1,659 @@
+<!-- templates/admin/index.html -->
+{% extends "layout/base.html" %}
+{% block head %}
+{{ super() }}
+<style>
+    table.dataTable tbody th,
+    table.dataTable tbody td,
+    table.dataTable thead th,
+    table.dataTable thead td {
+        padding: 5px 10px !important;
+    }
+    .modal-backdrop.show {
+    opacity: 1.2;
+    }
+</style>
+
+{% endblock %}
+
+{% block content %}
+<!--Page header-->
+<div class="page-header d-xl-flex d-block">
+    <div class="page-leftheader">
+        <div class="page-title">Monthly Payroll</div>
+    </div>
+    <div class="page-rightheader ms-md-auto">
+        <div class="d-flex align-items-end flex-wrap my-auto end-content breadcrumb-end">
+            <div class="btn-list">
+                <!-- <button class="btn btn-primary" data-bs-placement="top" data-bs-toggle="modal"
+                    data-bs-target="#largemodal" id="queue-status"> <i class="feather fe fe-upload-cloud"> </i> Queue
+                    Status </button> -->
+                <button class="btn btn-light" data-bs-toggle="tooltip" data-bs-placement="top" title="E-mail"> <i
+                        class="feather feather-mail"></i> </button>
+                <button class="btn btn-light" data-bs-placement="top" data-bs-toggle="tooltip" title="Contact"> <i
+                        class="feather feather-phone-call"></i> </button>
+                <button class="btn btn-primary" data-bs-placement="top" data-bs-toggle="tooltip" title="Info"> <i
+                        class="feather feather-info"></i> </button>
+            </div>
+        </div>
+    </div>
+</div>
+<!--End Page header-->
+<!-- Row -->
+<div class="row">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-body">
+                <form class="card-body pt-3" method="POST" action="/payroll">
+                    <input type="hidden" name="csrf_token" id="csrf_gen" value="{{ csrf_token() }}" />
+                    <div class="row mt-5">
+                        <div class="col-md-6 col-lg-3">
+                            <label class="form-label">Attendance Month:</label>
+                            <input class="form-control" placeholder="Month Range" type="text" name="selected_month"
+                                id="selected_month" value="{{start_of_month.strftime('%Y-%m-%d')}}" hidden>
+                            <div class="input-group">
+                                <div class="input-group-prepend">
+                                    <div class="input-group-text">
+                                        <span class="feather feather-clock"></span>
+                                    </div>
+                                </div>
+
+                                <input class="form-control" id="filter-datepicker-month" placeholder="Month Range"
+                                    type="text" name="month_range_input" value="{{start_of_month.strftime('%B')}}">
+                            </div>
+                            
+                        </div>
+                        <div class="col-md-2 col-lg-3">
+                            <div class="form-group">
+                                <label class="form-label">Select Sub Company:</label>
+                                <div class="input-group">
+                                    <select class="w-100 form-control form-select" name="sub_company" id="sub_company">
+                                        <option value="" selected disabled>Select Sub Company</option>
+                                        {% if company_details.sub_companies|length > 0 %}
+                                        {% for item in company_details.sub_companies %}
+                                        <option value="{{ item.id }}" {% if item.id == selected_sub_company %}selected{% endif %}>{{ item.company_name }}</option>
+                                        {% endfor %} 
+                                        {% endif %}
+                                        <option value="">All Company</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6 col-lg-2">
+                            <div class="form-group mt-5">
+                                <button href="javascript:void(0);" class="btn btn-primary btn-block">Search</button>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+
+            <div class="card">
+                    <div class="panel panel-primary">
+                        <div class=" tab-menu-heading p-0 bg-light">
+                            <div class="tabs-menu1 ">
+                                <!-- Tabs -->
+                                <ul class="nav panel-tabs">
+                                    <li class=""><a href="#tab5" class="active" data-bs-toggle="tab">Payroll Details</a></li>
+                                    <!-- <li><a href="#tab6" data-bs-toggle="tab">Al Ansari Exchange</a></li>
+                                    <li><a href="#tab7" data-bs-toggle="tab">Joyalukkas Exchange</a></li>
+                                    <li><a href="#tab9" data-bs-toggle="tab">RAK Bank</a></li>
+                                    <li><a href="#tab8" data-bs-toggle="tab">Non Assigned Exchange</a></li> -->
+
+                                </ul>
+                            </div>
+                        </div>
+                        <div class="panel-body tabs-menu-body">
+                            <div class="tab-content">
+                                <!-- Payroll Details -->
+                                <div class="tab-pane active " id="tab5">
+                                    <div class="card-body">
+                                        <div class="table-responsive">
+                                            <table class="table  table-vcenter text-nowrap table-bordered border-bottom table-striped" id="hr-payroll">
+                                                <thead>
+                                                    <tr>
+                                                        <th class="border-bottom-0 w-5">#Emp ID</th>
+                                                        <th class="border-bottom-0">Emp Name</th>
+                                                        <th class="border-bottom-0">Month-Year</th>
+                                                        <th class="border-bottom-0">Designation</th>
+                                                        <th class="border-bottom-0">(AED) Salary</th>
+                                                        <th class="border-bottom-0">Generated Date</th>
+                                                        <!-- <th class="border-bottom-0">Status</th> -->
+                                                        <th class="border-bottom-0">Actions</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    {% for item in payroll_details %}
+                                                        <tr>
+                                                            <td>{{item.employee_details_id.employee_company_details.employee_id}}</td>
+                                                            <td>
+                                                                <div class="d-flex">
+                                                                    <div class="me-3 mt-0 mt-sm-1 d-block">
+                                                                        <h6 class="mb-1 fs-14">{{item.employee_details_id.first_name + ' ' + item.employee_details_id.last_name}}</h6>
+                                                                    </div>
+                                                                </div>
+                                                            </td>
+                                                            <td>{{item.payroll_month}} - {{item.payroll_year}}</td>
+                                                            <td>{{item.employee_details_id.employee_company_details.designation}}</td>
+                                                            <td class="font-weight-semibold">{{"%0.2f" | format(item.salary_to_be_paid | default(0.0) | float)}}</td>
+                                                            <td>{% if item.generated_date %}
+                                                                {{item.generated_date.strftime('%Y-%m-%d')}}
+                                                            {% endif %}
+                                                                </td>
+                                                            <!-- <td><span class="badge badge-success">Paid</span></td> -->
+                                                            <td class="text-start">
+                                                                <a href="javascript:void(0);" class="" 
+                                                                    id="btnPayslip" id="payslip" data-employee_id="{{item.employee_details_id._id}}"
+                                                                    data-selected_year="{{item.payroll_year}}"
+                                                                    data-selected_month="{{item.payroll_month}}">
+                                                                    <i class="fe fe-layers text-primary" data-bs-toggle="tooltip"
+                                                                        data-bs-placement="top" title="View Payroll Details"></i>
+                                                            </a>
+                                                                <!-- <a href="hr-editpayroll.html" class="action-btns" data-bs-toggle="tooltip"
+                                                                    data-bs-placement="top" title="Edit">
+                                                                    <i class="feather feather-edit text-info"></i>
+                                                                </a>
+                                                                <a href="javascript:void(0);" class="action-btns" data-bs-toggle="tooltip"
+                                                                    data-bs-placement="top" title="Download">
+                                                                    <i class="feather feather-download  text-secondary"></i>
+                                                                </a>
+                                                                <a href="javascript:void(0);" class="action-btns" data-bs-toggle="tooltip"
+                                                                    data-bs-placement="top" title="Print" onclick="javascript:window.print();">
+                                                                    <i class="feather feather-printer text-success"></i>
+                                                                </a>
+                                                                <a href="javascript:void(0);" class="action-btns" data-bs-toggle="tooltip"
+                                                                    data-bs-placement="top" title="Share">
+                                                                    <i class="feather feather-share-2 text-warning"></i>
+                                                                </a>
+                                                                <a href="javascript:void(0);" class="action-btns" data-bs-toggle="tooltip"
+                                                                    data-bs-placement="top" title="Delete">
+                                                                    <i class="feather feather-x text-danger"></i>
+                                                                </a> -->
+                                                            </td>
+                                                        </tr>
+                                                    {% endfor %}
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+            </div>
+
+
+           
+        </div>
+    </div>
+</div>
+<!-- End Row -->
+
+<!-- Modal -->
+<!--Payslip Modal -->
+<div class="modal fade" id="viewsalarymodal">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">PaySlip</h5>
+                <button class="btn-close" data-bs-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">×</span>
+                </button>
+            </div>
+            <div class="modal-header">
+                <div>
+                    <img src="{{url_for('static', filename='uploads/profile/'+company_details.company_logo|default('cubes-logo.png',true))}}" class="header-brand-img w-auto"
+                        alt="Cubes"><br>
+                        {{company_details.company_name}}
+                </div>
+                <div class="ms-auto">
+                    <div class="font-weight-bold text-md-right mt-3 ">Date: <span
+                            class="paytable_current_date">01-02-2021</span> </div>
+                </div>
+            </div>
+            <div class="modal-body pt-1">
+                <div class="table-responsive mt-3 mb-3">
+                    <table class="table mb-0 modal-paytable paytable-emp-details table-striped">
+                        <tbody>
+
+                        </tbody>
+                    </table>
+                </div>
+                <div class="table-responsive mt-4">
+                    <table class="table text-nowrap mb-0 border table-striped">
+                        <tbody>
+                            <tr>
+                                <td class="p-0">
+                                    <table class="table text-nowrap mb-0 border-start paytable-actual-pay table-striped">
+                                        <thead>
+                                            <tr>
+                                                <th class="fs-18" rowspan="1" colspan="2">Earnings</th>
+                                            </tr>
+                                            <tr>
+                                                <th>Pay Type</th>
+                                                <th class="border-start">Amount</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+
+                                        </tbody>
+                                    </table>
+                                </td>
+                                <td class="p-0">
+                                    <table class="table text-nowrap mb-0 border-start paytable-deduction-pay table-striped">
+                                        <thead>
+                                            <tr>
+                                                <th class="fs-18" rowspan="1" colspan="2">Deduction</th>
+                                            </tr>
+                                            <tr>
+                                                <th>Pay Type</th>
+                                                <th class="border-start">Amount</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+
+                                        </tbody>
+                                    </table>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="mt-4 mb-3">
+                    <table class="table mb-0 pay-table-netsalary">
+                        <tbody>
+                            <div class="alert alert-info prorated_info d-none fs-12" role="alert"><i class="fa fa-bell-o me-2" aria-hidden="true"></i>Heads up! This is a Prorated Payslip dated till <span class="prorated_date"></span>,below is the amount employee will be recieving as Salary.</div>
+                            <div class="alert alert-success leave_info d-none fs-12" role="alert"><i class="fa fa-bell-o me-2" aria-hidden="true"></i> This month this employee has taken <span class="leave_days"></span> days of Paid Leave(s).</div>
+                            <tr>
+                                <td class="font-weight-semibold w-20 fs-18 pb-0 pt-0">Net Salary</td>
+                                <td class="pb-0 pt-0">
+                                    <h4 class="font-weight-semibold mb-0 fs-24">$32,000</h4>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="font-weight-semibold w-20 pb-0 pt-1 text-muted">InWords</td>
+                                <td class="pb-0 pt-1">
+                                    <h5 class="mb-0  text-muted">Thirty-Two Thousand only</h5>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <!-- <div class="p-5 border-top text-center">
+                <div class="text-center">
+                    <h6 class="mb-2">Spruko Technologies Pvt Ltd.</h6>
+                    <p class="mb-1 fs-12">Near Tulasi Hospital ECIL, ushaiguda, Hyderabad, Telangana 500062</p>
+                    <div>
+                        <small>Tel No: 99488 67536,</small>
+                        <small>Email: info@spruko.com</small>
+                    </div>
+                </div>
+            </div> -->
+            <div class="modal-footer">
+                <div class="ms-auto">
+                    <!-- <a  href="javascript:void(0);" class="btn btn-info" onclick="javascript:window.print();"><i class="si si-printer"></i> Print</a>
+                    <a  href="javascript:void(0);" class="btn btn-success"><i class="feather feather-download"></i> Download</a>
+                    <a  href="javascript:void(0);" class="btn btn-primary"><i class="si si-paper-plane"></i> Send</a> -->
+                    <a  href="javascript:void(0);" class="btn btn-info" onclick="javascript:window.print();"><i class="si si-printer"></i> Print</a>
+                    <a href="javascript:void(0);" class="btn btn-danger" data-bs-dismiss="modal"><i
+                            class="feather feather-x"></i> Close</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+{% block script %}
+{{ super() }}
+
+<!-- Datepicker js -->
+<!-- <script src="{{ url_for('static', filename='assets/plugins/date-picker/jquery-ui.js') }}"></script> -->
+<!-- INTERNAL Bootstrap-Datepicker js-->
+<script src="{{ url_for('static', filename='assets/plugins/bootstrap-datepicker/bootstrap-datepicker.js') }}"></script>
+<script>
+    // payslip
+    // Year picker
+    fpy = $('#datepicker-year').bootstrapdatepicker({
+        format: "yyyy",
+        viewMode: "year",
+        minViewMode: "years",
+        orientation: 'bottom',
+        multidate: false,
+        multidateSeparator: "-",
+    })
+    fpm = $('#filter-datepicker-month').bootstrapdatepicker({
+        format: "MM",
+        endDate: '+0m',
+        viewMode: "months",
+        minViewMode: "months",
+        orientation: 'bottom',
+        multidate: false,
+        multidateSeparator: "-",
+        autoclose: true
+    })
+    //fpy.on('changeDate', function (e) {
+    //  $('.action-btns').attr("data-selected_year", e.dates)
+    //});
+    fpm.on('changeDate', function (e) {
+        $('.action-btns').attr("data-selected_month", e.dates)
+        $('#selected_month').val(moment(new Date(e.dates)).format('YYYY-MM-DD'))
+    });
+
+    // Data Table
+	$('#hr-payroll').DataTable({
+		"order": [[ 0, "desc" ]],
+		order: [],
+		columnDefs: [ { orderable: false} ],
+		language: {
+			searchPlaceholder: 'Search...',
+			sSearch: '',
+			
+		}
+	});
+    $(document).ready(function () {
+        // New Pay Slip Start
+        $(document).on("click", '#btnPayslip', function (e) {
+            // AJAX request
+            e.preventDefault();
+            $("#global-loader").show();
+            var selected_month = $(this).attr("data-selected_month")
+            var selected_year = $(this).attr("data-selected_year")
+            var employee_id = $(this).attr("data-employee_id")
+            $.ajax({
+                url: '/payrollinfo',
+                data: {
+                    'selected_month': selected_month,
+                    'selected_year': selected_year,
+                    'employee_id': employee_id
+                },
+                type: 'GET',
+                success: function (response) {
+                    $("#global-loader").hide();
+
+                    // Add response in Modal body
+                    data = JSON.parse(response)
+                    if (data.status == "success") {
+                        details = '<tr>\
+                                <td>\
+                                    <strong>Emp ID:</strong>\
+                                    <span>' + data.employee_details.employee_company_details.employee_id + '</span>\
+                                </td>\
+                                <td class="text-end">\
+                                    <strong>Pay Period:</strong>\
+                                    <span>' + data.payroll_data.payroll_month+' ' +data.payroll_data.payroll_year+  '</span>\
+                                </td>\
+                            </tr>\
+                            <tr>\
+                                <td>\
+                                    <strong>Emp Name:</strong>\
+                                    <span>' + data.employee_details.first_name + ' ' + data.employee_details
+                            .last_name + '</span>\
+                                </td>\
+                                <td class="text-end">\
+                                    <strong>Deignation:</strong>\
+                                    <span>' + data.employee_details.employee_company_details.designation + '</span>\
+                                </td>\
+                            </tr>'
+
+                        // Check the no of rows in both addition and deduction and add total no of rows to each to make it even
+                        let additions_row = 0
+                        let deduction_row = 0
+
+                        $('.paytable-emp-details tbody').empty();
+                        $('.paytable-emp-details tbody').html(details);
+                        const timeElapsed = Date.now();
+                        const today = new Date(timeElapsed);
+                        $('.paytable_current_date').html(today.toDateString());
+                        $('.paytable-actual-pay tbody').empty();
+                        $('.paytable-deduction-pay tbody').empty();
+                        $('.pay-table-netsalary tbody').empty();
+                        add=0;
+                        ded=0;    
+                        actual_pay_details = ''
+                        //actual_pay_details +=
+                          //  '<tr>\
+                            //<td>Monthly Gross Salary</td>\
+                            //<td class="border-start">' + parseFloat(data.payroll_data.total_salary).toFixed(2) + '</td>\
+                        //</tr>';
+                        if(data.payroll_data.basic_salary){
+                            additions_row++;
+                            actual_pay_details +=
+                            '<tr>\
+                            <td>Basic Salary</td>\
+                            <td class="border-start">' + parseFloat(data.payroll_data.basic_salary).toFixed(2) + '</td>\
+                        </tr>';
+                        }
+
+                        if(data.payroll_data.housing_allowance != 0){
+                            additions_row++;
+                            actual_pay_details +=
+                            '<tr>\
+                            <td>Housing Allowance</td>\
+                            <td class="border-start">' + parseFloat(data.payroll_data.housing_allowance).toFixed(2) + '</td>\
+                        </tr>';
+                        }
+
+                        if(data.payroll_data.travel_allowance != 0){
+                            additions_row++;
+                            actual_pay_details +=
+                            '<tr>\
+                            <td>Travelling Allowance</td>\
+                            <td class="border-start">' + parseFloat(data.payroll_data.travel_allowance).toFixed(2) + '</td>\
+                        </tr>';
+                        }
+
+                        if(data.payroll_data.other_allowances != 0){
+                            additions_row++;
+                            actual_pay_details +=
+                            '<tr>\
+                            <td>Other Allowance</td>\
+                            <td class="border-start">' + parseFloat(data.payroll_data.other_allowances).toFixed(2) + '</td>\
+                        </tr>';
+                        }
+
+                        if(data.payroll_data.fuel_allowance != 0){
+                            additions_row++;
+                            actual_pay_details +=
+                            '<tr>\
+                            <td>Fuel Allowance</td>\
+                            <td class="border-start">' + parseFloat(data.payroll_data.fuel_allowances).toFixed(2) + '</td>\
+                        </tr>';
+                        }
+
+                        if(data.payroll_data.mobile_allowance!= 0){
+                            additions_row++;
+                            actual_pay_details +=
+                            '<tr>\
+                            <td>Mobile Allowance</td>\
+                            <td class="border-start">' + parseFloat(data.payroll_data.mobile_allowances).toFixed(2) + '</td>\
+                        </tr>';
+                        }
+                        if(data.payroll_data.medical_allowance!= 0){
+                            additions_row++;
+                            actual_pay_details +=
+                            '<tr>\
+                            <td>Medical Allowance</td>\
+                            <td class="border-start">' + parseFloat(data.payroll_data.medical_allowances).toFixed(2) + '</td>\
+                        </tr>';
+                        }
+
+                        $.each(data.additions, function (index,
+                            value) {
+                            additions_row++;
+                            actual_pay_details +=
+                                '<tr>\
+                                    <td>' + value.reason + '</td>\
+                                    <td class="border-start">' + parseFloat(value.amount).toFixed(2) + '</td>\
+                                </tr>';
+                        });
+
+                        deduction_details = ''
+                        $.each(data.deductions, function (index,
+                            value) {
+                            deduction_row++;
+                            deduction_details +=
+                                '<tr>\
+                                    <td>' + value.reason + '</td>\
+                                    <td class="border-start">' + parseFloat(value.amount).toFixed(2) + '</td>\
+                                </tr>';
+                        });
+                        // Check the no of rows in both addition and deduction and add total no of rows to each to make it even
+                        if (additions_row > deduction_row) {
+                            no_of_extra_rows = additions_row - deduction_row;
+                            for (let i = 0; i < no_of_extra_rows; i++) {
+                                deduction_details +=
+                                    '<tr><td class="border-start">&nbsp;</td><td class="border-start">&nbsp;</td></tr>';
+                            }
+                        }
+                        if (deduction_row > additions_row) {
+                            no_of_extra_rows = deduction_row - additions_row;
+                            for (let i = 0; i < no_of_extra_rows; i++) {
+                                actual_pay_details +=
+                                    '<tr><td class="border-start">&nbsp;</td><td class="border-start">&nbsp;</td></tr>';
+                            }
+                        }
+                        // Total of additiona and deduction 
+                        actual_pay_details += '<tr class="border-top">\
+                            <td class="font-weight-semibold">Total Pay (w/o deductions)</td>\
+                            <td class="font-weight-semibold border-start">AED ' + (data.payroll_data.total_salary +
+                                data.payroll_data.total_additions).toFixed(2) + '</td>\
+                        </tr>';
+                        deduction_details +=
+                            '<tr class="border-top">\
+                            <td class="font-weight-semibold">Total Deduction</td>\
+                            <td class="font-weight-semibold border-start">AED ' + (data.payroll_data.total_deductions).toFixed(2) + '</td>\
+                        </tr>';
+                        $('.paytable-actual-pay tbody').html(actual_pay_details);
+                        $('.paytable-deduction-pay tbody').html(deduction_details);
+
+                        net_salary_details = '<tr>\
+                            <td class="font-weight-semibold w-20 fs-18 pb-0 pt-0">Net Salary</td>\
+                            <td class="pb-0 pt-0">\
+                                <h4 class="font-weight-semibold mb-0 fs-24">AED: ' + (data.payroll_data.salary_to_be_paid).toFixed(2) + '</h4>\
+                            </td>\
+                        </tr>\
+                        <tr>\
+                            <td class="font-weight-semibold w-20 pb-0 pt-1 text-muted">InWords</td>\
+                            <td class="pb-0 pt-1">\
+                                <h5 class="mb-0  text-muted">' + numberToWords((data.payroll_data.salary_to_be_paid).toFixed(2)) + '</h5>\
+                            </td>\
+                        </tr>'
+                        $('.pay-table-netsalary tbody').html(net_salary_details);
+                        if(data.payroll_data.payroll_type == "date_wise"){
+                            $(".prorated_info").removeClass("d-none");
+                            $(".prorated_date").html(data.payroll_data.prorated_date);
+                        }
+                        if(data.payroll_data.paid_leaves > 0){
+                            $(".leave_info").removeClass("d-none");
+                            $(".leave_days").html(data.payroll_data.paid_leaves);
+                        }
+                        else{
+                            $(".leave_info").addClass("d-none");
+                        }
+                        // Display Modal
+                        $('#viewsalarymodal').modal('toggle');
+                    } else {
+                        data = JSON.parse(response)
+
+                        details = '<tr>\
+                            <td>\
+                                <strong>Emp ID:</strong>\
+                                <span>' + data.employee_details.employee_company_details.employee_id + '</span>\
+                            </td>\
+                            <td class="text-end">\
+                                <strong>Pay Period:</strong>\
+                                <span>' + moment(new Date(selected_month)).format('MMMM') + ' ' + moment(new Date(
+                            selected_month)).format('YYYY') + '</span>\
+                            </td>\
+                        </tr>\
+                        <tr>\
+                            <td>\
+                                <strong>Emp Name:</strong>\
+                                <span>' + data.employee_details.first_name + ' ' + data.employee_details.last_name + '</span>\
+                            </td>\
+                            <td class="text-end">\
+                                <strong>Deignation:</strong>\
+                                <span>' + data.employee_details.employee_company_details.designation + '</span>\
+                            </td>\
+                        </tr>'
+                        $('.paytable-emp-details tbody').empty();
+                        $('.paytable-emp-details tbody').html(details);
+                        $('#viewsalarymodal').modal('toggle');
+                        const timeElapsed = Date.now();
+                        const today = new Date(timeElapsed);
+                        $('.paytable_current_date').html(today.toDateString());
+                        $('.paytable-actual-pay tbody').empty();
+                        $('.paytable-deduction-pay tbody').empty();
+                        $('.pay-table-netsalary tbody').empty();
+                        $('.pay-table-netsalary tbody').html(
+                            'No Payroll Data Found for this month! Please check whether you have selected the desired Month and Year!'
+                        );
+                    }
+                }
+            });
+        });
+        // Pay Slip End
+
+    });
+
+    function numberToWords(number) {
+        var digit = ['zero', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine'];
+        var elevenSeries = ['ten', 'eleven', 'twelve', 'thirteen', 'fourteen', 'fifteen', 'sixteen', 'seventeen',
+            'eighteen', 'nineteen'
+        ];
+        var countingByTens = ['twenty', 'thirty', 'forty', 'fifty', 'sixty', 'seventy', 'eighty', 'ninety'];
+        var shortScale = ['', 'thousand', 'million', 'billion', 'trillion'];
+
+        number = number.toString();
+        number = number.replace(/[\, ]/g, '');
+        if (number != parseFloat(number)) return 'not a number';
+        var x = number.indexOf('.');
+        if (x == -1) x = number.length;
+        if (x > 15) return 'too big';
+        var n = number.split('');
+        var str = '';
+        var sk = 0;
+        for (var i = 0; i < x; i++) {
+            if ((x - i) % 3 == 2) {
+                if (n[i] == '1') {
+                    str += elevenSeries[Number(n[i + 1])] + ' ';
+                    i++;
+                    sk = 1;
+                } else if (n[i] != 0) {
+                    str += countingByTens[n[i] - 2] + ' ';
+                    sk = 1;
+                }
+            } else if (n[i] != 0) {
+                str += digit[n[i]] + ' ';
+                if ((x - i) % 3 == 0) str += 'hundred ';
+                sk = 1;
+            }
+            if ((x - i) % 3 == 1) {
+                if (sk) str += shortScale[(x - i - 1) / 3] + ' ';
+                sk = 0;
+            }
+        }
+        if (x != number.length) {
+            var y = number.length;
+            str += 'point ';
+            for (var i = x + 1; i < y; i++) str += digit[n[i]] + ' ';
+        }
+        str = str.replace(/\number+/g, ' ');
+        return str.trim() + ".";
+    }
+</script>
+<script>
+    // Data Table 
+    $('#hr-attendance').DataTable({
+        "order": [
+            [0, "desc"]
+        ],
+        ordering: false,
+        language: {
+            searchPlaceholder: 'Search...',
+            sSearch: '',
+        }
+    });
+</script>
+{% endblock %}

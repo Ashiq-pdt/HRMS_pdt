@@ -1,0 +1,563 @@
+<!-- templates/employee/index.html -->
+
+{% extends "layout/base.html" %}
+{% block head %}
+{{ super() }}
+<!-- INTERNAL Daterangepicker css-->
+<link rel="stylesheet" href="{{ url_for('static', filename='assets/plugins/daterangepicker/daterangepicker.css') }}">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.2/main.min.css">
+
+<style>
+    .fc-direction-ltr .fc-daygrid-event .fc-event-time,
+    .fc-daygrid-event-dot {
+        display: none !important;
+    }
+    .fc-event-title{
+        font-size:10px;
+    }
+    .fc-event-title-container{
+        color: #000000;
+        font-weight:bolder;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<meta name="csrf-token" content="{{ csrf_token() }}">
+
+<!--Page header-->
+<div class="page-header d-xl-flex d-block">
+    <div class="page-leftheader">
+        <div class="page-title">Leave Applications</div>
+    </div>
+    <div class="page-rightheader ms-md-auto">
+        <div class="d-flex align-items-end flex-wrap my-auto end-content breadcrumb-end">
+            <div class="btn-list">
+                <button class="btn btn-light" data-bs-toggle="tooltip" data-bs-placement="top" title="E-mail"> <i
+                        class="feather feather-mail"></i> </button>
+                <button class="btn btn-light" data-bs-placement="top" data-bs-toggle="tooltip" title="Contact"> <i
+                        class="feather feather-phone-call"></i> </button>
+                <button class="btn btn-primary" data-bs-placement="top" data-bs-toggle="tooltip" title="Info"> <i
+                        class="feather feather-info"></i> </button>
+            </div>
+        </div>
+    </div>
+</div>
+<!--End Page header-->
+
+<!-- Row -->
+<div class="row">
+    <div class="col-md-12 col-lg-12 col-xl-12">
+        <div class="card" id="tabs-style3">
+            <div class="card-header border-bottom-0">
+                <div class="card-title">
+                    Leave Summary
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="panel panel-primary tabs-style-3">
+                    <div class="tab-menu-heading">
+                        <div class="tabs-menu ">
+                            <!-- Tabs -->
+                            <ul class="nav panel-tabs">
+                                <li class=""><a href="#tab11" class="active" data-bs-toggle="tab"><i
+                                            class="fa fa-hourglass-half"></i> Pending Requests (<span
+                                            class="text-bold">{{leave_applications|selectattr('leave_status','equalto','pending')|list|count}}</span>)</a>
+                                </li>
+                                <li><a href="#tab12" data-bs-toggle="tab"><i class="fa fa-check-circle-o"></i> Approved
+                                        ({{leave_applications|selectattr('leave_status','equalto','approved')|list|count}})</a>
+                                </li>
+                                <li><a href="#tab13" data-bs-toggle="tab"><i class="fa fa-times-circle-o"></i> Rejected
+                                        ({{leave_applications|selectattr('leave_status','equalto','rejected')|list|count}})</a>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="panel-body tabs-menu-body">
+                        <div class="tab-content">
+                            <div class="tab-pane active" id="tab11">
+                                <div class="card">
+                                    <!-- <div class="card-header  border-0">
+                                        <h4 class="card-title"></h4>
+                                    </div> -->
+                                    <div class="card-body">
+                                        <div class="table-responsive">
+                                            <table
+                                                class="table  table-vcenter text-nowrap table-bordered border-bottom hr-leaves table-striped"
+                                                id="hr-leaves">
+                                                <thead>
+                                                    <tr>
+                                                        <!-- <th class="border-bottom-0 w-5">#No</th> -->
+                                                        <th class="border-bottom-0 w-5">Emp Name</th>
+                                                        <th class="border-bottom-0 w-5">Department</th>
+                                                        <th class="border-bottom-0">Leave Type</th>
+                                                        <th class="border-bottom-0">From</th>
+                                                        <th class="border-bottom-0">To</th>
+                                                        <th class="border-bottom-0">Days</th>
+                                                        <th class="border-bottom-0">Current Approver</th>
+                                                        <th class="border-bottom-0">Applied on</th>
+                                                        <th class="border-bottom-0">Status</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    {% for item in leave_applications|selectattr('leave_status','equalto','pending')|sort(attribute='application_on',reverse=True)%}
+                                                    <tr>
+                                                        <!-- <td>{{loop.index}}</td> -->
+                                                        <td>
+                                                            <div class="d-flex">
+                                                                <div class="me-3 mt-0 mt-sm-2 d-block">
+                                                                    <h6 class="mb-1 fs-14">
+                                                                        {{item.employee_details_id.first_name + ' ' +item.employee_details_id.last_name}}
+                                                                    </h6>
+                                                                </div>
+                                                            </div>
+                                                        </td>
+                                                        <td>{{item.employee_details_id.employee_company_details.department}}
+                                                        <td>{{item.employee_leave_policy.leave_policy_id.leave_policy_name}}
+                                                        </td>
+                                                        <td>{{item.leave_from.strftime('%d/%m/%Y')}}
+                                                        </td>
+                                                        <td>{{item.leave_till.strftime('%d/%m/%Y')}}
+                                                        </td>
+                                                        <td class="font-weight-semibold">
+                                                            {{item.no_of_days}} day(s)</td>
+                                                        <td><span class="badge badge-warning">{{item.current_aprrover.approver_id.employee_details_id.first_name + ' ' +item.current_aprrover.approver_id.employee_details_id.last_name}}</span></td>
+                                                        <td>{{item.application_on.strftime('%d/%m/%Y')}}
+                                                        </td>
+                                                        <td>
+                                                            {% if item.leave_status == "pending" %}
+                                                            <span class="badge badge-warning">Pending</span>
+                                                            {% elif item.leave_status == "approved" %}
+                                                            <span class="badge badge-success">Approved</span>
+                                                            {% elif item.leave_status == "rejected" %}
+                                                            <span class="badge badge-danger">Rejected</span>
+                                                            {% endif %}
+                                                            {% if item.leave_reject_reason %}
+                                                            <span class="feather feather-info p-0" data-bs-toggle="tooltip"
+                                                                data-bs-placement="top"
+                                                                title="{{item.leave_reject_reason}}"></span>
+                                                            {% endif %}
+                                                        </td>
+                                                    </tr>
+                                                    {% endfor %}
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="tab-pane" id="tab12">
+                                <div class="card">
+                                    <div class="card-body">
+                                        <div class="table-responsive">
+                                            <table
+                                                class="table  table-vcenter text-nowrap table-bordered border-bottom hr-leaves table-striped"
+                                                id="hr-leaves">
+                                                <thead>
+                                                    <tr>
+                                                        <!-- <th class="border-bottom-0 w-5">#No</th> -->
+                                                        <th class="border-bottom-0 w-5">Emp Name</th>
+                                                        <th class="border-bottom-0 w-5">Department</th>
+                                                        <th class="border-bottom-0">Leave Type</th>
+                                                        <th class="border-bottom-0">From</th>
+                                                        <th class="border-bottom-0">To</th>
+                                                        <th class="border-bottom-0">Days</th>
+                                                        <th class="border-bottom-0">Reason</th>
+                                                        <th class="border-bottom-0">Applied on</th>
+                                                        <th class="border-bottom-0">Approved on</th>
+                                                        <th class="border-bottom-0">Status</th>
+                                                        <th class="border-bottom-0">Actions</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    {% for item in leave_applications|selectattr('leave_status', 'in', ['approved', 'modified'])%}
+                                                    <tr>
+                                                        <!-- <td>{{loop.index}}</td> -->
+                                                        <td>
+                                                            <div class="d-flex">
+                                                                <div class="me-3 mt-0 mt-sm-2 d-block">
+                                                                    <h6 class="mb-1 fs-14">
+                                                                        {{item.employee_details_id.first_name + ' ' +item.employee_details_id.last_name}}
+                                                                    </h6>
+                                                                </div>
+                                                            </div>
+                                                        </td>
+                                                        <td>{{item.employee_details_id.employee_company_details.department}}
+                                                        <td>{{item.employee_leave_policy.leave_policy_id.leave_policy_name}}
+                                                        </td>
+                                                        <td>{{item.leave_from.strftime('%d/%m/%Y')}}
+                                                        </td>
+                                                        <td>{{item.leave_till.strftime('%d/%m/%Y')}}
+                                                        </td>
+                                                        <td class="font-weight-semibold">
+                                                            {{item.no_of_days}} day(s)</td>
+                                                        <td><a class="btn btn-light btn-icon btn-sm p-0"
+                                                            href="javascript:void(0);">
+                                                            <i class="text-info ion-chatbubble-working"
+                                                                data-bs-toggle="tooltip" data-bs-placement="top"
+                                                                title="{{item.reason  | default('No Comment Added By Employee')}}"></i>
+                                                                
+                                                            </a>
+                                                            <a class="btn btn-light btn-icon btn-sm p-0"
+                                                                href="javascript:void(0);">
+                                                                <i class="text-info ion-chatbubble-working"
+                                                                    data-bs-toggle="tooltip" data-bs-placement="top"
+                                                                    title="{% for item in leave_applications.approver_comments %} item.comment {% endfor %}"></i>
+                                                            </a>
+                                                        </td>
+                                                        <td>{{item.application_on.strftime('%d/%m/%Y')}}
+                                                        </td>
+                                                        <td>{{item.approved_on.strftime('%d/%m/%Y')}}</td>
+                                                        <td>
+                                                            {% if item.leave_status == "pending" %}
+                                                            <span class="badge badge-warning">Pending</span>
+                                                            {% elif item.leave_status == "approved" %}
+                                                            <span class="badge badge-success">Approved</span>
+                                                            {% elif item.leave_status == "modified" %}
+                                                            <span class="badge badge-warning">Modified</span>
+                                                            {% elif item.leave_status == "rejected" %}
+                                                            <span class="badge badge-danger">Rejected</span>
+                                                            {% endif %}
+                                                            {% if item.leave_reject_reason %}
+                                                            <span class="feather feather-info" data-bs-toggle="tooltip"
+                                                                data-bs-placement="top"
+                                                                title="{{item.leave_reject_reason}}"></span>
+                                                            {% elif item.leave_status == "modified" %}
+                                                            <span class="feather feather-info" data-bs-toggle="tooltip" data-bs-placement="top" 
+                                                            title="{{item.leave_from.strftime('%d-%m-%Y')}} - {{ item.leave_till.strftime('%d-%m-%Y') }}">                                      
+                                                            </span>
+                                                            {% endif %}
+                                                        </td>
+                                                        <td>
+                                                            <a href="#" data-bs-toggle="modal" data-bs-target="#editModal" 
+                                                            data-id="{{ item.id }}" 
+                                                            data-from="{{ item.leave_from.strftime("%d/%m/%Y") }}" 
+                                                            data-to="{{ item.leave_till.strftime("%d/%m/%Y") }}">  
+                                                                <i class="fe fe-edit"></i>
+                                                            </a>
+                                                        </td>
+                                                        
+                                                    </tr>
+                                                    {% endfor %}
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="tab-pane" id="tab13">
+                                <div class="card">
+                                    <div class="card-body">
+                                        <div class="table-responsive">
+                                            <table
+                                                class="table  table-vcenter text-nowrap table-bordered border-bottom hr-leaves table-striped"
+                                                id="hr-leaves">
+                                                <thead>
+                                                    <tr>
+                                                        <!-- <th class="border-bottom-0 w-5">#No</th> -->
+                                                        <th class="border-bottom-0 w-5">Emp Name</th>
+                                                        <th class="border-bottom-0 w-5">Department</th>
+                                                        <th class="border-bottom-0">Leave Type</th>
+                                                        <th class="border-bottom-0">From</th>
+                                                        <th class="border-bottom-0">To</th>
+                                                        <th class="border-bottom-0">Days</th>
+                                                        <th class="border-bottom-0">Reason</th>
+                                                        <th class="border-bottom-0">Applied on</th>
+                                                        <th class="border-bottom-0">Rejected on</th>
+                                                        <th class="border-bottom-0">Rejected By</th>
+                                                        <th class="border-bottom-0">Status</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    {% for item in leave_applications|selectattr('leave_status','equalto','rejected')%}
+                                                    <tr>
+                                                        <!-- <td>{{loop.index}}</td> -->
+                                                        <td>
+                                                            <div class="d-flex">
+                                                                <div class="me-3 mt-0 mt-sm-2 d-block">
+                                                                    <h6 class="mb-1 fs-14">
+                                                                        {{item.employee_details_id.first_name + ' ' +item.employee_details_id.last_name}}
+                                                                    </h6>
+                                                                </div>
+                                                            </div>
+                                                        </td>
+                                                        <td>{{item.employee_details_id.employee_company_details.department}}
+                                                        <td>{{item.employee_leave_policy.leave_policy_id.leave_policy_name}}
+                                                        </td>
+                                                        <td>{{item.leave_from.strftime('%d/%m/%Y')}}
+                                                        </td>
+                                                        <td>{{item.leave_till.strftime('%d/%m/%Y')}}
+                                                        </td>
+                                                        <td class="font-weight-semibold">
+                                                            {{item.no_of_days}} day(s)</td>
+                                                        <td><a class="btn btn-light btn-icon btn-sm p-0"
+                                                                href="javascript:void(0);">
+                                                                <i class="text-info ion-chatbubble-working"
+                                                                    data-bs-toggle="tooltip" data-bs-placement="top"
+                                                                    title="{{item.reason}}"></i>
+                                                            </a></td>
+                                                        <td>{{item.application_on.strftime('%d/%m/%Y')}}
+                                                        </td>
+                                                        <td>{{item.rejected_on.strftime('%d/%m/%Y')}}</td>
+                                                        <td><span class="badge badge-danger">{{item.current_aprrover.approver_id.employee_details_id.first_name + ' ' +item.current_aprrover.approver_id.employee_details_id.last_name}}</span></td>
+                                                        <td>
+                                                            {% if item.leave_status == "pending" %}
+                                                            <span class="badge badge-warning">Pending</span>
+                                                            {% elif item.leave_status == "approved" %}
+                                                            <span class="badge badge-success">Approved</span>
+                                                            {% elif item.leave_status == "rejected" %}
+                                                            <span class="badge badge-danger">Rejected</span>
+                                                            {% endif %}
+                                                            {% if item.leave_reject_reason %}
+                                                            <span class="feather feather-info" data-bs-toggle="tooltip"
+                                                                data-bs-placement="top"
+                                                                title="{{item.leave_reject_reason}}"></span>
+                                                            {% endif %}
+                                                        </td>
+                                                        
+                                                    </tr>
+                                                    {% endfor %}
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Modal -->
+    <div class="modal fade" id="editModal" tabindex="-1" aria-labelledby="editModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="editModalLabel">Edit Leave Application</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="editForm">
+
+                        <!-- <div class="mb-3">
+                            <label for="leave-type" class="form-label">Leave Type</label>
+                            <select class="form-control" id="leave-type" value="">
+                                <option value="paid">Paid</option>
+                                <option value="unpaid">Unpaid</option>
+                            </select>
+                        </div> -->
+                        <div class="mb-3">
+                            <label for="leave-reason" class="form-label">Reason for modification</label>
+                            <textarea class="form-control" id="leave-reason" rows="3"></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label for="leave-type" class="form-label">Leave from</label>
+                            <input required type="date" class="form-control" id="leave-from" value="">
+                        </div>
+                        <div class="mb-3">
+                            <label for="leave-type" class="form-label">Leave till</label>
+                            <input required type="date" class="form-control" id="leave-till" value="">
+                        </div>
+
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="button" style="width: 8rem;" class="btn btn-primary" id="saveChanges">Save Changes</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+<!-- End Row-->
+{% endblock %}
+
+{% block script %}
+{{ super() }}
+<!-- INTERNAL Index js-->
+
+<!-- INTERNAL Daterangepicker js-->
+<script src=".{{ url_for('static', filename='assets/plugins/daterangepicker/moment.min.js') }}"></script>
+<script src=".{{ url_for('static', filename='assets/plugins/daterangepicker/daterangepicker.js') }}"></script>
+<script>
+    // Data Table
+    $(document).ready(function () {
+        var table = $('.hr-leaves').DataTable({
+            "order": [
+                [0, "desc"]
+            ],
+            order: [],
+            columnDefs: [{
+                orderable: false,
+            }],
+            language: {
+                searchPlaceholder: 'Search...',
+                sSearch: '',
+            },
+            initComplete: function () {
+                this.api()
+                    .columns([1,2])
+                    .every(function () {
+                        var column = this;
+                        var select = $('<select class="form-control-sm select2 sm mx-2"><option value="">All</option></select>')
+                            .appendTo($(column.header()))
+                            .on('change', function () {
+                                var val = $.fn.dataTable.util.escapeRegex($(this).val());
+                                column.search(val ? '^' + val + '$' : '', true, false).draw();
+                            });
+                            $( select ).click( function(e) {
+                                e.stopPropagation();
+                            });
+                        column
+                            .data()
+                            .unique()
+                            .sort()
+                            .each(function (d, j) {
+                                select.append('<option value="' + d + '">' + d + '</option>');
+                            });
+                    });
+            },
+        });
+    });
+
+    const editModal = document.getElementById('editModal');
+    editModal.addEventListener('show.bs.modal', function (event) {
+        const button = event.relatedTarget;
+        const leaveId = button.getAttribute('data-id');
+        const leaveTo = button.getAttribute('data-to');
+        const leaveFrom = button.getAttribute('data-from');
+
+        console.log(leaveId, leaveFrom, leaveTo);
+
+        //make leaveFrom and leaveTRo default value fro date feilds in the model
+
+        document.querySelector('#leave-from').value = leaveFrom
+        document.querySelector('#leave-till').value = leaveTo
+
+    
+        // Store the leave data in the modal's dataset
+        editModal.dataset.id = leaveId
+        editModal.dataset.from = leaveFrom
+        editModal.dataset.to = leaveTo
+        
+
+        // document.querySelector('.modal-header').appendChild(document.createElement('div')).textContent = leaveId;
+    });
+
+    const saveChangesBtn = document.getElementById('saveChanges');
+    saveChangesBtn.addEventListener('click',async function () {
+        // Store original button text
+        const originalText = saveChangesBtn.innerHTML;
+
+        // Update button state to loading
+        saveChangesBtn.innerHTML = `<div class="spinner-border" style="width: 1rem; height: 1rem;" 
+        role="status"><span class="visually-hidden">Loading...</span></div>`;
+
+        // const leaveType = document.getElementById('leave-type').value;
+        const leaveFrom = document.getElementById('leave-from').value;
+        const leaveTill = document.getElementById('leave-till').value;
+        const leaveReason = document.getElementById('leave-reason').value;
+
+        // if (leaveFrom > leaveTill) {
+        //     const messageDiv = document.createElement('div');
+        //     // Set the text content
+        //     messageDiv.textContent = 'Leave from date cannot be greater than leave till date';
+
+        //     // Set the style color to red
+        //     messageDiv.style.color = 'red';
+
+        //     // Set the ID
+        //     messageDiv.id = 'messageDivId'; // Replace 'messageDivId' with the desired ID
+
+        //     // Append the div to the modal body
+        //     modalBody.appendChild(messageDiv);
+
+        //     // remove spinner
+        //     saveChangesBtn.innerHTML = originalText
+
+        //     return false
+            
+        // }
+
+        const leaveId = editModal.dataset.id
+        const old_leaveFrom = editModal.dataset.from
+        const old_leaveTo = editModal.dataset.to
+
+        console.log( leaveFrom, leaveTill, old_leaveFrom);
+
+        // const updatedData = {
+            
+        // };
+
+        const result = await fetch('/update_leave_application', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+            },
+            body: JSON.stringify({
+                id: String(leaveId),
+                new_from: leaveFrom,
+                new_to: leaveTill,
+                from: String(old_leaveFrom),
+                to: String(old_leaveTo),
+                adjustment_comment: leaveReason
+            })
+        });
+
+        console.log( result)
+
+
+        if (result.status == 200) {
+            const data = await result.json();
+            const message = data['message'];
+            console.log(data)
+
+            const modalBody = document.querySelector('.modal-body');
+            const messageDiv = document.createElement('div');
+            // Set the text content
+            messageDiv.textContent = message;
+
+            // Set the style color to red
+            messageDiv.style.color = data.status == 'error' ? 'red': 'green';
+
+            // Set the ID
+            messageDiv.id = 'messageDivId'; // Replace 'messageDivId' with the desired ID
+
+            // Append the div to the modal body
+            modalBody.appendChild(messageDiv);
+
+            saveChangesBtn.innerHTML = originalText;
+        } else {
+
+            const data = await result.json();
+            saveChangesBtn.innerHTML = 'Saved Changes';
+        }
+    });
+
+    function resetModal() {
+        // Restore original button text
+        saveChangesBtn.innerHTML = 'Save Changes'; // Change this to whatever the original button text is
+
+        // Remove any message div
+        const messageDiv = document.getElementById('messageDivId');
+        if (messageDiv) {
+            messageDiv.remove();
+        }
+
+        // Optionally reset form fields
+        document.getElementById('leave-type').value = '';
+        document.getElementById('leave-from').value = '';
+        document.getElementById('leave-till').value = '';
+        document.getElementById('leave-reason').value = '';
+    }
+
+    // Event listener for modal close to reset the state
+    editModal.addEventListener('hide.bs.modal', resetModal);
+
+</script>
+{% endblock %}

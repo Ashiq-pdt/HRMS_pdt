@@ -1,0 +1,570 @@
+<!-- templates/employee/index.html -->
+
+{% extends "layout/base.html" %}
+{% block head %}
+{{ super() }}
+<!-- INTERNAL Daterangepicker css-->
+<link rel="stylesheet" href="{{ url_for('static', filename='assets/plugins/daterangepicker/daterangepicker.css') }}">
+<style>
+    table.dataTable tbody th,
+    table.dataTable tbody td,
+    table.dataTable thead th,
+    table.dataTable thead td {
+        padding: 5px 10px !important;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!--Page header-->
+<div class="page-header d-xl-flex d-block">
+    <div class="page-leftheader">
+        <div class="page-title">My Leaves</div>
+    </div>
+    <div class="page-rightheader ms-md-auto">
+        <div class="align-items-end flex-wrap my-auto right-content breadcrumb-right">
+            <div class="btn-list">
+                {% if employee_details.employee_leave_policies and not can_apply_leave.disable_leave_application %}
+                    <a  href="javascript:void(0);" class="btn btn-primary me-3" data-bs-toggle="modal" data-bs-target="#applyleaves">Apply Leaves</a>
+                {% else %}
+                    
+                {% endif %}
+                <button  class="btn btn-light" data-bs-toggle="tooltip" data-bs-placement="top" title="E-mail"> <i class="feather feather-mail"></i> </button>
+                <button  class="btn btn-light" data-bs-placement="top" data-bs-toggle="tooltip" title="Contact"> <i class="feather feather-phone-call"></i> </button>
+                <button  class="btn btn-primary" data-bs-placement="top" data-bs-toggle="tooltip" title="Info"> <i class="feather feather-info"></i> </button>
+            </div>
+        </div>
+    </div>
+</div>
+<!--End Page header-->
+
+<!-- Row -->
+<div class="row">
+    <div class="col-md-12 col-sm-12 col-lg-12 col-xl-12 col-xxl-9">
+        <div class="card">
+            <!-- <div class="card-header  border-0">
+                <h4 class="card-title">Leaves Summary</h4>
+            </div> -->
+
+            <div className="tab-menu-heading">
+                <div class="tab-menu-heading">
+                    <div class="tabs-menu">
+                        <!-- Tabs -->
+                        <ul class="nav panel-tabs">
+                            <li>
+                                <a href="#tab12" data-bs-toggle="tab" class="{% if not isLeaveAdjustmentActive %}active{% endif %}">
+                                    Leave Summary
+                                </a>
+                            </li>
+                            <li>
+                                <a href="#tab13" data-bs-toggle="tab" class="{% if isLeaveAdjustmentActive %}active{% endif %}">
+                                    Leave Adjustments
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+              </div>
+
+            <div class="panel-body tabs-menu-body">
+                <div class="tab-content">
+
+                    <div class="tab-pane {% if not isLeaveAdjustmentActive %}active{% endif %}" id="tab12">
+                        <div class="card">
+                            <div class="card-body">
+                                <div class="table-responsive">
+                                    <table class="table  table-vcenter text-nowrap table-bordered border-bottom" id="emp-attendance">
+                                        <thead>
+                                            <tr>
+                                                <!-- <th class="border-bottom-0 text-center">#ID</th> -->
+                                                <th class="border-bottom-0">Leave Type</th>
+                                                <th class="border-bottom-0">Asked Leave(From-To)</th>
+                                                <th class="border-bottom-0">Approved Leave(From-To)</th>
+                                                <th class="border-bottom-0">Approved Days</th>
+                                                <!-- <th class="border-bottom-0">Reason</th> -->
+                                                <th class="border-bottom-0">Applied On</th>
+                                                <th class="border-bottom-0">Current Approver</th>
+                                                <th class="border-bottom-0">Status</th>
+                                                <th class="border-bottom-0">Action</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for item in leave_applications|sort(attribute='application_on',reverse=True) %}
+                                                <tr>
+                                                    <!-- <td class="text-center">{{loop.index}}</td> -->
+                                                    <td>{{item.employee_leave_policy.leave_policy_id.leave_policy_name}}</td>
+                                                    <td>{{item.asked_leave_from.strftime('%d/%m/%Y') + ' - ' + item.asked_leave_till.strftime('%d/%m/%Y')}}</td>
+                                                    <td>{{item.leave_from.strftime('%d/%m/%Y') + ' - ' + item.leave_till.strftime('%d/%m/%Y')}}</td>
+                                                    <td class="font-weight-semibold">{{item.no_of_days}} day(s)</td>
+                                                    <!-- <td><a class="btn btn-light btn-icon btn-sm" href="javascript:void(0);">
+                                                        <i class="text-info ion-chatbubble-working" data-bs-toggle="tooltip"
+                                                            data-bs-placement="top" title="{{item.reason}}"></i>
+                                                    </a></td> -->
+                                                    <td>{{item.application_on.strftime('%d/%m/%Y')}}</td>
+                                                    <td>{% if item.leave_status == "pending" %}
+                                                            <span class="badge badge-warning">{{item.current_aprrover.approver_id.employee_details_id.first_name + ' ' +item.current_aprrover.approver_id.employee_details_id.last_name}} ({{item.current_approval_level}}/{{item.company_approval_level}})</span></td>
+                                                        {% else %}
+                                                        -
+                                                        {% endif %}
+                                                    <td>
+                                                        {% if item.leave_status == "pending" %}
+                                                            <span class="badge badge-warning">Pending</span>
+                                                        {% elif item.leave_status == "modified" %}
+                                                            <span class="badge badge-warning">Modified</span>
+                                                        {% elif item.leave_status == "approved" %}
+                                                            <span class="badge badge-success">Approved</span>
+                                                        {% elif item.leave_status == "rejected" %}
+                                                            <span class="badge badge-danger">Rejected</span>
+                                                        {% endif %}
+                                                        {% if item.leave_reject_reason %}
+                                                            <span class="feather feather-info" data-bs-toggle="tooltip" data-bs-placement="top" title="{{item.leave_reject_reason}}"></span>
+                                                        {% elif item.leave_status == "modified" %}
+                                                            <span class="feather feather-info" data-bs-toggle="tooltip" data-bs-placement="top" title="{{item.leave_from.strftime('%d-%m-%Y')}} - {{ item.leave_till.strftime('%d-%m-%Y') }}"></span>
+                                                        {% endif %}
+                                                    </td>
+                                                    <td class="text-start d-flex">
+                                                        <!-- <a  href="javascript:void(0);" class="action-btns1" data-bs-toggle="modal" data-bs-target="#leaveapplictionmodal">
+                                                            <i class="feather feather-eye  text-primary"  data-bs-toggle="tooltip" data-bs-placement="top" title="view"></i>
+                                                        </a> -->
+                                                        {% if item.leave_status =="pending" %}
+                                                            <a  href="javascript:void(0);" class="btnDeleteLeave" data-bs-toggle="tooltip" data-bs-placement="top" title="Delete" data-leave_application_id="{{item._id}}">
+                                                                <i class="feather feather-trash-2 text-danger"></i>
+                                                            </a>
+                                                        {% else %}
+                                                            -
+                                                        {% endif %}
+                                                        
+                                                        <!-- <a  href="javascript:void(0);" class="action-btns1"  data-bs-toggle="modal" data-bs-target="#reportmodal">
+                                                            <i class="feather feather-info text-secondary" data-bs-toggle="tooltip" data-bs-placement="top" title="Report"></i>
+                                                        </a> -->
+                                                    </td>
+                                                </tr>
+                                            {% endfor %}
+                                            
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="tab-pane {% if isLeaveAdjustmentActive %}active{% endif %}" id="tab13">
+                        <form class="card-body pt-3 pb-1" method="POST" action="/leaves">
+                            <input type="hidden" name="csrf_token" id="csrf_gen" value="{{ csrf_token() }}" />
+                                <div class="row">
+                                    <div class="col-md-4 col-lg-4">
+                                        <div class="leave-content active" id="multiple">
+                                            <div class="form-group">
+                                                <label class="form-label">Date Range:</label>
+                                                <div class="input-group">
+                                                    <input type="text" name="daterange" class="form-control"
+                                                        placeholder="select dates" id="dt_range"
+                                                        value="{{start.strftime('%d/%m/%Y') + ' - ' + end.strftime('%d/%m/%Y')}}" />
+                                                    <div class="input-group-append">
+                                                        <div class="input-group-text">
+                                                            <i class="bx bx-calendar"></i>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4 col-lg-2 ">
+                                        <div class="form-group mt-5">
+                                            <button class="btn btn-primary btn-block">Search</button>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4 col-lg-2 ">
+                                        <div class="form-group mt-5">
+                                            <a href="/leaves" class="btn btn-orange btn-block">Reset</a>
+                                        </div>
+                                    </div>
+                                </div>
+                        </form>
+                        <div class="card">
+                            <div class="card-body">
+                                <div class="table-responsive">
+                                    <table class="table  table-vcenter text-nowrap table-bordered border-bottom" id="hr-expense">
+                                        <thead>
+                                            <tr>
+                                                <th class="border-bottom-0">#No</th>
+                                                <th class="border-bottom-0">Dated On</th>
+                                                <th class="border-bottom-0">Employee Name</th>
+                                                <th class="border-bottom-0">Department</th>
+                                                <th class="border-bottom-0">Leave Type</th>
+                                                <th class="border-bottom-0">Adjustment Days</th>
+                                                <th class="border-bottom-0">Leave Bal Before Adjustment</th>
+                                                <th class="border-bottom-0">Leave Bal After Adjustment</th>
+
+                                                <!-- <th class="border-bottom-0">Action</th> -->
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for item in adjustment_details|sort(attribute='_id',reverse=True) %}
+                                                <tr>
+                                                    <td>{{loop.index}}</td>
+                                                    <td>{{item.created_at.strftime('%Y-%m-%d')}}</td>
+                                                    <td>
+                                                        <div class="d-flex">
+                                                            <div class="me-3 mt-0 mt-sm-2 d-block">
+                                                                <h6 class="mb-1 fs-14">{{item.employee_details_id.first_name + ' ' + item.employee_details_id.last_name}}</h6>
+                                                            </div>
+                                                        </div>
+                                                    </td>
+                                                    <td>{{item.employee_details_id.employee_company_details.department}}</td>
+                                                    <td>{{item.employee_leave_pol_id.leave_policy_id.leave_policy_name}}</td>
+                                                    <td class="font-weight-semibold {{'text-success' if item.adjustment_type =='increment' else 'text-danger'}}">{{item.adjustment_days}} 
+                                                        {% if item.adjustment_comment %}
+                                                            <a class="btn btn-light btn-icon btn-sm p-0" href="javascript:void(0);">
+                                                                <i class="text-info ion-chatbubble-working" data-bs-toggle="tooltip"
+                                                                    data-bs-placement="top" title="{{item.adjustment_comment}}"></i>
+                                                            </a>
+                                                        {% endif %}
+                                                    </td>
+                                                    <td>{{item.before_adjustment}} </td>
+                                                    <td>{{item.after_adjustment}}</td>
+
+                                                    <!-- <td class="text-start d-flex"> -->
+                                                        <!-- <a  href="javascript:void(0);" class="action-btns1" data-bs-toggle="tooltip" data-bs-placement="top" title="Accept">
+                                                            <i class="feather feather-check text-success" ></i>
+                                                        </a>
+                                                        <a  href="javascript:void(0);" class="action-btns1" data-bs-toggle="tooltip" data-bs-placement="top" title="Rejected">
+                                                            <i class="feather feather-x text-danger"></i>
+                                                        </a>
+                                                        <a  href="javascript:void(0);" class="action-btns1" data-bs-toggle="modal" data-bs-target="#editexpensemodal">
+                                                            <i class="feather feather-eye  text-primary"  data-bs-toggle="tooltip" data-bs-placement="top" title="view"></i>
+                                                        </a> -->
+                                                        <!-- <a  href="{{ url_for('company.delete_adjustment',adjustment_id=item._id) }}" class="action-btns1" data-bs-toggle="tooltip" data-bs-placement="top" title="Delete">
+                                                            <i class="feather feather-trash-2 text-danger"></i>
+                                                        </a>
+                                                    </td> -->
+                                                </tr>
+                                            {% endfor %}
+                                            
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-12 col-sm-12 col-lg-12 col-xl-12 col-xxl-3">
+
+        <div class="tab-pane active">
+            <div class="card">
+                <div class="card-header  border-0">
+                    <h4 class="card-title">Leaves Balance Overview</h4>
+                </div>
+                <div class="card-body">
+                    <div id="leavesoverview" class="mx-auto pt-2"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- End Row-->
+
+<!--Apply Leaves Modal -->
+<div class="modal fade"  id="applyleaves">
+    <div class="modal-dialog" role="document">
+        <form class="card-body pt-3" id="apply_leave_form">
+        
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Apply Leaves</h5>
+                <a  class="btn-close" data-bs-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">×</span>
+                </a>
+            </div>
+            <div class="modal-body">
+                <div class="leave-types">
+                    <div class="" id="multiple">
+                        <div class="form-group">
+                            <label class="form-label">Date Range:</label>
+                            <div class="input-group">
+                                <input type="text" name="daterange"  class="form-control" placeholder="select dates"/>
+                                <div class="input-group-append">
+                                    <div class="input-group-text">
+                                        <i class="bx bx-calendar"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Leaves Types</label>
+                        <select class="form-control custom-select select2" name="leave_type" data-placeholder="Select" id="leave_type">
+                            <!-- <option label="Select"></option> -->
+                            {% for item in employee_details.employee_leave_policies %}
+                                <option value="{{item._id}}">{{item.leave_policy_id.leave_policy_name+' '+'( Remaining Balance: ' + item.balance|string + ' )'}}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Specify reason Emergency/other:</label>
+                        <textarea class="form-control" rows="3" name="reason" placeholder="Specify reason ..."></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="form-label" class="form-label">Emergency Contact*</label>
+                            <input class="form-control" type="text" id="emergency_contact" name="emergency_contact" required>
+                   </div>
+                   <div class="form-group">
+                    <label class="form-label">Contact Address*:</label>
+                    <textarea class="form-control" rows="3" name="contact_address" id="contact_address" placeholder="Specify Contact address..."></textarea>
+                </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <div class="">
+                    <label class="mb-0 font-weight-semibold">Selected Days:</label>
+                    <span class="badge badge-danger badge-pill ms-2 no_of_days">1</span>
+                    <input type="text" name="no_of_days" id="no_of_days" value="1" class="form-control" hidden/>
+                </div>
+                <div class="ms-auto">
+                    <a href="javascript:void(0);" class="btn btn-outline-primary" data-bs-dismiss="modal">Close</a>
+                    <button class="btn btn-primary" id="btnApplyLeave">Apply</button>
+                </div>
+            </div>
+        </div>
+        </form>
+    </div>
+</div>
+<!-- End Apply Leaves Modal  -->
+{% endblock %}
+
+{% block script %}
+{{ super() }}
+<!-- INTERNAL Index js-->
+<script src="{{ url_for('static', filename='assets/plugins/apexchart/apexcharts.js') }}"></script>
+
+<!-- INTERNAL Daterangepicker js-->
+<script src=".{{ url_for('static', filename='assets/plugins/daterangepicker/moment.min.js') }}"></script>
+<script src=".{{ url_for('static', filename='assets/plugins/daterangepicker/daterangepicker.js') }}"></script>
+
+<script src="{{ url_for('static', filename='assets/js/employee/emp-myleaves.js') }}"></script>
+
+<script>
+
+    $(document).ready(function () {
+        var table = $('#hr-expense').DataTable({
+            "order": [
+                [0, "desc"]
+            ],
+            order: [],
+            columnDefs: [{
+                orderable: false,
+            }],
+            language: {
+                searchPlaceholder: 'Search...',
+                sSearch: '',
+            },
+            initComplete: function () {
+                this.api()
+                    .columns([3,4])
+                    .every(function () {
+                        var column = this;
+                        var select = $('<select class="mx-2"><option value="">All</option></select>')
+                            .appendTo($(column.header()))
+                            .on('change', function () {
+                                var val = $.fn.dataTable.util.escapeRegex($(this).val());
+                                column.search(val ? '^' + val + '$' : '', true, false).draw();
+                            });
+                            $( select ).click( function(e) {
+                                e.stopPropagation();
+                            });
+                        column
+                            .data()
+                            .unique()
+                            .sort()
+                            .each(function (d, j) {
+                                select.append('<option value="' + d + '">' + d + '</option>');
+                            });
+                    });
+            },
+        });
+    });
+
+    $(document).ready(function() {
+        $('#hr-expense').DataTable();
+    });
+
+    // Ajax Apply Leave
+    $(document).on("click", '#btnApplyLeave', function (e) {
+        e.preventDefault();
+        var cs = "{{ csrf_token() }}";
+        var leave_type = $('#leave_type :selected').val()
+        var emergency_contact = $('#emergency_contact').val()
+        var contact_address = $('#contact_address').val()        
+
+        if(leave_type != '' && emergency_contact != '' && contact_address != ''){
+            swal({
+                title: "Are you sure?",
+                text: "You want to apply for leave?",
+                icon: "warning",
+                buttons: true,
+                dangerMode: true,
+            }).then((willDelete) => {
+                if (willDelete) {
+                    $.ajax({
+                            headers: {
+                                'X-CSRF-TOKEN': cs
+                            },
+                            url: '/applyleave',
+                            data: $('#apply_leave_form').serialize(),
+                            type: 'POST',
+                        })
+                        .done(function (data) {
+                            $('#applyleaves').modal('toggle');
+                            swal({
+                                title: "Success",
+                                text: "Successfully Applied for Leave!",
+                                icon: "success",
+                            }).then(function(){ 
+                                $("#global-loader").show();
+                                location.reload();
+                                });
+                        })
+                        .fail(function (err) {
+                            console.log(err);
+                            $('#message').html(err);
+                        })
+                }
+            });
+        }
+        else{
+            swal({
+                title: "Error",
+                text: "Please Select the required fields.",
+                icon: "error",
+            });
+        }
+        
+    });
+    //EnD Ajax Apply Leave
+
+    // Ajax Delete Leave
+    $(document).on("click", '.btnDeleteLeave', function (e) {
+        e.preventDefault();
+        var cs = "{{ csrf_token() }}";
+        var leave_application_id = $(this).attr("data-leave_application_id");
+        swal({
+            title: "Are you sure?",
+            text: "You want to delete this leave request?",
+            icon: "warning",
+            buttons: true,
+            dangerMode: true,
+        }).then((willDelete) => {
+            if (willDelete) {
+                $.ajax({
+                        headers: {
+                            'X-CSRF-TOKEN': cs
+                        },
+                        url: '/deleteleaveapplication',
+                        data: {leave_application_id:leave_application_id},
+                        type: 'POST',
+                    })
+                    .done(function (data) {
+                        //$('#markattendancemodal').modal('toggle');
+                        swal({
+                            title: "Success",
+                            text: "Successfully Deleted Leave!",
+                            icon: "success",
+                        }).then(function () {
+                            $("#global-loader").show();
+                            location.reload();
+                        });
+                    })
+                    .fail(function (err) {
+                        console.log(err);
+                        $('#message').html(err);
+                    })
+            }
+        });
+    });
+    //EnD Ajax Delete Leave
+</script>
+
+<script>
+    $(function(e){
+        'use strict';
+    
+        /*----- Overview ------*/
+        var options = {
+            series: [{% for item in employee_details.employee_leave_policies %}
+                         {{item.balance}},
+                    {% endfor %}],
+    
+            // series: [14, 8, 20, 18],
+            chart: {
+                height:300,
+                type: 'donut',
+            },
+            dataLabels: {
+                enabled: false
+            },
+    
+            legend: {
+                show: false,
+            },
+             stroke: {
+                show: true,
+                width:0
+            },
+            plotOptions: {
+            pie: {
+                donut: {
+                    size: '85%',
+                    background: 'transparent',
+                    labels: {
+                        show: true,
+                        name: {
+                            show: true,
+                            fontSize: '29px',
+                            color:'#6c6f9a',
+                            offsetY: -10
+                        },
+                        value: {
+                            show: true,
+                            fontSize: '26px',
+                            color: undefined,
+                            offsetY: 16,
+                        },
+                        total: {
+                            show: true,
+                            showAlways: false,
+                            label: 'Total Leaves Balance',
+                            fontSize: '22px',
+                            fontWeight: 600,
+                            color: '#373d3f',
+                            // formatter: function (w) {
+                            //   return w.globals.seriesTotals.reduce((a, b) => {
+                            // 	return a + b
+                            //   }, 0)
+                            // }
+                          }
+    
+                    }
+                }
+            }
+            },
+            responsive: [{
+                breakpoint: 480,
+                options: {
+                    legend: {
+                        show: false,
+                    }
+                }
+            }],
+            labels: [{% for item in employee_details.employee_leave_policies %}
+                "{{item.leave_policy_id.leave_policy_name}}",
+            {% endfor %}],
+            colors: ['#3366ff', '#f7284a', '#fe7f00', '#01c353'],
+        };
+        var chart = new ApexCharts(document.querySelector("#leavesoverview"), options);
+        chart.render();
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,160 @@
+<!-- templates/admin/index.html -->
+
+{% extends "layout/base.html" %}
+{% block head %}
+{{ super() }}
+<link href="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.0/main.min.css" rel="stylesheet" />
+
+<style>
+    .multi-wrapper, .multi-wrapper .non-selected-wrapper,.multi-wrapper .selected-wrapper{
+        height: 50vh;
+    }
+</style>
+{% endblock %}
+{% block content %}
+
+<!--Page header-->
+<div class="page-header d-xl-flex d-block">
+    <div class="page-leftheader">
+        <div class="page-title">Create New Adjustment</div>
+    </div>
+    <div class="page-rightheader ms-md-auto">
+        <div class="d-flex align-items-end flex-wrap my-auto end-content breadcrumb-end">
+            <div class="btn-list">
+                <button class="btn btn-light" data-bs-toggle="tooltip" data-bs-placement="top" title="E-mail"> <i
+                        class="feather feather-mail"></i> </button>
+                <button class="btn btn-light" data-bs-placement="top" data-bs-toggle="tooltip" title="Contact"> <i
+                        class="feather feather-phone-call"></i> </button>
+                <button class="btn btn-primary" data-bs-placement="top" data-bs-toggle="tooltip" title="Info"> <i
+                        class="feather feather-info"></i> </button>
+            </div>
+        </div>
+    </div>
+</div>
+<!--End Page header-->
+
+<!-- Row -->
+<div class="row">
+    <div class="col-md-12">
+        <form class="card-body pt-3" method="POST" action="{{url_for('company.edit_adjustment',adjustment_id=adjustment_details._id)}}" enctype="multipart/form-data">
+            <input type="hidden" name="csrf_token" id="csrf_gen" value="{{ csrf_token() }}" />
+            <input class="form-control" placeholder="Month Range" type="text" name="selected_month" id="selected_month" value="{{adjustment_details.adjustment_on.strftime('%Y-%m-%d')}}" hidden>
+            <div class="card">
+                <div class="form-group ">
+                    <div class="row">
+                        <div class="col-md-12 col-lg-5">
+                            <div class="card-body">
+                                <h4 class="card-title">Basic Information</h4>
+                                <div class="row">
+                                    <div class="col-md-6 col-lg-6">
+                                        <label class="form-label mb-0 mt-2">Month/Year</label>
+                                        <div class="input-group">
+                                            <div class="input-group-prepend">
+                                                <div class="input-group-text">
+                                                    <span class="feather feather-clock"></span>
+                                                </div>
+                                            </div>
+                                            <input class="form-control" id="filter-datepicker-month" placeholder="Month Range"
+                                                type="text" name="month_range_input" value="{{adjustment_details.adjustment_on.strftime('%B %Y')}}" required>
+                                        </div>
+                                    </div>
+                                    <!-- <div class="col-md-6 col-lg-6 pt-2">
+                                        <label class="form-label mb-0 mt-2">&nbsp;</label>
+                                        <div class="form-group mb-0">
+                                            <label class="custom-switch">
+                                                <input type="checkbox" class="custom-switch-input"
+                                                    name="recurring_payment"
+                                                    id="recurring_payment">
+                                                <span class="custom-switch-indicator"></span>
+                                                <span class="custom-switch-description">Recurring Payment</span>
+                                            </label>
+                                        </div>
+                                    </div> -->
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-12 col-lg-12 pt-2 px-0">
+                                        <div class="col-lg-12 col-md-12">
+                                            <div class="form-group">
+                                                <label class="form-label"> Selected Employee</label>
+                                                <input name="employee_name" type="text"  id="adjustment_employee" class="form-control" value="{{adjustment_details.employee_details_id.first_name + ' ' + adjustment_details.employee_details_id.last_name}}" disabled>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                               
+                            </div>
+                        </div>
+                        <div class="col-md-12 col-lg-7">
+                            <div class="card-body">
+                                <h4 class="card-title"><span class="text-success">Addition</span>/<span class="text-danger">Deduction</span> Summary</h4>
+                                <div class="form-group input-adjustments">
+                                    <div class="row">
+                                        <div class="col-md-12 col-lg-3">
+                                            <div class="form-group">
+                                                <label class="form-label mb-0 mt-2">Reasons</label>
+                                                <select name="adjustment_reason"
+                                                    class="form-control custom-select" data-placeholder="Select Reason" required>
+                                                    <option label="Select Reason" default></option>
+                                                    {% for item in company_details.adjustment_reasons|sort(attribute='adjustment_type') %}
+                                                        <option value="{{item.id}}" class="{{'text-success' if item.adjustment_type=='addition' else 'text-danger'}}" {% if adjustment_details.adjustment_reason_id._id==item._id %}selected{% endif %}>{{item.adjustment_reason}}</option>
+                                                    {% endfor %}
+                                                </select>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-12 col-lg-3">
+                                            <label class="form-label mb-0 mt-2">Amount</label>
+                                            <input name="adjustment_amount" type="number"  id="adjustment_amount" class="form-control"
+                                                value="{{adjustment_details.adjustment_amount}}">
+                                        </div>
+                                        <div class="col-md-12 col-lg-3">
+                                            <div class="form-group">
+                                                <label for="form-label" class="form-label mb-0 mt-2">Select File</label>
+                                                <input class="form-control" name="adjustment_document" type="file" value="{{adjustment_details.adjustment_document}}">
+                                            </div>
+                                        </div>
+                                        
+                                        <!-- <div class="col-md-12 col-lg-2">
+                                            <a href="#" class="btn btn-danger" id="removeRegular"><i class="fa fa-times"></i></a>
+                                        </div> -->
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-footer">
+                            <button class="btn btn-primary">Update</button>
+                            <a href="javascript:void(0);" class="btn btn-danger">Cancel</a>
+                </div>
+                
+            </div>
+        </form>
+    </div>
+</div>
+<!-- End Row -->
+
+{% endblock %}
+
+{% block script %}
+{{ super() }}
+<!-- INTERNAL Fullcalendar js-->
+<script src="{{ url_for('static', filename='assets/plugins/bootstrap-datepicker/bootstrap-datepicker.js') }}"></script>
+<!-- Select2 js -->
+<script>
+    fpm = $('#filter-datepicker-month').bootstrapdatepicker({
+        format: "MM yyyy",
+        startdate: '+0m',
+        startView: "months",
+        minViewMode: "months",
+        orientation: 'bottom',
+        autoclose: true
+    })
+    // To get the month and year in route
+    fpm.on('changeDate', function (e) {
+        $('.action-btns').attr("data-selected_month", e.dates)
+        $('#selected_month').val(moment(new Date(e.dates)).format('YYYY-MM-DD'))
+    });
+    
+</script>
+{% endblock %}

@@ -1,0 +1,42 @@
+C:\Program Files\MongoDB\Server\6.0\bin\mongodump --uri="mongodb+srv://pdtuae-hrm:pass@123@cluster0.mf10u.mongodb.net/hrm?retryWrites=true&w=majority" --collection="Test-Atlas-Collection
+.Atlas-HRM-Collection";
+
+
+mongodump --uri="mongodb+srv://pdtuae-hrm:pass%40123@cluster0.mf10u.mongodb.net/hrm" --archive=dump.archive --gzip
+
+
+// Backup from Atlas Server
+
+mongodump --uri="mongodb+srv://pdtuae-hrm:pass%40123@cluster0.mf10u.mongodb.net/hrm" --archive=dump.archive --gzip
+
+mongodump --uri="mongodb+srv://pdtuae-hrm:pass%40123@cluster0.mf10u.mongodb.net/hrm-test-db" --archive=dump.archive --gzip
+
+mongodump --uri="mongodb+srv://pdtuae-hrm:pass%40123@cluster0.mf10u.mongodb.net/hrm-fen" --archive=dump-fen.archive --gzip
+
+
+mongodump --uri="mongodb+srv://pdtuae-hrm:pass%40123@cluster0.mf10u.mongodb.net/hrm" --archive=dump.archive --gzip
+
+//Restore that backup in Local
+
+mongorestore --archive=dump.archive --gzip --nsFrom='hrm.*' --nsTo='Test-Atlas-Hrm.*'
+
+
+mongorestore --archive=dump.archive --gzip --nsFrom='hrm.*' --nsTo='Test-hrm-test-db.*'
+
+mongorestore --archive=dump-fen.archive --gzip --nsFrom='hrm.*' --nsTo='Test-hrm-fen.*'
+
+mongorestore --uri="mongodb+srv://pdtuae-hrm:pass%40123@cluster0.mf10u.mongodb.net/db" C:/Users/Arsalan/Desktop/hrm-test-db-live
+
+
+https://stackoverflow.com/questions/64274976/mongodb-atlas-database-vs-mongodb-local-which-is-best-for-saas-in-terms-of-tran
+https://stackoverflow.com/questions/65470894/mongodb-vs-mongodb-atlas
+https://studio3t.com/whats-new/5-reasons-you-should-install-a-local-mongodb-database/
+
+
+np:\\.\pipe\LOCALDB#74967BAD\tsql\query
+
+
+mongorestore --archive=dump.archive --gzip --nsFrom='hrm.*' --nsTo='hrm-test-db.*'
+
+
+DB_URI = "mongodb://localhost:27017/hrm-test-db"

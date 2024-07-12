@@ -1,0 +1,450 @@
+<!-- templates/employee/index.html -->
+
+{% extends "layout/base.html" %}
+{% block head %}
+{{ super() }}
+<!-- INTERNAL Daterangepicker css-->
+<link rel="stylesheet" href="{{ url_for('static', filename='assets/plugins/daterangepicker/daterangepicker.css') }}">
+{% endblock %}
+
+{% block content %}
+<!--Page header-->
+<div class="page-header d-xl-flex d-block">
+    <div class="page-leftheader">
+        <div class="page-title">Reimbursement</div>
+    </div>
+    <div class="page-rightheader ms-md-auto">
+        <div class="d-flex align-items-end flex-wrap my-auto end-content breadcrumb-end">
+            <div class="btn-list">
+                <!-- <a  href="{{url_for('employee.create_reimbursement')}}" class="btn btn-primary me-3">Apply Reimbursement</a> -->
+                <button class="btn btn-light" data-bs-toggle="tooltip" data-bs-placement="top" title="E-mail"> <i
+                        class="feather feather-mail"></i> </button>
+                <button class="btn btn-light" data-bs-placement="top" data-bs-toggle="tooltip" title="Contact"> <i
+                        class="feather feather-phone-call"></i> </button>
+                <button class="btn btn-primary" data-bs-placement="top" data-bs-toggle="tooltip" title="Info"> <i
+                        class="feather feather-info"></i> </button>
+            </div>
+        </div>
+    </div>
+</div>
+<!--End Page header-->
+
+<!-- Row -->
+<div class="row">
+    <div class="card" id="tabs-style3">
+        <div class="card-header border-bottom-0">
+            <div class="card-title">
+                Reimbursement Summary
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="panel panel-primary tabs-style-3">
+                <div class="tab-menu-heading">
+                    <div class="tabs-menu ">
+                        <!-- Tabs -->
+                        <ul class="nav panel-tabs">
+                            <li class=""><a href="#tab11" class="active" data-bs-toggle="tab"><i class="fa fa-hourglass-half"></i> Pending Requests (<span class="text-bold">{{reimbursement_data|selectattr('reimbursement_status','equalto','pending')|list|count}}</span>)</a></li>
+                            <li><a href="#tab12" data-bs-toggle="tab"><i class="fa fa-check-circle-o"></i> Approved ({{reimbursement_data|selectattr('reimbursement_status','equalto','approved')|list|count}})</a></li>
+                            <li><a href="#tab13" data-bs-toggle="tab"><i class="fa fa-times-circle-o"></i> Rejected ({{reimbursement_data|selectattr('reimbursement_status','equalto','rejected')|list|count}})</a></li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="panel-body tabs-menu-body">
+                    <div class="tab-content">
+                        <div class="tab-pane active" id="tab11">
+                            <div class="card">
+                                <!-- <div class="card-header  border-0">
+                                    <h4 class="card-title"></h4>
+                                </div> -->
+                                <div class="card-body">
+                                    <div class="table-responsive">
+                                        <table class="table  table-vcenter text-nowrap table-bordered border-bottom table-striped hr-leaves" id="hr-leaves">
+                                            <thead>
+                                                <tr>
+                                                    <th class="border-bottom-0">#No</th>
+                                                    <th class="border-bottom-0">Created On</th>
+                                                    <th class="border-bottom-0">Employee Name</th>
+                                                    <th class="border-bottom-0">Department</th>
+                                                    <th class="border-bottom-0">Adjustment Type</th>
+                                                    <th class="border-bottom-0">Dated On</th>
+                                                    <th class="border-bottom-0">Amount (AED)</th>
+                                                    <th class="border-bottom-0">Action</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {% for item in reimbursement_data|sort(attribute='created_at',reverse=True)|selectattr('reimbursement_status','equalto','pending') %}
+                                                    <tr>
+                                                        <td>{{loop.index}}</td>
+                                                        <td>{{item.created_at.strftime('%Y-%m-%d')}}</td>
+                                                        <td>
+                                                            <div class="d-flex">
+                                                                <div class="me-3 mt-0 mt-sm-2 d-block">
+                                                                    <h6 class="mb-1 fs-14">{{item.employee_details_id.first_name + ' ' + item.employee_details_id.last_name}}</h6>
+                                                                </div>
+                                                            </div>
+                                                        </td>
+                                                        <td>{{item.employee_details_id.employee_company_details.department}}</td>
+                                                        <td>{{item.adjustment_reason_id.adjustment_reason}}</td>
+                                                        <td>{{item.reimbursement_on.strftime('%Y-%m-%d')}}</td>
+                                                        <td class="font-weight-semibold">{{"%0.2f" | format(item.reimbursement_amount | float)}} 
+                                                            {% if item.reimbursement_document %}
+                                                                <a class="btn btn-light btn-icon btn-sm break_history p-0" style="float:right" href="{{url_for('static', filename='uploads/documents/'+company_details.company_name.strip()+'/adjustments/'+item.reimbursement_document)}}" target="_blank"">
+                                                                    <i class="fa fa-file-image-o text-end" data-bs-toggle="tooltip" title="" data-bs-original-title="View Reciept"></i></td>
+                                                                </a>
+                                                            {% endif %}
+                                                        <td class="text-start d-flex">
+                                                            <div class="btn-group mt-1 mb-1">
+                                                                <button class="btn btn-outline-primary dropdown-toggle" data-bs-toggle="dropdown">
+                                                                    Action <span class="caret"></span>
+                                                                </button>
+                                                                <ul class="dropdown-menu" role="menu">
+                                                                    <!-- <li class="dropdown-plus-title">
+                                                                        Dropdown
+                                                                        <b class="fa fa-angle-up" aria-hidden="true"></b>
+                                                                    </li> -->
+                                                                    <li><a href="javascript:void(0);" class="reimburse" data-type="approved" data-reimburse_id="{{item._id}}">Aprrove</a></li>
+                                                                    <li><a href="javascript:void(0);" class="reimburse_to_payroll" data-type="approvedtopayroll" data-reimburse_id="{{item._id}}" data-bs-toggle="modal" data-bs-target="#approvetopayrollmodal">Approve & Add to Payroll</a></li>
+                                                                    <li><a href="javascript:void(0);" class="reimburse" data-type="rejected" data-reimburse_id="{{item._id}}">Reject</a></li>
+
+                                                                </ul>
+                                                            </div>
+                                                        </td>
+                                                    </tr>
+                                                {% endfor %}
+                                                
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="tab-pane" id="tab12">
+                            <div class="card">
+                                <!-- <div class="card-header  border-0">
+                                    <h4 class="card-title"></h4>
+                                </div> -->
+                                <div class="card-body">
+                                    <div class="table-responsive">
+                                        <table class="table  table-vcenter text-nowrap table-bordered border-bottom table-striped hr-leaves" id="hr-leaves">
+                                            <thead>
+                                                <tr>
+                                                    <th class="border-bottom-0">#No</th>
+                                                    <th class="border-bottom-0">Created On</th>
+                                                    <th class="border-bottom-0">Employee Name</th>
+                                                    <th class="border-bottom-0">Department</th>
+                                                    <th class="border-bottom-0">Adjustment Type</th>
+                                                    <th class="border-bottom-0">Dated On</th>
+                                                    <th class="border-bottom-0">Amount (AED)</th>
+                                                    <th class="border-bottom-0">Action</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {% for item in reimbursement_data|sort(attribute='created_at',reverse=True)|selectattr('reimbursement_status','equalto','approved') %}
+                                                    <tr>
+                                                        <td>{{loop.index}}</td>
+                                                        <td>{{item.created_at.strftime('%Y-%m-%d')}}</td>
+                                                        <td>
+                                                            <div class="d-flex">
+                                                                <div class="me-3 mt-0 mt-sm-2 d-block">
+                                                                    <h6 class="mb-1 fs-14">{{item.employee_details_id.first_name + ' ' + item.employee_details_id.last_name}}</h6>
+                                                                </div>
+                                                            </div>
+                                                        </td>
+                                                        <td>{{item.employee_details_id.employee_company_details.department}}</td>
+                                                        <td>{{item.adjustment_reason_id.adjustment_reason}}</td>
+                                                        <td>{{item.reimbursement_on.strftime('%Y-%m-%d')}}</td>
+                                                        <td class="font-weight-semibold">{{"%0.2f" | format(item.reimbursement_amount | float)}}</td>
+                                                        <td class="text-start d-flex">
+                                                            <div class="btn-group mt-1 mb-1">
+                                                                <button class="btn btn-outline-primary dropdown-toggle" data-bs-toggle="dropdown">
+                                                                    Action <span class="caret"></span>
+                                                                </button>
+                                                                <ul class="dropdown-menu" role="menu">
+                                                                    <!-- <li class="dropdown-plus-title">
+                                                                        Dropdown
+                                                                        <b class="fa fa-angle-up" aria-hidden="true"></b>
+                                                                    </li> -->
+                                                                    <li><a href="javascript:void(0);" class="reimburse" data-type="pending" data-reimburse_id="{{item._id}}">Pending</a></li>
+                                                                    <li><a href="javascript:void(0);" class="reimburse_to_payroll" data-type="approvedtopayroll" data-reimburse_id="{{item._id}}" data-bs-toggle="modal" data-bs-target="#approvetopayrollmodal">Approve & Add to Payroll</a></li>
+                                                                    <li><a href="javascript:void(0);" class="reimburse" data-type="rejected" data-reimburse_id="{{item._id}}">Reject</a></li>
+                                                                </ul>
+                                                            </div>
+                                                        </td>
+                                                    </tr>
+                                                {% endfor %}
+                                                
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="tab-pane" id="tab13">
+                            <div class="card">
+                                <!-- <div class="card-header  border-0">
+                                    <h4 class="card-title"></h4>
+                                </div> -->
+                                <div class="card-body">
+                                    <div class="table-responsive">
+                                        <table class="table  table-vcenter text-nowrap table-bordered border-bottom table-striped hr-leaves" id="hr-leaves">
+                                            <thead>
+                                                <tr>
+                                                    <th class="border-bottom-0">#No</th>
+                                                    <th class="border-bottom-0">Created On</th>
+                                                    <th class="border-bottom-0">Employee Name</th>
+                                                    <th class="border-bottom-0">Department</th>
+                                                    <th class="border-bottom-0">Adjustment Type</th>
+                                                    <th class="border-bottom-0">Dated On</th>
+                                                    <th class="border-bottom-0">Amount (AED)</th>
+                                                    <th class="border-bottom-0">Action</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {% for item in reimbursement_data|sort(attribute='created_at',reverse=True)|selectattr('reimbursement_status','equalto','rejected') %}
+                                                    <tr>
+                                                        <td>{{loop.index}}</td>
+                                                        <td>{{item.created_at.strftime('%Y-%m-%d')}}</td>
+                                                        <td>
+                                                            <div class="d-flex">
+                                                                <div class="me-3 mt-0 mt-sm-2 d-block">
+                                                                    <h6 class="mb-1 fs-14">{{item.employee_details_id.first_name + ' ' + item.employee_details_id.last_name}}</h6>
+                                                                </div>
+                                                            </div>
+                                                        </td>
+                                                        <td>{{item.employee_details_id.employee_company_details.department}}</td>
+                                                        <td>{{item.adjustment_reason_id.adjustment_reason}}</td>
+                                                        <td>{{item.reimbursement_on.strftime('%Y-%m-%d')}}</td>
+                                                        <td class="font-weight-semibold">{{"%0.2f" | format(item.reimbursement_amount | float)}}</td>
+                                                        <td class="text-start d-flex">
+                                                            <div class="btn-group mt-1 mb-1">
+                                                                <button class="btn btn-outline-primary dropdown-toggle" data-bs-toggle="dropdown">
+                                                                    Action <span class="caret"></span>
+                                                                </button>
+                                                                <ul class="dropdown-menu" role="menu">
+                                                                    <!-- <li class="dropdown-plus-title">
+                                                                        Dropdown
+                                                                        <b class="fa fa-angle-up" aria-hidden="true"></b>
+                                                                    </li> -->
+                                                                    <li><a href="javascript:void(0);" class="reimburse" data-type="pending" data-reimburse_id="{{item._id}}">Pending</a></li>
+                                                                    <li><a href="javascript:void(0);" class="reimburse" data-type="approved" data-reimburse_id="{{item._id}}">Aprrove</a></li>
+                                                                    <li><a href="javascript:void(0);" class="reimburse_to_payroll" data-type="approvedtopayroll" data-reimburse_id="{{item._id}}" data-bs-toggle="modal" data-bs-target="#approvetopayrollmodal">Approve & Add to Payroll</a></li>
+                                                                </ul>
+                                                            </div>
+                                                            
+                                                        </td>
+                                                    </tr>
+                                                {% endfor %}
+                                                
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- End Row-->
+
+<!--Reject Reason Modal -->
+<div class="modal fade" id="approvetopayrollmodal">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <form class="card-body pt-3" id="time_rejection_form">
+                <div class="modal-header">
+                    <h5 class="modal-title">Select Payroll Month/Year*</h5>
+                    <a type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">×</span>
+                    </a>
+                </div>
+
+                <div class="modal-body">
+                    <div id="message"></div>
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+                    <input type="hidden" name="status" value="approvedtopayroll"/>
+                    <input type="hidden" name="reimbursement_id" id="r_id" value=""/>
+
+                    <div class="form-group">
+                        <label class="form-label mb-0 mt-2">Month/Year</label>
+                        <input class="form-control" id="filter-datepicker-month" placeholder="Month Range" name="payroll_month" type="text" required>
+					</div>
+
+                </div>
+                <div class="modal-footer">
+                    <a href="javascript:void(0);" class="btn btn-outline-primary" data-bs-dismiss="modal">Close</a>
+                    <a class="btn btn-primary" id="btnReimbursetoPayroll">Submit</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+<!-- Reject Reason Modal  -->
+{% endblock %}
+
+{% block script %}
+{{ super() }}
+<!-- INTERNAL Index js-->
+<!-- <script src="{{ url_for('static', filename='assets/plugins/apexchart/apexcharts.js') }}"></script> -->
+
+<!-- INTERNAL Daterangepicker js-->
+<script src=".{{ url_for('static', filename='assets/plugins/daterangepicker/moment.min.js') }}"></script>
+<script src="{{ url_for('static', filename='assets/plugins/bootstrap-datepicker/bootstrap-datepicker.js') }}"></script>
+
+<script>
+
+$(document).on("show.bs.modal", '#approvetopayrollmodal', function (e) {
+    var reimburse_id = $(e.relatedTarget).data('reimburse_id');
+    if(reimburse_id){
+        $('#r_id').val(reimburse_id);
+    }
+    $('#filter-datepicker-month').bootstrapdatepicker({
+        format: "MM yyyy",
+        startdate: '+0m',
+        startView: "months",
+        minViewMode: "months",
+        orientation: 'bottom',
+        autoclose: true,
+        container: '#approvetopayrollmodal .modal-body'
+    })
+});
+
+// Data Table
+$(document).ready(function () {
+    var table = $('.hr-leaves').DataTable({
+        "order": [
+            [0, "desc"]
+        ],
+        order: [],
+        columnDefs: [{
+            orderable: false,
+        }],
+        language: {
+            searchPlaceholder: 'Search...',
+            sSearch: '',
+        },
+        initComplete: function () {
+            this.api()
+                .columns([3,4])
+                .every(function () {
+                    var column = this;
+                    var select = $('<select class="form-control-sm select2 sm mx-2"><option value="">All</option></select>')
+                        .appendTo($(column.header()))
+                        .on('change', function () {
+                            var val = $.fn.dataTable.util.escapeRegex($(this).val());
+                            column.search(val ? '^' + val + '$' : '', true, false).draw();
+                        });
+                        $( select ).click( function(e) {
+                            e.stopPropagation();
+                        });
+                    column
+                        .data()
+                        .unique()
+                        .sort()
+                        .each(function (d, j) {
+                            select.append('<option value="' + d + '">' + d + '</option>');
+                        });
+                });
+        },
+    });
+});
+</script>
+<script>
+    // Ajax Approve Leave 
+    $(document).on("click", '.reimburse', function (e) {
+        e.preventDefault();
+        var cs = "{{ csrf_token() }}";
+        var status = $(this).attr("data-type");
+        var reimbursement_id = $(this).attr("data-reimburse_id");
+
+
+        swal({
+            title: "Are you sure?",
+            text: "You want to perform this action?",
+            icon: "warning",
+            buttons: true,
+            dangerMode: true,
+        }).then((willDelete) => {
+            if (willDelete) {
+                $("#global-loader").show();
+                $.ajax({
+                        headers: {
+                            'X-CSRF-TOKEN': cs
+                        },
+                        url: '/update/reimbursement/',
+                        data: {
+                            reimbursement_id: reimbursement_id,
+                            status : status
+                        },
+                        type: 'POST',
+                    })
+                    .done(function (data) {
+                        //$('#markattendancemodal').modal('toggle');
+                        $("#global-loader").hide();
+                        swal({
+                            title: "Success",
+                            text: "Successfully Perfomed Action!",
+                            icon: "success",
+                        }).then(function () {
+                            $("#global-loader").show();
+                            location.reload();
+                        });
+                    })
+                    .fail(function (err) {
+                        console.log(err);
+                        $('#message').html(err);
+                    })
+            }
+        });
+    });
+    //EnD Ajax Approve Leave
+
+    // Ajax Reject Leave 
+    $(document).on("click", '#btnReimbursetoPayroll', function (e) {
+        e.preventDefault();
+        var cs = "{{ csrf_token() }}";
+        var payroll_month = $('#filter-datepicker-month').val();
+
+
+        if(payroll_month){
+            swal({
+                title: "Are you sure?",
+                text: "You want to approve this reimbursement & add to payroll?",
+                icon: "warning",
+                buttons: true,
+                dangerMode: true,
+            }).then((willDelete) => {
+                if (willDelete) {
+                    $("#global-loader").show();
+                    $.ajax({
+                            headers: {
+                                'X-CSRF-TOKEN': cs
+                            },
+                            url: '/update/reimbursement/',
+                            data: $('#time_rejection_form').serialize(),
+                            type: 'POST',
+                        })
+                        .done(function (data) {
+                            $("#global-loader").hide();
+                            swal({
+                                title: "Success",
+                                text: "Successfully approved reimbursement & added amount to payroll!",
+                                icon: "success",
+                            }).then(function () {
+                                $("#global-loader").show();
+                                location.reload();
+                            });
+                        })
+                        .fail(function (err) {
+                            console.log(err);
+                            $('#message').html(err);
+                        })
+                }
+            });
+        }
+    });
+    //EnD Ajax Reject Leave
+</script>
+{% endblock %}

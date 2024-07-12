@@ -1,0 +1,222 @@
+<!-- templates/admin/index.html -->
+
+{% extends "layout/base.html" %}
+{% block head %}
+{{ super() }}
+<link href="https://cdn.jsdelivr.net/npm/fullcalendar-scheduler@5.11.0/main.min.css" rel="stylesheet" />
+<style>
+    .fc .fc-bg-event{
+        opacity:0.8 !important;
+    }
+    .fc .fc-bg-event .fc-event-title {
+        font-weight: 900;
+        font-style: normal;
+        text-align: center;
+    }
+
+    .fc-h-event .fc-event-title-container{
+        font-weight: 900;
+        font-style: normal;
+        text-align: center;
+    }
+
+    .fc-license-message{
+        display: none;
+    }
+</style>
+{% endblock %}
+{% block content %}
+<!--Page header-->
+<div class="page-header d-xl-flex d-block">
+    <div class="page-leftheader">
+        <div class="page-title">Shift Scheduler </div>
+    </div>
+    <div class="page-rightheader ms-md-auto">
+        <div class="d-flex align-items-end flex-wrap my-auto end-content breadcrumb-end">
+            <div class="btn-list">
+                <button class="btn btn-light" data-bs-toggle="tooltip" data-bs-placement="top" title="E-mail"> <i
+                        class="feather feather-mail"></i> </button>
+                <button class="btn btn-light" data-bs-placement="top" data-bs-toggle="tooltip" title="Contact"> <i
+                        class="feather feather-phone-call"></i> </button>
+                <button class="btn btn-primary" data-bs-placement="top" data-bs-toggle="tooltip" title="Info"> <i
+                        class="feather feather-info"></i> </button>
+            </div>
+        </div>
+    </div>
+</div>
+<!--End Page header-->
+<div class="row">
+    <div class="col-md-12">
+        <form class="card" method="POST" action="#">
+            <input type="hidden" name="csrf_token" id="csrf_schedule" value="{{ csrf_token() }}" />
+            <input type="hidden" name="company_id" id="company_id" value="{{ company_details.user_id.id }}" />
+            <div class="card-header border-bottom-0">
+                <h3 class="card-title">Select options</h3>
+            </div>
+            <div class="card-body ">
+                    <div class="row">
+                        <!-- <input type="text" id="edit-count-checked-checkboxes" name="count-checked-checkboxes" class="form-text" disabled hidden/>
+                        <div class="col-lg-3 col-md-4 col-sm-3">
+                            <label class="form-label mb-0">Employees Selected</label>
+                            <button type="button" class="btn btn-danger mb-1 me-3 disabled no_of_emp_btn">
+                                <span><i class="fa fa-users"></i></span>
+                                <span class="badge bg-white text-primary ms-2 no_of_emp_selected">0</span>
+                            </button>
+                        </div> -->
+                        <div class="col-lg-2 col-md-4 col-sm-2">
+                            <div class="form-group">
+                                <label class="form-label"> Select Work Timing*</label>
+                                <select class="form-control select2-show-search custom-select" id="work_timing" required>
+                                    {% for item in company_details.worktimings %}
+                                        <option value="{{item._id}}"  data-color="{{item.schedule_color}}">{{item.name if item.is_day_off else item.name + '(' + (item.office_start_at + ' - ' + item.office_end_at) +')' }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-lg-2 col-md-4 col-sm-3">
+                            <div class="form-group">
+                                <label class="form-label">Select an office*</label>
+                                <select name="country" class="form-control custom-select select2" id="working_office" data-placeholder="Select Country">
+                                    {% for item in company_details.offices %}
+                                        <option value="{{item._id}}"  data-color="{{item.schedule_color}}">{{item.office_name}}</option>
+                                    {% endfor %}
+                                    <!-- <option label="Select Country"></option>
+                                    <option value="Brazil">Brazil</option>
+                                    <option value="Czech Republic">Czech Republic</option>
+                                    <option value="Germany"selected>Germany</option>
+                                    <option value="Poland" >Poland</option> -->
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-lg-2 col-md-4 col-sm-3">
+                            <div class="form-group">
+                                <label class="form-label">Schedule From*</label>
+                                <input type="text" class="form-control fc-datepicker" name="start_date" id="start_date" placeholder="DD-MM-YYYY">
+                            </div>
+                        </div>
+                        <div class="col-lg-2 col-md-4 col-sm-3">
+                            <div class="form-group">
+                                <label class="form-label">Schedule Till*</label>
+                                <input type="text" class="form-control fc-datepicker" name="end_date" id="end_date" placeholder="DD-MM-YYYY">
+                            </div>
+                        </div>
+                        <div class="col-lg-2 col-md-4 col-sm-3">
+                            <div class="form-group">
+                                <label class="form-label"> Enable Outside Clock-ins*</label>
+                                <select class="form-control select2-show-search custom-select" id="allow_outside_checkin" name="allow_outside_checkin" required>
+                                        <option value="False" >No</option>
+                                        <option value="True" >Yes</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-lg-2 col-md-4 col-sm-3">
+                            <label class="form-label">&nbsp;</label>
+                            <button class="btn btn-primary disabled scheduleBtn scheduleBtns mb-2"  name="add_schedule">Schedule</button>
+                            <button class="btn btn-primary disabled scheduleBtns clearSchedule mb-2">Clear Schedule</button>
+                        </div>
+                    </div>
+                 <div id="message" class="text-danger"></div>
+            </div>
+        </form>
+    </div>
+</div>
+<!-- Row -->
+<div class="row">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-body">
+                <input type="text" id="edit-count-checked-checkboxes" name="count-checked-checkboxes" class="form-text" disabled hidden/>
+                <div class="col-lg-3 col-md-4 col-sm-3 px-0">
+                    <!-- <label class="form-label mb-0">Employees Selected</label> -->
+                    <button type="button" class="btn btn-danger mb-1 me-3 disabled no_of_emp_btn">
+                        <span><i class="fa fa-users"></i></span>
+                        <span class="badge bg-white text-primary ms-2 no_of_emp_selected">0</span>
+                    </button>
+                </div>
+                <div id="calendar" class="position-sticky"></div>
+          
+            </div>
+        </div>
+    </div>
+</div>
+</div>
+<!-- End Row -->
+
+{% endblock %}
+
+{% block script %}
+{{ super() }}
+<script>
+    $(".fc-datepicker").datepicker({
+		dateFormat: "yy-mm-dd"}
+    );
+</script>
+<!-- INTERNAL Index js-->
+<script src="{{ url_for('static', filename='assets/plugins/modal-datepicker/datepicker.js') }}"></script>
+<script src="{{ url_for('static', filename='assets/plugins/bootstrap-timepicker/bootstrap-timepicker.js') }}"></script>
+<script src="{{ url_for('static', filename='assets/js/hr/hr-settings.js') }}"></script>
+<script src="{{ url_for('static', filename='assets/plugins/accordion/accordion.min.js') }}"></script>
+<script src="{{ url_for('static', filename='assets/plugins/sweet-alert/jquery.sweet-modal.min.js') }}"></script>
+<script src="{{ url_for('static', filename='assets/plugins/sweet-alert/sweetalert.min.js') }}"></script>
+<!-- <script src="{{ url_for('static', filename='assets/plugins/fullcalendar/fullcalendar.min.js') }}"></script> -->
+<script src='https://cdn.jsdelivr.net/npm/fullcalendar-scheduler@5.11.0/main.min.js'></script>
+
+<!-- <script src="{{ url_for('static', filename='assets/js/app-calendar.js') }}"></script> -->
+
+<script>
+    {% include "js/app-calendar-mass.js" %}
+</script>
+<script>
+    $(document).ready(function(){
+
+        var $checkboxes = $('input.resource_checkbox[type=checkbox]');
+            
+        $checkboxes.change(function(){
+            var countCheckedCheckboxes = $checkboxes.filter(':checked').length;
+            if (countCheckedCheckboxes > 0) {
+                $( ".no_of_emp_btn" ).removeClass( "btn-danger" )
+                $( ".no_of_emp_btn" ).addClass( "btn-success" )
+                $( ".scheduleBtns" ).removeClass( "disabled" )
+            }
+            else{
+                $( ".no_of_emp_btn" ).removeClass( "btn-success" )
+                $( ".no_of_emp_btn" ).addClass( "btn-danger" )
+                $( ".scheduleBtns" ).addClass( "disabled" )
+            }
+            $('#count-checked-checkboxes').text(countCheckedCheckboxes);
+            $('.no_of_emp_selected').html(countCheckedCheckboxes);
+            $('#edit-count-checked-checkboxes').val(countCheckedCheckboxes);
+            var ch = $(this).attr('data-parent')
+            if(ch){
+                if ($('.'+ch+':checked').length == $('.'+ch).length) {
+                    $('#'+ch).prop("checked" , true);
+               } else {
+                    $('#'+ch).prop("checked" , false);
+               }
+            }
+        });
+    });
+
+    $(document).on(' change','input[name="resource_group_checkbox"]',function() {
+        var c =  '.'+$(this).val();
+        $(c).prop("checked" , this.checked);
+        var $checkboxes = $('input.resource_checkbox[type=checkbox]');
+            var countCheckedCheckboxes = $checkboxes.filter(':checked').length;
+            if (countCheckedCheckboxes > 0) {
+                $( ".no_of_emp_btn" ).removeClass( "btn-danger" )
+                $( ".no_of_emp_btn" ).addClass( "btn-success" )
+                $( ".scheduleBtns" ).removeClass( "disabled" )
+            }
+            else{
+                $( ".no_of_emp_btn" ).removeClass( "btn-success" )
+                $( ".no_of_emp_btn" ).addClass( "btn-danger" )
+                $( ".scheduleBtns" ).addClass( "disabled" )
+            }
+            $('#count-checked-checkboxes').text(countCheckedCheckboxes);
+            $('.no_of_emp_selected').html(countCheckedCheckboxes);
+            $('#edit-count-checked-checkboxes').val(countCheckedCheckboxes);
+    });
+    
+</script>
+
+{% endblock %}

@@ -1,0 +1,202 @@
+<!-- templates/admin/index.html -->
+
+{% extends "layout/base.html" %}
+{% block head %}
+{{ super() }}
+<link href="https://cdn.jsdelivr.net/npm/fullcalendar@5.11.0/main.min.css" rel="stylesheet" />
+
+<style>
+  
+</style>
+{% endblock %}
+{% block content %}
+
+<!--Page header-->
+<div class="page-header d-xl-flex d-block">
+    <div class="page-leftheader">
+        <div class="page-title">Adjustments</div>
+    </div>
+    <div class="page-rightheader ms-md-auto">
+        <div class="d-flex align-items-end flex-wrap my-auto end-content breadcrumb-end">
+            <div class="btn-list">
+                <a href="{{url_for('company.create_adjustments')}}" class="btn btn-primary me-3">Create New Adjustment</a>
+                <button  class="btn btn-light" data-bs-toggle="tooltip" data-bs-placement="top" title="E-mail"> <i class="feather feather-mail"></i> </button>
+                <button  class="btn btn-light" data-bs-placement="top" data-bs-toggle="tooltip" title="Contact"> <i class="feather feather-phone-call"></i> </button>
+                <button  class="btn btn-primary" data-bs-placement="top" data-bs-toggle="tooltip" title="Info"> <i class="feather feather-info"></i> </button>
+            </div>
+        </div>
+    </div>
+</div>
+<!--End Page header-->
+
+
+<!-- Row -->
+<div class="row">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-body">
+                <form class="card-body pt-3" method="POST" action="/adjustments">
+                    <input type="hidden" name="csrf_token" id="csrf_gen" value="{{ csrf_token() }}" />
+                    <div class="row mt-5">
+                        <div class="col-md-6 col-lg-3">
+                            <label class="form-label">Payroll Month:</label>
+                            <input class="form-control" placeholder="Month Range" type="text" name="selected_month"
+                                id="selected_month" value="{{start_of_month.strftime('%Y-%m-%d')}}" hidden>
+                            <div class="input-group">
+                                <div class="input-group-prepend">
+                                    <div class="input-group-text">
+                                        <span class="feather feather-clock"></span>
+                                    </div>
+                                </div>
+
+                                <input class="form-control" id="filter-datepicker-month" placeholder="Month Range"
+                                    type="text" name="month_range_input" value="{{start_of_month.strftime('%B')}}">
+                            </div>
+                        </div>
+                        <div class="col-md-6 col-lg-2">
+                            <div class="form-group mt-5">
+                                <button href="javascript:void(0);" class="btn btn-primary btn-block">Search</button>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="card-header border-bottom-0">
+                <h4 class="card-title">Adjustment Summary</h4>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table  table-vcenter text-nowrap table-bordered border-bottom table-striped" id="hr-expense">
+                        <thead>
+                            <tr>
+                                <th class="border-bottom-0">#No</th>
+                                <th class="border-bottom-0">Dated On</th>
+                                <th class="border-bottom-0">Employee Name</th>
+                                <th class="border-bottom-0">Department</th>
+                                <th class="border-bottom-0">Adjustment Type</th>
+                                <th class="border-bottom-0">Payroll Month/Year</th>
+                                <th class="border-bottom-0">Amount (AED)</th>
+                                <th class="border-bottom-0">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in adjustment_details %}
+                                <tr>
+                                    <td>{{loop.index}}</td>
+                                    <td>{{item.created_at.strftime('%Y-%m-%d')}}</td>
+                                    <td>
+                                        <div class="d-flex">
+                                            <div class="me-3 mt-0 mt-sm-2 d-block">
+                                                <h6 class="mb-1 fs-14">{{item.employee_details_id.first_name + ' ' + item.employee_details_id.last_name}}</h6>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>{{item.employee_details_id.employee_company_details.department}}</td>
+                                    <td>{{item.adjustment_reason_id.adjustment_reason}} 
+                                        {% if item.attendance_date %}
+                                            ({{ item.attendance_date.strftime('%d-%m-%Y')}})
+                                        {% endif %} </td>
+                                    <td>{{item.adjustment_month_on_payroll}}/{{item.adjustment_year_on_payroll}}</td>
+                                    <td class="font-weight-semibold {{'text-success' if item.adjustment_type =='addition' else 'text-danger'}}">{{"%0.2f" | format(item.adjustment_amount | float)}}</td>
+                                    <td class="text-start d-flex">
+                                        <!-- <a  href="javascript:void(0);" class="action-btns1" data-bs-toggle="tooltip" data-bs-placement="top" title="Accept">
+                                            <i class="feather feather-check text-success" ></i>
+                                        </a>
+                                        <a  href="javascript:void(0);" class="action-btns1" data-bs-toggle="tooltip" data-bs-placement="top" title="Rejected">
+                                            <i class="feather feather-x text-danger"></i>
+                                        </a>
+                                        <a  href="javascript:void(0);" class="action-btns1" data-bs-toggle="modal" data-bs-target="#editexpensemodal">
+                                            <i class="feather feather-eye  text-primary"  data-bs-toggle="tooltip" data-bs-placement="top" title="view"></i>
+                                        </a> -->
+
+                                        {% if not item.added_to_payroll %}
+                                            <a  href="{{ url_for('company.edit_adjustment',adjustment_id=item._id) }}" class="mx-2" data-bs-toggle="tooltip" data-bs-placement="top" title="Edit">
+                                                <i class="feather feather-edit text-info"></i>
+                                            </a>
+                                            <a  href="{{ url_for('company.delete_adjustment',adjustment_id=item._id) }}" class="" data-bs-toggle="tooltip" data-bs-placement="top" title="Delete">
+                                                <i class="feather feather-trash-2 text-danger"></i>
+                                            </a>
+                                        {% endif %}
+                                        
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                            
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- End Row -->
+
+{% endblock %}
+
+{% block script %}
+{{ super() }}
+<script src="{{ url_for('static', filename='assets/plugins/bootstrap-datepicker/bootstrap-datepicker.js') }}"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.1.3/jszip.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/pdfmake.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/vfs_fonts.js"></script>
+<script src="https://cdn.datatables.net/buttons/2.2.3/js/buttons.html5.min.js"></script>
+<script>
+
+// Data Table 
+$(document).ready(function () {
+    var table = $('#hr-expense').DataTable({
+        "order": [
+            [0, "desc"]
+        ],
+        order: [],
+        columnDefs: [{
+            orderable: false,
+        }],
+        language: {
+            searchPlaceholder: 'Search...',
+            sSearch: '',
+        },
+        initComplete: function () {
+            this.api()
+                .columns([3,4])
+                .every(function () {
+                    var column = this;
+                    var select = $('<select class="mx-2"><option value="">All</option></select>')
+                        .appendTo($(column.header()))
+                        .on('change', function () {
+                            var val = $.fn.dataTable.util.escapeRegex($(this).val());
+                            column.search(val ? '^' + val + '$' : '', true, false).draw();
+                        });
+                        $( select ).click( function(e) {
+                            e.stopPropagation();
+                        });
+                    column
+                        .data()
+                        .unique()
+                        .sort()
+                        .each(function (d, j) {
+                            select.append('<option value="' + d + '">' + d + '</option>');
+                        });
+                });
+        },
+    });
+});
+
+fpm = $('#filter-datepicker-month').bootstrapdatepicker({
+    format: "MM",
+    //endDate: '+0m',
+    viewMode: "months",
+    minViewMode: "months",
+    orientation: 'bottom',
+    multidate: false,
+    multidateSeparator: "-",
+    autoclose: true
+})
+
+fpm.on('changeDate', function (e) {
+    $('.action-btns').attr("data-selected_month", e.dates)
+    $('#selected_month').val(moment(new Date(e.dates)).format('YYYY-MM-DD'))
+});
+</script>
+
+{% endblock %}

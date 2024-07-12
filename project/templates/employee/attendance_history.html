@@ -1,0 +1,269 @@
+<!-- templates/employee/index.html -->
+
+{% extends "layout/base.html" %}
+{% block head %}
+{{ super() }}
+<!-- INTERNAL Daterangepicker css-->
+<link rel="stylesheet" href="{{ url_for('static', filename='assets/plugins/daterangepicker/daterangepicker.css') }}">
+<style>
+    table.dataTable tbody th,
+    table.dataTable tbody td,
+    table.dataTable thead th,
+    table.dataTable thead td {
+        padding: 5px 10px !important;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!--Page header-->
+<div class="page-header d-xl-flex d-block">
+    <div class="page-leftheader">
+        <div class="page-title">Attendance History</div>
+    </div>
+    <div class="page-rightheader ms-md-auto">
+        <div class="align-items-end flex-wrap my-auto right-content breadcrumb-right">
+            <div class="btn-list">
+                <button  class="btn btn-light" data-bs-toggle="tooltip" data-bs-placement="top" title="E-mail"> <i class="feather feather-mail"></i> </button>
+                <button  class="btn btn-light" data-bs-placement="top" data-bs-toggle="tooltip" title="Contact"> <i class="feather feather-phone-call"></i> </button>
+                <button  class="btn btn-primary" data-bs-placement="top" data-bs-toggle="tooltip" title="Info"> <i class="feather feather-info"></i> </button>
+            </div>
+        </div>
+    </div>
+</div>
+<!--End Page header-->
+
+<!-- Row -->
+<div class="row">
+    <div class="col-md-12 col-sm-12 col-lg-12 col-xl-12 col-xxl-12">
+        <div class="card">
+            <div class="card-header border-0">
+                <h4 class="card-title">Monthly Attendance History</h4>
+            </div>
+            <div class="card-body">
+                <form class="card-body pt-3 pb-1" method="POST" action="/attendancehistory">
+                    <input type="hidden" name="csrf_token" id="csrf_gen" value="{{ csrf_token() }}" />
+
+                    <div class="row">
+                        <div class="col-md-2 col-lg-2">
+                            <div class="leave-content active" id="multiple">
+                                <div class="form-group">
+                                    <label class="form-label">Date From:</label>
+                                    <div class="wd-200 mg-b-30">
+                                        <div class="input-group">
+                                            <div class="input-group-prepend">
+                                                <div class="input-group-text">
+                                                    <span class="feather feather-calendar"></span>
+                                                </div>
+                                            </div><input class="form-control fc-datepicker" name="attendance_date_from" placeholder="DD/MM/YYYY" type="text" value="{{start.strftime('%d/%m/%Y')}}">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-2 col-lg-2">
+                            <div class="leave-content active" id="multiple">
+                                <div class="form-group">
+                                    <label class="form-label">Date to:</label>
+                                    <div class="wd-200 mg-b-30">
+                                        <div class="input-group">
+                                            <div class="input-group-prepend">
+                                                <div class="input-group-text">
+                                                    <span class="feather feather-calendar"></span>
+                                                </div>
+                                            </div><input class="form-control fc-datepicker" name="attendance_date_to" placeholder="DD/MM/YYYY" type="text" value="{{end.strftime('%d/%m/%Y')}}">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-2 col-lg-2 ">
+                            <div class="form-group mt-5">
+                                <button class="btn btn-primary btn-block">Search</button>
+                            </div>
+                        </div>
+                        <div class="col-md-2 col-lg-2 ">
+                            <div class="form-group mt-5">
+                                <a href="/attendancereport" class="btn btn-orange btn-block">Reset</a>
+                            </div>
+                        </div>
+
+                    </div>
+                </form>
+
+            </div>
+            <div class="table-responsive mt-5 p-3">
+                <table class="table  table-vcenter text-nowrap table-bordered border-bottom  attendance-history ">
+                    <thead>
+                        <tr>
+                            <th class="text-start border-bottom-0">Attendance Date</th>
+                            <th class="text-start border-bottom-0">Day</th>
+                            <th class="text-start border-bottom-0">Status</th>
+                            <th class="text-start border-bottom-0">Clock In At</th>
+                            <th class="text-start border-bottom-0">Clock Out At</th>
+                            <th class="text-start border-bottom-0">Total Hours Worked</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in attendance_history %}
+                            <tr class="border-bottom fs-15">
+                                <td class="text-start d-flex"><span
+                                        class=" fs-15">{{item.attendance_date.strftime('%d %B %Y')}}</span></td>
+                                <td class="text-start fs-15">{% if item.attendance_status == 'present' %}
+                                    <span class="badge badge-success-light">Present</span>
+                                    {% elif item.attendance_status == 'absent' %}
+                                    <span class="badge badge-danger-light">Absent</span>
+                                    {% elif item.attendance_status == 'dayoff' %}
+                                    <span class="badge badge-pink-light">Day off {{'('+item.leave_name+')' if item.leave_name else '(Week Off)'}}</span>
+                                    {% elif item.attendance_status == 'holiday' %}
+                                    <span class="badge badge-warning-light">Holiday({{item.occasion_for}})</span>
+                                    {% else %}
+                                    <span class="badge badge-pink-light">Week off</span>
+                                    {% endif %}</td>
+                                <td class="text-start fs-15">{{item.employee_check_in_at.strftime('%H:%M %p') if item.employee_check_in_at else '-'}}
+                                    {% if item.employee_check_in_at %}
+                                        <a class="btn btn-light btn-icon btn-sm break_history p-0" href="javascript:void(0);"
+                                            data-bs-toggle="modal" data-bs-target="#presentmodal"
+                                            data-attendance_id="{{item._id}}">
+                                            <i class="feather fe fe-clock {{'text-success' if item.break_history else 'text-danger'}}" data-bs-toggle="tooltip"
+                                                data-bs-placement="top" title="View History"></i>
+                                        </a>
+                                    {% endif %}
+                                </td>
+                                <td class="text-start fs-15">{{item.employee_check_out_at.strftime('%H:%M %p') if item.employee_check_out_at else '-'}}</td>
+                                <td class="text-start">{{item.total_hrs_worked if item.total_hrs_worked else (item.employee_check_out_at-item.employee_check_in_at if item.employee_check_out_at else '-')}}</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- End Row-->
+
+<!--Present Modal -->
+<div class="modal fade" id="presentmodal">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Break History</h5>
+                <button class="btn-close" data-bs-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">×</span>
+                </button>
+            </div>
+            <!-- <div class="modal-body p-0">
+                <div class="row">
+                    <div class="col-md-12">
+                        <div class="pt-5 text-center">
+                            <h6 class="mb-1 fs-14 font-weight-semibold">Employee Name: <small
+                                    class="text-muted fs-14">Test Employee</small></h6>
+
+                        </div>
+                    </div>
+                </div>
+            </div> -->
+            <!-- Container -->
+            <div style="max-height:80vh;overflow-y:scroll">
+                <ul class="notification">
+                </ul>
+            </div>
+            <!-- End Container -->
+            <div class="modal-footer">
+                <a href="javascript:void(0);" class="btn btn-outline-primary" data-bs-dismiss="modal">Close</a>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- End Present Modal  -->
+{% endblock %}
+
+{% block script %}
+{{ super() }}
+<script src="{{ url_for('static', filename='assets/plugins/modal-datepicker/datepicker.js') }}"></script>
+<script>
+	/* Data Table */
+	$('.attendance-history').DataTable({
+		order: [],
+		columnDefs: [ { orderable: false, targets: [0] } ],
+		language: {
+			searchPlaceholder: 'Search...',
+			sSearch: '',
+
+		}
+	});
+	/* End Data Table */
+
+    $(document).ready(function () {
+        $('.break_history').click(function () {
+            // AJAX request
+            $("#global-loader").show();
+            var attendance_id = $(this).attr("data-attendance_id"); //Start or end
+
+            $.ajax({
+                url: '/breakhistory',
+                type: 'get',
+                data: {
+                    attendance_id: attendance_id
+                },
+                success: function (response) {
+                    // Add response in Modal body
+                    //data = JSON.parse(response)
+                    //console.log(response.details)
+
+                    if (response.details) {
+                        //console.log(response.details.employee_id)
+                        break_history_details = ''
+
+                        $.each(response.details, function (index, value) {
+                            break_history_details += '<li>\
+                            <div class="notification-time ">\
+                                <span class="date">' + value.attendance_date + '</span>\
+                                <span class="date mt-2 text-success">' + value.break_difference + ' Minutes</span>\
+                            </div>\
+                            <div class="notification-icon text-success">\
+                                <a href="javascript:void(0);" style="border-color:#f7284a !important"></a>\
+                            </div>\
+                            <div class="notification-time-date mb-2 d-block d-md-none">\
+                                <span class="date">' + value.attendance_date + '</span>\
+                                <span class="date ms-2 text-success">' + value.break_difference + ' Minutes</span>\
+                            </div>\
+                            <div class="notification-body mt-2" style="margin-right:30px !important">\
+                                <div class="media mt-0">\
+                                    <div class="media-body ms-3 d-flex">\
+                                        <div class="">\
+                                            <p class="fs-15 text-dark fw-bold mb-0">Break Time</p>\
+                                            <p class="mb-0 fs-13 text-dark">Start: ' + value.start_at + ', End: ' +
+                                value.end_at + '</p>\
+                                        </div>\
+                                        <div class="notify-time">\
+                                            <p class="mb-0 text-muted fs-11"><span\
+                                                    class="badge bg-danger ms-3 px-2 pb-1 mb-1">Break</span></p>\
+                                        </div>\
+                                    </div>\
+                                </div>\
+                            </div>\
+                        </li>'
+                        });
+                        //$('.modal-body').html(response);
+                        $('ul.notification').html(break_history_details);
+                        $("#global-loader").hide();
+                    } else {
+                        $('ul.notification').html(
+                            '<span class="px-3">Break History Not Found! </span>');
+                        //$('#largemodal').modal('toggle');
+                        $("#global-loader").hide();
+                    }
+                    // Display Modal
+                    $('#largemodal').modal('show');
+                }
+            });
+        });
+    });
+
+    $('.fc-datepicker').datepicker({
+        format:'dd/mm/yyyy',
+        autoHide: true
+      });
+</script>
+{% endblock %}

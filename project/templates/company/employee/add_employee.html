@@ -1,0 +1,870 @@
+<!-- templates/admin/index.html -->
+
+{% extends "layout/base.html" %}
+
+{% block content %}
+	<!--Page header-->
+    <div class="page-header d-xl-flex d-block">
+        <div class="page-leftheader">
+            <div class="page-title">Add Employee</div>
+        </div>
+        <div class="page-rightheader ms-md-auto">
+            <div class="align-items-end flex-wrap my-auto right-content breadcrumb-right">
+                <div class="btn-list">
+                    <button  class="btn btn-light" data-bs-toggle="tooltip" data-bs-placement="top" title="E-mail"> <i class="feather feather-mail"></i> </button>
+                    <button  class="btn btn-light" data-bs-placement="top" data-bs-toggle="tooltip" title="Contact"> <i class="feather feather-phone-call"></i> </button>
+                    <button  class="btn btn-primary" data-bs-placement="top" data-bs-toggle="tooltip" title="Info"> <i class="feather feather-info"></i> </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!--End Page header-->
+
+    <!-- Row -->
+    <div class="row">
+        <div class="col-xl-10 col-md-12 col-lg-12">
+            <form class="card-body pt-3" method="POST" action="/create/employee" enctype="multipart/form-data">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+            <div class="text-end">
+                <button class="btn btn-primary">Save</button>
+                <a  href="/employees" class="btn btn-danger">Cancel</a>
+            </div>
+            <div class="tab-menu-heading hremp-tabs p-0 ">
+                <div class="tabs-menu1">
+                    <!-- Tabs -->
+                    <ul class="nav panel-tabs">
+                        <li class="ms-4"><a href="#tab5" class="active"  data-bs-toggle="tab">Personal Details</a></li>
+                        <li><a href="#tab6"  data-bs-toggle="tab">Company Details</a></li>
+                        <li><a href="#tab7" data-bs-toggle="tab">Bank Details</a></li>
+                        <li><a href="#tab8" data-bs-toggle="tab">Upload Documents</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="panel-body tabs-menu-body hremp-tabs1 p-0">
+                <div class="tab-content">
+                    <div class="tab-pane active" id="tab5">
+                        <div class="card-body">
+                            <h4 class="mb-4 font-weight-bold">Basic</h4>
+                            
+                            <div class="form-group ">
+                                <div class="row">
+                                    <div class="col-md-3">
+                                        <label class="form-label mb-0 mt-2">User Name</label>
+                                    </div>
+                                    <div class="col-md-9">
+                                        <div class="row">
+                                            <div class="col-md-6">
+                                                <input type="text" class="form-control mb-md-0 mb-5" name="first_name"  placeholder="First Name" required>
+                                                <span class="text-muted"></span>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <input type="text" class="form-control" name="last_name"  placeholder="Last Name" required> 
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="form-group ">
+                                <div class="row">
+                                    <div class="col-md-3">
+                                        <label class="form-label mb-0 mt-2">Father Name</label>
+                                    </div>
+                                    <div class="col-md-9">
+                                        <input type="text" class="form-control" name="father_name" placeholder="Name">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <div class="row">
+                                    <div class="col-md-3">
+                                        <label class="form-label mb-0 mt-2">Contact Number</label>
+                                    </div>
+                                    <div class="col-md-9">
+                                        <input type="text" class="form-control" name="contact_no"   placeholder="Phone Number" required>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <div class="row">
+                                    <div class="col-md-3">
+                                        <label class="form-label mb-0 mt-2">Emergency Contact Number 01</label>
+                                    </div>
+                                    <div class="col-md-9">
+                                        <input type="text" class="form-control" name="emergency_contact_no_1" placeholder="Emergency Contact Person">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <div class="row">
+                                    <div class="col-md-3">
+                                        <label class="form-label mb-0 mt-2">Emergency Contact Person</label>
+                                    </div>
+                                    <div class="col-md-9">
+                                        <input type="text" class="form-control" name="emergency_contact_no_2" placeholder="Contact Number02">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="form-group ">
+                                <div class="row">
+                                    <div class="col-md-3">
+                                        <label class="form-label mb-0 mt-2">Date Of Birth</label>
+                                    </div>
+                                    <div class="col-md-9">
+                                        <input type="text" class="form-control fc-datepicker" name="dob"  placeholder="DD-MM-YYY">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="form-group ">
+                                <div class="row">
+                                    <div class="col-md-3">
+                                        <label class="form-label">Gender</label>
+                                    </div>
+                                    <div class="col-md-9">
+                                        <div class="custom-controls-stacked d-md-flex">
+                                            <label class="custom-control custom-radio me-4">
+                                                <input type="radio" class="custom-control-input" name="gender" value="male">
+                                                <span class="custom-control-label">Male</span>
+                                            </label>
+                                            <label class="custom-control custom-radio">
+                                                <input type="radio" class="custom-control-input" name="gender" value="female">
+                                                <span class="custom-control-label">Female</span>
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <div class="row">
+                                    <div class="col-md-3">
+                                        <label class="form-label mb-0 mt-2">Marital Status</label>
+                                    </div>
+                                    <div class="col-md-9">
+                                        <select class="form-control custom-select select2" name="marital_status" data-placeholder="Select">
+                                            <option label="Select"></option>
+                                            <option value="single">Single</option>
+                                            <option value="married">Married</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <div class="row">
+                                    <div class="col-md-3">
+                                        <label class="form-label mb-0 mt-2">Blood Group</label>
+                                    </div>
+                                    <div class="col-md-9">
+                                        <select class="form-control custom-select select2" name="blood_group" data-placeholder="Select Group">
+                                            <option label="Select Group"></option>
+                                            <option value="a+">A+</option>
+                                            <option value="b+">B+</option>
+                                            <option value="o+">O+</option>
+                                            <option value="ab+">AB+</option>
+                                            <option value="a-">A-</option>
+                                            <option value="b-">B-</option>
+                                            <option value="o-">O-</option>
+                                            <option value="ab-">AB-</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="form-group ">
+                                <div class="row">
+                                    <div class="col-md-3">
+                                        <label class="form-label mb-0 mt-2">Email</label>
+                                    </div>
+                                    <div class="col-md-9">
+                                        <input type="email" class="form-control" name="personal_email" placeholder="Email" required>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <div class="row">
+                                    <div class="col-md-3">
+                                        <label class="form-label mb-0 mt-2">Present Address</label>
+                                    </div>
+                                    <div class="col-md-9">
+                                        <textarea rows="3" class="form-control" name="present_address" placeholder="Address1"></textarea>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <div class="row">
+                                    <div class="col-md-3">
+                                        <label class="form-label mb-0 mt-2">Permanent Address</label>
+                                    </div>
+                                    <div class="col-md-9">
+                                        <textarea rows="3" class="form-control" name="permanent_address" placeholder="Address2"></textarea>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <div class="row">
+                                    <div class="col-md-3">
+                                        <label class="form-label mb-0 mt-2">Passport Number</label>
+                                    </div>
+                                    <div class="col-md-9">
+                                        <input type="text" class="form-control" name="passport_number"
+                                            placeholder="Passport Number">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <div class="row">
+                                    <div class="col-md-3">
+                                        <label class="form-label mb-0 mt-2">Emirates Id Number</label>
+                                    </div>
+                                    <div class="col-md-9">
+                                        <input type="text" class="form-control" name="emirates_id_no"
+                                            placeholder="Emirates Id Number">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <div class="row">
+                                    <div class="col-md-3">
+                                        <div class="form-label mb-0 mt-2">Upload Photo</div>
+                                    </div>
+                                    <div class="col-md-9">
+                                        <div class="form-group">
+                                            <label for="form-label" class="form-label"></label>
+                                            <input class="form-control" name="profile_pic" type="file">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <h4 class="mb-5 mt-7 font-weight-bold">Account Login</h4>
+                            <div class="form-group">
+                                <div class="row">
+                                    <div class="col-md-3">
+                                        <label class="form-label mb-0 mt-2">Employee Email</label>
+                                    </div>
+                                    <div class="col-md-9">
+                                        <input type="text" class="form-control" name="email" placeholder="Employee Email" required>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <div class="row">
+                                    <div class="col-md-3">
+                                        <label class="form-label mb-0 mt-2">Password</label>
+                                    </div>
+                                    <div class="col-md-9">
+                                        <input type="password" class="form-control" name="password" placeholder="Password" required>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="form-group mt-7">
+                                <div class="row">
+                                    <div class="col-md-3">
+                                        <label class="form-label">Email Notification:</label>
+                                    </div>
+                                    <div class="col-md-9">
+                                        <label class="custom-switch">
+                                            <input type="checkbox" name="email_notification" class="custom-switch-input">
+                                            <span class="custom-switch-indicator"></span>
+                                            <span class="custom-switch-description">On/Off</span>
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                        </div>
+                    </div>
+                    <div class="tab-pane" id="tab6">
+                        <div class="card-body">
+                            <div class="form-group">
+                                <div class="row">
+                                    <div class="col-md-3">
+                                        <label class="form-label mb-0 mt-2">Employee ID</label>
+                                    </div>
+                                    <div class="col-md-9">
+                                        <input type="text" class="form-control" name="employee_id" placeholder="#ID">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <div class="row">
+                                    <div class="col-md-3">
+                                        <label class="form-label mb-0 mt-2">Working Sub Company</label>
+                                    </div>
+                                    <div class="col-md-9">
+                                        <select class="form-control custom-select select2" name="working_sub_company" data-placeholder="Select Working Sub Company">
+                                            <option label="Select Working Sub Company"></option>
+                                            {% for item in departments.sub_companies %}
+                                                <option value="{{item._id}}" {% if item.is_default %}
+                                                selected{% endif %}>{{item.company_name}}</option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <div class="row">
+                                    <div class="col-md-3">
+                                        <label class="form-label mb-0 mt-2">Department</label>
+                                    </div>
+                                    <div class="col-md-9">
+                                        <select name="department"  class="form-control custom-select select2"  data-placeholder="Select Department">
+                                            <option label="Select Department"></option>
+                                            {% for item in departments.departments %}
+                                                <option value="{{item.department_name}}">{{item.department_name}}</option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <div class="row">
+                                    <div class="col-md-3">
+                                        <label class="form-label mb-0 mt-2">Clock In Office</label>
+                                    </div>
+                                    <div class="col-md-9">
+                                        <select class="form-control custom-select select2" name="working_office" data-placeholder="Select Default Clock In Office">
+                                            {% for item in departments.offices %}
+                                                <option value="{{item._id}}" {% if item.is_default %}
+                                                selected{% endif %}>{{item.office_name}}</option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <div class="row">
+                                    <div class="col-md-3">
+                                        <label class="form-label mb-0 mt-2">Working Timing</label>
+                                    </div>
+                                    <div class="col-md-9">
+                                        <select class="form-control custom-select select2" name="working_office" data-placeholder="Select Default Working Office">
+                                            {% for item in departments.worktimings %}
+                                                <option value="{{item.id}}" {% if item.is_default %}
+                                                selected{% endif %}>{{item.name}}</option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <div class="row">
+                                    <div class="col-md-3">
+                                        <label class="form-label mb-0 mt-2">Allow Outside Radius Clock Ins</label>
+                                    </div>
+                                    <div class="col-md-9">
+                                        <select name="office_clockins"  class="form-control custom-select select2"  data-placeholder="Allow Outside Radius Clock Ins">
+                                            <option value="no">No</option>
+                                            <option value="yes">Yes</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <div class="row">
+                                    <div class="col-md-3">
+                                        <label class="form-label mb-0 mt-2">Allow Work From Home</label>
+                                    </div>
+                                    <div class="col-md-9">
+                                        <select name="wfh_option"  class="form-control custom-select select2"  data-placeholder="Allow Work From Home">
+                                            <option value="yes">Yes</option>
+                                            <option value="no">No</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <div class="row">
+                                    <div class="col-md-3">
+                                        <label class="form-label mb-0 mt-2">Designation</label>
+                                    </div>
+                                    <div class="col-md-9">
+                                        <input type="text" class="form-control" name="designation"  placeholder="Designation">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <div class="row">
+                                    <div class="col-md-3">
+                                        <label class="form-label mb-0 mt-2">Date Of Joining</label>
+                                    </div>
+                                    <div class="col-md-9">
+                                        <input type="text" class="form-control fc-datepicker" name="date_of_joining" placeholder="DD/MM/YYYY">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <div class="row">
+                                    <div class="col-md-3">
+                                        <label class="form-label mb-0 mt-2">Probation End Date</label>
+                                    </div>
+                                    <div class="col-md-9">
+                                        <input type="text" class="form-control fc-datepicker" name="probation_end_date" placeholder="DD/MM/YYYY">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <div class="row">
+                                    <div class="col-md-3">
+                                        <label class="form-label mb-0 mt-2">Resignation Date</label>
+                                    </div>
+                                    <div class="col-md-9">
+                                        <input type="text" class="form-control fc-datepicker" name="date_of_resignation" placeholder="DD/MM/YYYY">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <div class="row">
+                                    <div class="col-md-3">
+                                        <label class="form-label mb-0 mt-2">Termination Date</label>
+                                    </div>
+                                    <div class="col-md-9">
+                                        <input type="text" class="form-control fc-datepicker" name="date_of_termination"  placeholder="DD/MM/YYYY">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <div class="row">
+                                    <div class="col-md-3">
+                                        <label class="form-label mb-0 mt-2">Credit Leaves
+                                            <span class="form-help" data-bs-toggle="tooltip" data-bs-placement="top" title="Unused leaves for the Employee">?</span>
+                                        </label>
+                                    </div>
+                                    <div class="col-md-9">
+                                        <input type="number" class="form-control" name="credit_leaves"  placeholder="0">
+                                    </div>
+                                </div>
+                            </div>
+                            <h4 class="mb-5 mt-7 font-weight-bold">Salary</h4>
+                            <div class="form-group">
+                                <div class="row">
+                                    <div class="col-md-3">
+                                        <label class="form-label mb-0 mt-2">Type</label>
+                                    </div>
+                                    <div class="col-md-9">
+                                        <select name="type"  class="form-control custom-select select2 salary-type" data-placeholder="Select Type">
+                                            <option label="Select Type" value=""></option>
+                                            <option value="0">Full-Time</option>
+                                            <option value="1">Part-Time</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- If type=salary -->
+                            <div class="full-sal">
+                                <div class="form-group">
+                                    <div class="row">
+                                        <div class="col-md-3">
+                                            <label class="form-label mb-0 mt-2">Basic Salary</label>
+                                        </div>
+                                        <div class="col-md-9">
+                                            <input type="number" class="form-control basic_salary" name="basic_salary" placeholder="Amount" value="0">
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <div class="row">
+                                        <div class="col-md-3">
+                                            <label class="form-label mb-0 mt-2">Housing Allowance</label>
+                                        </div>
+                                        <div class="col-md-9">
+                                            <input type="number" class="form-control housing_allowance" name="housing_allowance" placeholder="Amount" value="0">
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <div class="row">
+                                        <div class="col-md-3">
+                                            <label class="form-label mb-0 mt-2">Travelling Allowance</label>
+                                        </div>
+                                        <div class="col-md-9">
+                                            <input type="number" class="form-control travel_allowance" name="travel_allowance" placeholder="Amount" value="0">
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <div class="row">
+                                        <div class="col-md-3">
+                                            <label class="form-label mb-0 mt-2">Fuel Allowance</label>
+                                        </div>
+                                        <div class="col-md-9">
+                                            <input type="number" class="form-control fuel_allowance"
+                                                name="fuel_allowance" placeholder="Amount"
+                                                value="0">
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <div class="row">
+                                        <div class="col-md-3">
+                                            <label class="form-label mb-0 mt-2">Mobile Allowance</label>
+                                        </div>
+                                        <div class="col-md-9">
+                                            <input type="number" class="form-control mobile_allowance"
+                                                name="mobile_allowance" placeholder="Amount"
+                                                value="0">
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <div class="row">
+                                        <div class="col-md-3">
+                                            <label class="form-label mb-0 mt-2">Medical Allowance</label>
+                                        </div>
+                                        <div class="col-md-9">
+                                            <input type="number" class="form-control medical_allowance"
+                                                name="medical_allowance" placeholder="Amount"
+                                                value="0">
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <div class="row">
+                                        <div class="col-md-3">
+                                            <label class="form-label mb-0 mt-2">Other</label>
+                                        </div>
+                                        <div class="col-md-9">
+                                            <input type="number" class="form-control other_allowances" name="other_allowances" placeholder="Amount" value="0">
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <div class="row">
+                                        <div class="col-md-3">
+                                            <label class="form-label mb-0 mt-2">Salary</label>
+                                        </div>
+                                        <div class="col-md-9">
+                                            <input type="number" class="form-control over-all-sal" name="total-salary" placeholder="" value="0" disabled>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- PER HOUR -->
+                            <div class="per-hour"> 
+                                <div class="form-group">
+                                    <div class="row">
+                                        <div class="col-md-3">
+                                            <label class="form-label mb-0 mt-2">Salary</label>
+                                        </div>
+                                        <div class="col-md-9">
+                                            <input type="number" class="form-control" name="salary-per-hour" placeholder="$Salary">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="form-group mt-7">
+                                <div class="row">
+                                    <div class="col-md-3">
+                                        <label class="form-label">Status:</label>
+                                    </div>
+                                    <div class="col-md-9">
+                                        <label class="custom-switch">
+                                            <input type="checkbox" name="status" class="custom-switch-input">
+                                            <span class="custom-switch-indicator"></span>
+                                            <span class="custom-switch-description">Active/Inactive</span>
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="tab-pane" id="tab7">
+                        <div class="card-body">
+                            <div class="form-group">
+                                <div class="row">
+                                    <div class="col-md-3">
+                                        <label class="form-label mb-0 mt-2">Account Holder</label>
+                                    </div>
+                                    <div class="col-md-9">
+                                        <input type="text" class="form-control" name="account_holder" placeholder="Name">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <div class="row">
+                                    <div class="col-md-3">
+                                        <label class="form-label mb-0 mt-2">Account Number</label>
+                                    </div>
+                                    <div class="col-md-9">
+                                        <input type="text" class="form-control" name="account_no"  placeholder="Account Number">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <div class="row">
+                                    <div class="col-md-3">
+                                        <label class="form-label mb-0 mt-2">IBAN Number</label>
+                                    </div>
+                                    <div class="col-md-9">
+                                        <input type="text" class="form-control" name="iban_no"  placeholder="IBAN Number">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <div class="row">
+                                    <div class="col-md-3">
+                                        <label class="form-label mb-0 mt-2">Swift Code</label>
+                                    </div>
+                                    <div class="col-md-9">
+                                        <input type="text" class="form-control" name="swift_code"  placeholder="Swift Code">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <div class="row">
+                                    <div class="col-md-3">
+                                        <label class="form-label mb-0 mt-2">Bank Name</label>
+                                    </div>
+                                    <!-- <div class="col-md-9">
+                                        <input type="text" class="form-control" name="bank_name" placeholder="Name">
+                                    </div> -->
+                                    <div class="col-md-9">
+                                        <select name="bank_name"  class="form-control custom-select select2 salary-type" data-placeholder="Select Bank">
+                                            <option label="Select Bank" value=""></option>
+                                            {% for item in bank_details %}
+                                                <option value="item._id">{{item.bank_name}} ( {{item.routing_code}} )</option>
+                                            {% endfor %}
+                                        </select>     
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <div class="row">
+                                    <div class="col-md-3">
+                                        <label class="form-label mb-0 mt-2">Bank Routing Code</label>
+                                    </div>
+                                    <div class="col-md-9">
+                                        <input type="text" class="form-control" name="routing_code"
+                                            value="" placeholder="Routing Code">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <div class="row">
+                                    <div class="col-md-3">
+                                        <label class="form-label mb-0 mt-2">Branch Location</label>
+                                    </div>
+                                    <div class="col-md-9">
+                                        <input type="text" class="form-control" name="branch_location"  placeholder="Location">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <div class="row">
+                                    <div class="col-md-3">
+                                        <label class="form-label mb-0 mt-2">Bank Code (IFSC)
+                                            <span class="form-help" data-bs-toggle="tooltip" data-bs-placement="top" title="Bank Identify Number in your Country">?</span>
+                                        </label>
+                                    </div>
+                                    <div class="col-md-9">
+                                        <input type="text" class="form-control" name="ifsc_code" placeholder="Code">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <div class="row">
+                                    <div class="col-md-3">
+                                        <label class="form-label mb-0 mt-2">Tax Payer ID (PAN)
+                                            <span class="form-help" data-bs-toggle="tooltip" data-bs-placement="top" title="Taxpayer Identification Number Used in your Country">?</span>
+                                        </label>
+                                    </div>
+                                    <div class="col-md-9">
+                                        <input type="text" class="form-control" name="tax_id" placeholder="ID No">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="tab-pane" id="tab8">
+                        <div class="card-body">
+                            <div class="text-end">
+                                <!-- <button class="btn btn-primary" id="add_more"> Add Document</button> -->
+                                <a  href="#" class="btn btn-primary" id="add_more">Add Document</a>
+                            </div>
+
+                            <div class="form-group input-files">
+                                <!-- <div class="row">
+                                    <div class="col-md-3">
+                                        <label for="form-label" class="form-label">Select Document</label>
+                                         <select name="document_type[]"  class="form-control custom-select select2 salary-type" data-placeholder="Select Document Type">
+                                            <option label="Select Document Type" value=""></option>
+                                            <option value="passport_copy">Passport Copy</option>
+                                            <option value="id_proof">Emirates ID</option>
+                                            <option value="visa_copy">Visa Copy</option>
+                                            <option value="offer_letter">Offer Letter</option>
+                                            <option value="other">Other</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-3 mt-1">
+                                        <div class="form-group">
+                                        <label for="form-label" class="form-label">Days Before Expiry Alert</label>
+                                            <input class="form-control" name="alert_before[]" type="input">
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3 mt-1">
+                                        <div class="form-group">
+                                        <label for="form-label" class="form-label">Document Expiry Date</label>
+                                            <input class="form-control" name="expiry_date[]" type="input">
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <div class="form-group">
+                                        <label for="form-label" class="form-label">Select File</label>
+                                            <input class="form-control" name="document[]" type="file">
+                                        </div>
+                                    </div>
+                                </div> -->
+                            </div>
+                        </div>
+                    </div>
+                </form>
+
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- End Row-->
+{% endblock %}
+{% block script %}
+    {{ super() }}
+<!-- INTERNAL Index js-->
+<script>
+    $(document).ready(function(){
+        $('.full-sal').hide();
+        $('.per-hour').hide();
+        $('.salary-type').change(
+            function(){
+                if(this.value == 0){
+                    $('.full-sal').show();
+                    $('.per-hour').hide();
+                }
+                else {
+                    $('.per-hour').show();
+                    $('.full-sal').hide();
+                }
+            }
+        )
+    });
+    $('.basic_salary,.housing_allowance,.travel_allowance,.other_allowances').keyup(function() {
+        var bs = parseInt($('.basic_salary').val());
+        var h_a = parseInt($('.housing_allowance').val());
+        var t_a = parseInt($('.travel_allowance').val());
+        var o_a = parseInt($('.other_allowances').val());
+       var total = bs+h_a+t_a+o_a;
+       $('.over-all-sal').val(total)
+    });
+	$( ".fc-datepicker" ).datepicker({
+        dateFormat:"dd/mm/yy"
+    });
+    
+    $(document).ready(function(){
+        var id = 1;
+        $("#add_more").click(function(){
+            var showId = ++id;
+            if(showId <=25)
+            {
+                $(".input-files").append(' <div class="row">\
+                    <div class="col-md-3">\
+                        <label for="form-label" class="form-label">Select Document</label>\
+                         <select id="document_type'+showId+'" name="document_type[]"  class="form-control custom-select select2 salary-type" data-placeholder="Select Document Type">\
+                            <option label="Select Document Type" value=""></option>\
+                            <option value="passport_copy" data-stored-value="{{departments.passport_expiry_alert|default('0')}}">Passport Copy</option>\
+                            <option value="id_proof" data-stored-value="{{departments.emirates_expiry_alert|default('0')}}">Emirates ID</option>\
+                            <option value="visa_copy" data-stored-value="{{departments.visa_expiry_alert|default('0')}}">Visa Copy</option>\
+                            <option value="offer_letter" data-stored-value="{{departments.offer_expiry_alert|default('0')}}">Offer Letter</option>\
+                            <option value="other" data-stored-value="{{departments.other_expiry_alert|default('0')}}">Other</option>\
+                        </select>\
+                    </div>\
+                    <div class="col-md-2 mt-1 p-0 d-none" id="doc_remark_other'+showId+'">\
+                        <div class="form-group">\
+                        <label for="form-label" class="form-label">Document Remark</label>\
+                            <input class="form-control" name="document_remark[]" id="document_remark'+showId+'" type="input">\
+                        </div>\
+                    </div>\
+                    <div class="col-md-2 mt-1">\
+                        <div class="form-group">\
+                        <label for="form-label" class="form-label">Days Before Expiry Alert</label>\
+                            <input class="form-control" name="alert_before[]" id="alert_before'+showId+'" type="input">\
+                        </div>\
+                    </div>\
+                    <div class="col-md-2 mt-1">\
+                        <div class="form-group">\
+                        <label for="form-label" class="form-label">Document Expiry Date</label>\
+                             <input type="text" class="form-control fc-datepicker" name="expiry_date[]"  placeholder="DD/MM/YYYY" id="expiry_date'+showId+'">\
+                        </div>\
+                    </div>\
+                    <div class="col-md-4">\
+                        <div class="form-group">\
+                        <label for="form-label" class="form-label">Select File</label>\
+                            <input class="form-control" name="document[]" id="document'+showId+'" type="file">\
+                        </div>\
+                    </div>\
+                    <div class="col-md-1">\
+                        <div class="form-group">\
+                        <label for="form-label" class="form-label">&nbsp;</label>\
+                        <a  href="#" class="btn btn-danger" id="removeRegular"><i class="fa fa-times"></i></a>\
+                        </div>\
+                    </div>\
+                </div>');
+            }
+            $('#document_type' + showId).on('change', function() {
+                var alert_beforeDateInput = $('#alert_before' + showId);
+                var docInput = $('#document_type' + showId);
+                var docremarkInput = $('#document_remark' + showId);
+    
+                
+                var documentTypeValue = $(this).val();
+                // Set the expiry date based on the selected document type
+                if (documentTypeValue === 'other') {
+                    $('#doc_remark_other' + showId).removeClass("d-none");
+    
+                } else {
+                    $('#doc_remark_other' + showId).addClass("d-none");
+                }
+                switch (documentTypeValue) {
+                case 'passport_copy':
+                    // Alert Expiry days for passport
+                    var passportExpiryAlert = $('#document_type' + showId + ' option[value="passport_copy"]').data('stored-value');
+                    alert_beforeDateInput.val(passportExpiryAlert);
+                    break;
+                case 'id_proof':
+                    // Alert Expiry days for Emirates ID 
+                    var idExpiryAlert = $('#document_type' + showId + ' option[value="id_proof"]').data('stored-value');
+                    alert_beforeDateInput.val(idExpiryAlert);
+    
+                    break;
+                case 'visa_copy':
+                    // Alert Expiry days for visa 
+                    var visaExpiryAlert = $('#document_type' + showId + ' option[value="visa_copy"]').data('stored-value');
+                    alert_beforeDateInput.val(visaExpiryAlert);
+    
+                    break;
+                case 'offer_letter':
+                    // Alert Expiry days for offer letter 
+                    var offerExpiryAlert = $('#document_type' + showId + ' option[value="offer_letter"]').data('stored-value');
+                    alert_beforeDateInput.val(offerExpiryAlert);
+    
+                    break;
+                case 'other':
+                    // Alert Expiry days for other documents here
+                    alert_beforeDateInput.val('');
+                    break;
+                default:
+                alert_beforeDateInput.val('');
+                }
+            });
+        });
+        $(".input-files").on('click', '#removeRegular', function(){
+            $(this).parent().parent().parent().remove();
+        });
+        // Datepicker
+        $('body').on('focus',".fc-datepicker", function(){
+            $(this).datepicker({
+                dateFormat:"dd/mm/yy"
+            });
+          });
+    });
+</script>
+<script src="{{ url_for('static', filename='assets/js/hr/hr-empview.js') }}"></script>
+{% endblock %}

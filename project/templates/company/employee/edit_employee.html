@@ -1,0 +1,1532 @@
+<!-- templates/admin/index.html -->
+
+{% extends "layout/base.html" %}
+
+{% block content %}
+<!--Page header-->
+<div class="page-header d-xl-flex d-block">
+    <div class="page-leftheader">
+        <div class="page-title">Employee Profile</div>
+    </div>
+    <div class="page-rightheader ms-md-auto">
+        <div class="align-items-end flex-wrap my-auto right-content breadcrumb-right">
+            <div class="btn-list">
+                <button class="btn btn-light" data-bs-toggle="tooltip" data-bs-placement="top" title="E-mail"> <i
+                        class="feather feather-mail"></i> </button>
+                <button class="btn btn-light" data-bs-placement="top" data-bs-toggle="tooltip" title="Contact"> <i
+                        class="feather feather-phone-call"></i> </button>
+                <button class="btn btn-primary" data-bs-placement="top" data-bs-toggle="tooltip" title="Info"> <i
+                        class="feather feather-info"></i> </button>
+            </div>
+        </div>
+    </div>
+</div>
+<!--End Page header-->
+
+<!-- Row -->
+<div class="row">
+    <div class="col-xl-3 col-md-12 col-lg-12">
+        <div class="card box-widget widget-user">
+            <div class="card-body text-center">
+                <div class="widget-user-image mx-auto text-center">
+                    <img class="avatar avatar-xxl brround rounded-circle" alt="img"
+                        src="{{ url_for('static', filename='profile.png')}}">
+                </div>
+                <div class="pro-user mt-3">
+                    <h5 class="pro-user-username text-dark mb-1 fs-16">
+                        {{employee.first_name + ' ' + employee.last_name}}</h5>
+                    <h6 class="pro-user-desc text-muted fs-12">
+                        {{employee.employee_company_details.designation | default('NA')}}</h6>
+                </div>
+
+            </div>
+            <div class="card-footer p-0">
+                <div class="row">
+                    <div class="col-4 text-center py-5 border-end">
+                        <h5 class="fs-12 font-weight-semibold mb-3">{{statistics.start_of_month.strftime("%B - %Y")}}</h5>
+                        <h5 class="mb-2">
+                            <span class="fs-18 text-success">{{statistics.present_count}}</span>
+                            <span class="my-auto fs-9 font-weight-normal  ms-1 me-1">/</span>
+                            <span class="fs-18 font-weight-semibold text-dark">{{statistics.end_of_the_month.strftime("%d")}}</span>
+                        </h5>
+                        <h5 class="fs-12 mb-0">Attendance</h5>
+                    </div>
+                    <div class="col-4  py-5 text-center border-end">
+                        <h5 class="fs-12 font-weight-semibold mb-3">{{statistics.start_of_month.strftime("%B - %Y")}}</h5>
+                        <h5 class="mb-2">
+                            <span class="fs-18 text-orange">{{statistics.absent_count|default('0')}}</span>
+                            <!-- <span class="my-auto fs-9 font-weight-normal  ms-1 me-1">/</span>
+                            <span class="fs-18 font-weight-semibold text-dark">41</span> -->
+                        </h5>
+                        <h5 class="fs-12 mb-0">Absent</h5>
+                    </div>
+                    <div class="col-4 text-center py-5">
+                        <h5 class="fs-12 font-weight-semibold mb-3">{{statistics.start_of_month.strftime("%B - %Y")}}</h5>
+                        <h5 class="mb-2">
+                            <span class="fs-18 text-primary">{{statistics.late_count|default('0')}}</span>
+                        </h5>
+                        <h5 class="fs-12 mb-0">Late</h5>
+                    </div>
+                    
+                </div>
+            </div>
+        </div>
+        <div class="card">
+            <div class="card-header  border-0">
+                <div class="card-title">Statistics-{{statistics.start_of_month.strftime("%Y")}}</div>
+            </div>
+            <div class="card-footer p-0">
+                <div class="row">
+                    <div class="col-4 text-center py-5 border-end">
+                        <!-- <h5 class="fs-12 font-weight-semibold mb-3">{{statistics.start_of_month.strftime("%B - %Y")}}</h5> -->
+                        <h5 class="mb-2">
+                            <span class="fs-18 text-success">{{statistics.year_present|default('0')}}</span>
+                            <!-- <span class="my-auto fs-9 font-weight-normal  ms-1 me-1">/</span>
+                            <span class="fs-18 font-weight-semibold text-dark">{{statistics.end_of_the_month.strftime("%d")}}</span> -->
+                        </h5>
+                        <h5 class="fs-12 mb-0">Attendance</h5>
+                    </div>
+                    <div class="col-4  py-5 text-center border-end">
+                        <!-- <h5 class="fs-12 font-weight-semibold mb-3">{{statistics.start_of_month.strftime("%B - %Y")}}</h5> -->
+                        <h5 class="mb-2">
+                            <span class="fs-18 text-orange">{{statistics.year_absent_count|default('0')}}</span>
+                            <!-- <span class="my-auto fs-9 font-weight-normal  ms-1 me-1">/</span>
+                            <span class="fs-18 font-weight-semibold text-dark">41</span> -->
+                        </h5>
+                        <h5 class="fs-12 mb-0">Absent</h5>
+                    </div>
+                    <div class="col-4 text-center py-5">
+                        <!-- <h5 class="fs-12 font-weight-semibold mb-3">{{statistics.start_of_month.strftime("%B - %Y")}}</h5> -->
+                        <h5 class="mb-2">
+                            <span class="fs-18 text-primary">{{statistics.year_late_count|default('0')}}</span>
+                        </h5>
+                        <h5 class="fs-12 mb-0">Late</h5>
+                    </div>
+                    
+                </div>
+            </div>
+        </div>
+
+    </div>
+    <div class="col-xl-9 col-md-12 col-lg-12">
+        <form class="card-body pt-3" method="POST" action="/edit/employee/{{employee.id}}"
+            enctype="multipart/form-data">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+            <div class="text-end mb-2">
+                <button class="btn btn-primary">Update</button>
+                <a href="/employees" class="btn btn-danger">Cancel</a>
+            </div>
+            <div class="tab-menu-heading hremp-tabs p-0 ">
+                <div class="tabs-menu1">
+                    <!-- Tabs -->
+                    <ul class="nav panel-tabs">
+                        <li class="ms-1 pt-2"><a href="#tab5" class="active" data-bs-toggle="tab">Personal Details</a></li>
+                        <li class="ms-1 pt-2"><a href="#tab6" data-bs-toggle="tab">Company Details</a></li>
+                        <li class="ms-1 pt-2"><a href="#tab7" data-bs-toggle="tab">Bank Details</a></li>
+                        <li class="ms-1 pt-2"><a href="#tab9" data-bs-toggle="tab">Opening Leaves</a></li>
+                        <li class="ms-1 pt-2"><a href="#tab8" data-bs-toggle="tab">Upload Documents</a></li>
+                        <li class="ms-1 pt-2"><a href="#tab17" data-bs-toggle="tab">SIF Config.</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="panel-body tabs-menu-body hremp-tabs1 p-0">
+                <div class="tab-content">
+                    <div class="tab-pane active" id="tab5">
+                        <div class="card-body">
+                            <h4 class="mb-4 font-weight-bold">Basic</h4>
+
+                            <div class="form-group ">
+                                <div class="row">
+                                    <div class="col-md-3">
+                                        <label class="form-label mb-0 mt-2">User Name</label>
+                                    </div>
+                                    <div class="col-md-9">
+                                        <div class="row">
+                                            <div class="col-md-6">
+                                                <input type="text" class="form-control mb-md-0 mb-5" name="first_name"
+                                                    placeholder="First Name" value="{{employee.first_name}}" required>
+                                                <span class="text-muted"></span>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <input type="text" class="form-control" name="last_name"
+                                                    placeholder="Last Name" value="{{employee.last_name}}" required>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="form-group ">
+                                <div class="row">
+                                    <div class="col-md-3">
+                                        <label class="form-label mb-0 mt-2">Father Name</label>
+                                    </div>
+                                    <div class="col-md-9">
+                                        <input type="text" class="form-control" name="father_name" placeholder="Name"
+                                            value="{{employee.father_name}}">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <div class="row">
+                                    <div class="col-md-3">
+                                        <label class="form-label mb-0 mt-2">Contact Number</label>
+                                    </div>
+                                    <div class="col-md-9">
+                                        <input type="text" class="form-control" name="contact_no"
+                                            value="{{employee.contact_no}}" placeholder="Phone Number" required>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <div class="row">
+                                    <div class="col-md-3">
+                                        <label class="form-label mb-0 mt-2">Emergency Contact Number 01</label>
+                                    </div>
+                                    <div class="col-md-9">
+                                        <input type="text" class="form-control" name="emergency_contact_no_1"
+                                            value="{{employee.emergency_contact_no_1}}" placeholder="Contact Number01">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <div class="row">
+                                    <div class="col-md-3">
+                                        <label class="form-label mb-0 mt-2">Emergency Contact Person</label>
+                                    </div>
+                                    <div class="col-md-9">
+                                        <input type="text" class="form-control" name="emergency_contact_no_2"
+                                            value="{{employee.emergency_contact_no_2}}" placeholder="Emergency Contact Person">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="form-group ">
+                                <div class="row">
+                                    <div class="col-md-3">
+                                        <label class="form-label mb-0 mt-2">Date Of Birth</label>
+                                    </div>
+                                    <div class="col-md-9">
+                                        <input type="text" class="form-control fc-datepicker" name="dob"
+                                            value="{{employee.dob}}" placeholder="DD-MM-YYY">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="form-group ">
+                                <div class="row">
+                                    <div class="col-md-3">
+                                        <label class="form-label">Gender</label>
+                                    </div>
+                                    <div class="col-md-9">
+                                        <div class="custom-controls-stacked d-md-flex">
+                                            <label class="custom-control custom-radio me-4">
+                                                <input type="radio" class="custom-control-input" name="gender"
+                                                    value="male" {% if employee.gender=="male" %} checked{% endif %}>
+                                                <span class="custom-control-label">Male</span>
+                                            </label>
+                                            <label class="custom-control custom-radio">
+                                                <input type="radio" class="custom-control-input" name="gender"
+                                                    value="female" {% if employee.gender=="female" %}
+                                                    checked{% endif %}>
+                                                <span class="custom-control-label">Female</span>
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <div class="row">
+                                    <div class="col-md-3">
+                                        <label class="form-label mb-0 mt-2">Marital Status</label>
+                                    </div>
+                                    <div class="col-md-9">
+                                        <select class="form-control custom-select select2" name="marital_status"
+                                            data-placeholder="Select">
+                                            <option label="Select"></option>
+                                            <option value="single" {% if employee.marital_status=="single" %}
+                                                selected{% endif %}>Single</option>
+                                            <option value="married" {% if employee.marital_status=="married" %}
+                                                selected{% endif %}>Married</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <div class="row">
+                                    <div class="col-md-3">
+                                        <label class="form-label mb-0 mt-2">Blood Group</label>
+                                    </div>
+                                    <div class="col-md-9">
+                                        <select class="form-control custom-select select2" name="blood_group"
+                                            data-placeholder="Select Group">
+                                            <option label="Select Group" default></option>
+                                            <option value="a+" {% if employee.blood_group=="a+" %} selected{% endif %}>
+                                                A+</option>
+                                            <option value="b+" {% if employee.blood_group=="b+" %} selected{% endif %}>
+                                                B+</option>
+                                            <option value="o+" {% if employee.blood_group=="o+" %} selected{% endif %}>
+                                                O+</option>
+                                            <option value="ab+" {% if employee.blood_group=="ab+" %}
+                                                selected{% endif %}>AB+</option>
+                                            <option value="a-" {% if employee.blood_group=="a-" %} selected{% endif %}>
+                                                A-</option>
+                                            <option value="b-" {% if employee.blood_group=="b-" %} selected{% endif %}>
+                                                B-</option>
+                                            <option value="o-" {% if employee.blood_group=="o-" %} selected{% endif %}>
+                                                O-</option>
+                                            <option value="ab-" {% if employee.blood_group=="ab-" %}
+                                                selected{% endif %}>AB-</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="form-group ">
+                                <div class="row">
+                                    <div class="col-md-3">
+                                        <label class="form-label mb-0 mt-2">Email</label>
+                                    </div>
+                                    <div class="col-md-9">
+                                        <input type="email" class="form-control" name="personal_email"
+                                            placeholder="Email" value="{{employee.personal_email}}" required>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <div class="row">
+                                    <div class="col-md-3">
+                                        <label class="form-label mb-0 mt-2">Present Address</label>
+                                    </div>
+                                    <div class="col-md-9">
+                                        <textarea rows="3" class="form-control" name="present_address"
+                                            placeholder="Address1">{{employee.present_address}}</textarea>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <div class="row">
+                                    <div class="col-md-3">
+                                        <label class="form-label mb-0 mt-2">Permanent Address</label>
+                                    </div>
+                                    <div class="col-md-9">
+                                        <textarea rows="3" class="form-control" name="permanent_address"
+                                            placeholder="Address2">{{employee.permanent_address}}</textarea>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <div class="row">
+                                    <div class="col-md-3">
+                                        <label class="form-label mb-0 mt-2">Passport Number</label>
+                                    </div>
+                                    <div class="col-md-9">
+                                        <input type="text" class="form-control" name="passport_number"
+                                            value="{{employee.passport_number}}" placeholder="Passport Number">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <div class="row">
+                                    <div class="col-md-3">
+                                        <label class="form-label mb-0 mt-2">Emirates Id Number</label>
+                                    </div>
+                                    <div class="col-md-9">
+                                        <input type="text" class="form-control" name="emirates_id_no"
+                                            value="{{employee.emirates_id_no}}" placeholder="Emirates Id Number">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <div class="row">
+                                    <div class="col-md-3">
+                                        <div class="form-label mb-0 mt-2">Upload Photo</div>
+                                    </div>
+                                    <div class="col-md-9">
+                                        <div class="form-group">
+                                            <label for="form-label" class="form-label"></label>
+                                            <input class="form-control" name="profile_pic" type="file">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="tab-pane" id="tab6">
+                        <div class="card-body">
+                            <div class="form-group">
+                                <div class="row">
+                                    <div class="col-md-3">
+                                        <label class="form-label mb-0 mt-2">Employee ID</label>
+                                    </div>
+                                    <div class="col-md-9">
+                                        <input type="text" class="form-control" name="employee_id"
+                                            value="{{employee.employee_company_details.employee_id}}" placeholder="#ID">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <div class="row">
+                                    <div class="col-md-3">
+                                        <label class="form-label mb-0 mt-2">Working Sub Company</label>
+                                    </div>
+                                    <div class="col-md-9">
+                                        <select class="form-control custom-select select2"
+                                            name="working_sub_company" data-placeholder="Select Working Sub Company">
+                                            <option label="Select Working Sub Company"></option>
+                                            {% for item in departments.sub_companies %}
+                                            <option value="{{item._id}}"
+                                                {% if employee.employee_company_details.working_sub_company._id==item._id %}
+                                                selected{% endif %}>{{item.company_name}}</option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <div class="row">
+                                    <div class="col-md-3">
+                                        <label class="form-label mb-0 mt-2">Department</label>
+                                    </div>
+                                    <div class="col-md-9">
+                                        <select name="department" class="form-control custom-select select2"
+                                            data-placeholder="Select Department">
+                                            <option label="Select Department"></option>
+                                            {% for item in departments.departments %}
+                                            <option value="{{item.department_name}}"
+                                                {% if employee.employee_company_details.department==item.department_name %}
+                                                selected{% endif %}>{{item.department_name}}</option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <div class="row">
+                                    <div class="col-md-3">
+                                        <label class="form-label mb-0 mt-2">Clock In Office</label>
+                                    </div>
+                                    <div class="col-md-9">
+                                        <select name="working_office" class="form-control custom-select select2"
+                                             data-placeholder="Select Default Clock In Office">
+                                            <option label="Select Default Working Office"></option>
+                                            {% for item in departments.offices %}
+                                            <option value="{{item.id}}"
+                                            {% if item.id==employee.employee_company_details.working_office._id %}selected{% endif %}>{{item.office_name}}</option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <div class="row">
+                                    <div class="col-md-3">
+                                        <label class="form-label mb-0 mt-2">Work Timing</label>
+                                    </div>
+                                    <div class="col-md-9">
+                                        <select name="work_timing" class="form-control custom-select select2"
+                                             data-placeholder="Select Default Work Timing">
+                                            <option label="Select Default Work Timing"></option>
+                                            {% for item in departments.worktimings %}
+                                            <option value="{{item.id}}"
+                                            {% if ("work_timing" in employee.employee_company_details) and (item.id == employee.employee_company_details.work_timing._id) %}selected{% endif %}>{{item.name}}</option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <div class="row">
+                                    <div class="col-md-3">
+                                        <label class="form-label mb-0 mt-2">Allow Outside Radius Clock Ins</label>
+                                    </div>
+                                    <div class="col-md-9">
+                                        <select name="office_clockins"  class="form-control custom-select select2"  data-placeholder="Allow Outside Radius Clock Ins">
+                                            <option value="no" {% if employee.employee_company_details.allow_outside_checkin %}
+                                            selected{% endif %}>No</option>
+                                            <option value="yes" {% if employee.employee_company_details.allow_outside_checkin %}
+                                            selected{% endif %}>Yes</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <div class="row">
+                                    <div class="col-md-3">
+                                        <label class="form-label mb-0 mt-2">Allow Work From Home</label>
+                                    </div>
+                                    <div class="col-md-9">
+                                        <select name="wfh_option"  class="form-control custom-select select2"  data-placeholder="Allow Work From Home">
+                                            <option value="no" {% if employee.employee_company_details.home_option %}
+                                            selected{% endif %}>No</option>
+                                            <option value="yes" {% if employee.employee_company_details.home_option %}
+                                            selected{% endif %}>Yes</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <div class="row">
+                                    <div class="col-md-3">
+                                        <label class="form-label mb-0 mt-2">Designation</label>
+                                    </div>
+                                    <div class="col-md-9">
+                                        <input type="text" class="form-control" name="designation"
+                                            value="{{employee.employee_company_details.designation}}"
+                                            placeholder="Designation">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <div class="row">
+                                    <div class="col-md-3">
+                                        <label class="form-label mb-0 mt-2">Date Of Joining</label>
+                                    </div>
+                                    <div class="col-md-9">
+                                        <input type="text" class="form-control fc-datepicker" name="date_of_joining"
+                                            value="{{employee.employee_company_details.date_of_joining}}"
+                                            placeholder="DD/MM/YYYY">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <div class="row">
+                                    <div class="col-md-3">
+                                        <label class="form-label mb-0 mt-2">Probation End Date</label>
+                                    </div>
+                                    <div class="col-md-9">
+                                        <input type="text" class="form-control fc-datepicker" name="probation_end_date"
+                                            value="{{employee.employee_company_details.probation_end_date}}"
+                                            placeholder="DD/MM/YYYY">
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="form-group">
+                                <div class="row">
+                                    <div class="col-md-3">
+                                        <label class="form-label mb-0 mt-2">Resignation Date</label>
+                                    </div>
+                                    <div class="col-md-9">
+                                        <input type="text" class="form-control fc-datepicker" name="date_of_resignation"
+                                            value="{{employee.employee_company_details.date_of_resignation}}"
+                                            placeholder="DD/MM/YYYY">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <div class="row">
+                                    <div class="col-md-3">
+                                        <label class="form-label mb-0 mt-2">Termination Date</label>
+                                    </div>
+                                    <div class="col-md-9">
+                                        <input type="text" class="form-control fc-datepicker" name="date_of_termination"
+                                            value="{{employee.employee_company_details.date_of_termination}}"
+                                            placeholder="DD/MM/YYYY">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <div class="row">
+                                    <div class="col-md-3">
+                                        <label class="form-label mb-0 mt-2">Credit Leaves
+                                            <span class="form-help" data-bs-toggle="tooltip" data-bs-placement="top"
+                                                title="Unused leaves for the Employee">?</span>
+                                        </label>
+                                    </div>
+                                    <div class="col-md-9">
+                                        <input type="number" class="form-control" name="credit_leaves"
+                                            value="{{employee.employee_company_details.credit_leaves}}" placeholder="0">
+                                    </div>
+                                </div>
+                            </div>
+                            <h4 class="mb-5 mt-7 font-weight-bold">Salary</h4>
+                            <div class="form-group">
+                                <div class="row">
+                                    <div class="col-md-3">
+                                        <label class="form-label mb-0 mt-2">Type</label>
+                                    </div>
+                                    <div class="col-md-9">
+                                        <select name="type" class="form-control custom-select select2 salary-type"
+                                            data-placeholder="Select Type">
+                                            <option label="Select Group"
+                                                {% if employee.employee_company_details.type=="" %} selected{% endif %}>
+                                            </option>
+                                            <option value="0" {% if employee.employee_company_details.type=="0" %}
+                                                selected{% endif %}>Full-Time</option>
+                                            <option value="1" {% if employee.employee_company_details.type=="1" %}
+                                                selected{% endif %}>Part-Time</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- If type=salary -->
+                            <div class="full-sal">
+                                <div class="form-group">
+                                    <div class="row">
+                                        <div class="col-md-3">
+                                            <label class="form-label mb-0 mt-2">Basic Salary</label>
+                                        </div>
+                                        <div class="col-md-9">
+                                            <input type="number" class="form-control basic_salary" name="basic_salary"
+                                                placeholder="Amount"
+                                                value="{{employee.employee_company_details.basic_salary}}">
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <div class="row">
+                                        <div class="col-md-3">
+                                            <label class="form-label mb-0 mt-2">Housing Allowance</label>
+                                        </div>
+                                        <div class="col-md-9">
+                                            <input type="number" class="form-control housing_allowance"
+                                                name="housing_allowance" placeholder="Amount"
+                                                value="{{employee.employee_company_details.housing_allowance}}">
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <div class="row">
+                                        <div class="col-md-3">
+                                            <label class="form-label mb-0 mt-2">Travelling Allowance</label>
+                                        </div>
+                                        <div class="col-md-9">
+                                            <input type="number" class="form-control travel_allowance"
+                                                name="travel_allowance" placeholder="Amount"
+                                                value="{{employee.employee_company_details.travel_allowance}}">
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <div class="row">
+                                        <div class="col-md-3">
+                                            <label class="form-label mb-0 mt-2">Fuel Allowance</label>
+                                        </div>
+                                        <div class="col-md-9">
+                                            <input type="number" class="form-control fuel_allowance"
+                                                name="fuel_allowance" placeholder="Amount"
+                                                value="{{employee.employee_company_details.fuel_allowance|default('0')}}">
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <div class="row">
+                                        <div class="col-md-3">
+                                            <label class="form-label mb-0 mt-2">Mobile Allowance</label>
+                                        </div>
+                                        <div class="col-md-9">
+                                            <input type="number" class="form-control mobile_allowance"
+                                                name="mobile_allowance" placeholder="Amount"
+                                                value="{{employee.employee_company_details.mobile_allowance|default('0')}}">
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <div class="row">
+                                        <div class="col-md-3">
+                                            <label class="form-label mb-0 mt-2">Medical Allowance</label>
+                                        </div>
+                                        <div class="col-md-9">
+                                            <input type="number" class="form-control medical_allowance"
+                                                name="medical_allowance" placeholder="Amount"
+                                                value="{{employee.employee_company_details.medical_allowance|default('0')}}">
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <div class="row">
+                                        <div class="col-md-3">
+                                            <label class="form-label mb-0 mt-2">Other</label>
+                                        </div>
+                                        <div class="col-md-9">
+                                            <input type="number" class="form-control other_allowances"
+                                                name="other_allowances" placeholder="Amount"
+                                                value="{{employee.employee_company_details.other_allowances}}">
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <div class="row">
+                                        <div class="col-md-3">
+                                            <label class="form-label mb-0 mt-2">Salary</label>
+                                        </div>
+                                        <div class="col-md-9">
+                                            <input type="number" class="form-control over-all-sal" name="total-salary"
+                                                placeholder=""
+                                                value="{{employee.employee_company_details.total_salary}}" disabled>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- PER HOUR -->
+                            <div class="per-hour">
+                                <div class="form-group">
+                                    <div class="row">
+                                        <div class="col-md-3">
+                                            <label class="form-label mb-0 mt-2">Salary</label>
+                                        </div>
+                                        <div class="col-md-9">
+                                            <input type="number" class="form-control" name="salary-per-hour"
+                                                value="{{employee.employee_company_details.total_salary}}"
+                                                placeholder="$Salary">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="form-group mt-7">
+                                <div class="row">
+                                    <div class="col-md-3">
+                                        <label class="form-label">Status:</label>
+                                    </div>
+                                    <div class="col-md-9">
+                                        <label class="custom-switch">
+                                            <input type="checkbox" name="status" class="custom-switch-input"
+                                                {% if employee.employee_company_details.status %} checked {% endif %}>
+                                            <span class="custom-switch-indicator"></span>
+                                            <span class="custom-switch-description">Active/Inactive</span>
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="tab-pane" id="tab7">
+                        <div class="card-body">
+                            <div class="form-group">
+                                <div class="row">
+                                    <div class="col-md-3">
+                                        <label class="form-label mb-0 mt-2">Account Holder</label>
+                                    </div>
+                                    <div class="col-md-9">
+                                        <input type="text" class="form-control" name="account_holder"
+                                            value="{{employee.employee_bank_details.account_holder}}"
+                                            placeholder="Name">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <div class="row">
+                                    <div class="col-md-3">
+                                        <label class="form-label mb-0 mt-2">Account Number</label>
+                                    </div>
+                                    <div class="col-md-9">
+                                        <input type="text" class="form-control" name="account_no"
+                                            value="{{employee.employee_bank_details.account_no}}" placeholder="Number">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <div class="row">
+                                    <div class="col-md-3">
+                                        <label class="form-label mb-0 mt-2">IBAN Number</label>
+                                    </div>
+                                    <div class="col-md-9">
+                                        <input type="text" class="form-control" name="iban_no"  placeholder="IBAN Number" value="{{employee.employee_bank_details.iban_no}}">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <div class="row">
+                                    <div class="col-md-3">
+                                        <label class="form-label mb-0 mt-2">Swift Code</label>
+                                    </div>
+                                    <div class="col-md-9">
+                                        <input type="text" class="form-control" name="swift_code"  placeholder="Swift Code" value="{{employee.employee_bank_details.swift_code}}">
+                                    </div>
+                                </div> 
+                            </div>
+                            <div class="form-group">
+                                <div class="row">
+                                    <div class="col-md-3">
+                                        <label class="form-label mb-0 mt-2">Bank Name</label>
+                                    </div>
+                                    <!-- <div class="col-md-9">
+                                        <input type="text" class="form-control" name="bank_name" placeholder="Name">
+                                    </div> -->
+                                    <div class="col-md-9">
+                                        <select name="bank_name"  class="form-control custom-select select2 salary-type" data-placeholder="Select Bank">
+                                            <option label="Select Bank" value=""></option>
+                                            {% for item in bank_list %}
+                                                <option value="{{item.bank_name}}">{{item.bank_name}} ( {{item.routing_code}} )</option>
+                                            {% endfor %}
+                                        </select>     
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <div class="row">
+                                    <div class="col-md-3">
+                                        <label class="form-label mb-0 mt-2">Bank Routing Code</label>
+                                    </div>
+                                    <div class="col-md-9">
+                                        <input type="text" class="form-control" name="routing_code"
+                                            value="{{employee.employee_bank_details.routing_code}}" placeholder="Routing Code">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <div class="row">
+                                    <div class="col-md-3">
+                                        <label class="form-label mb-0 mt-2">Branch Location</label>
+                                    </div>
+                                    <div class="col-md-9">
+                                        <input type="text" class="form-control" name="branch_location"
+                                            value="{{employee.employee_bank_details.branch_location}}"
+                                            placeholder="Location">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <div class="row">
+                                    <div class="col-md-3">
+                                        <label class="form-label mb-0 mt-2">Bank Code (IFSC)
+                                            <span class="form-help" data-bs-toggle="tooltip" data-bs-placement="top"
+                                                title="Bank Identify Number in your Country">?</span>
+                                        </label>
+                                    </div>
+                                    <div class="col-md-9">
+                                        <input type="text" class="form-control" name="ifsc_code"
+                                            value="{{employee.employee_bank_details.ifsc_code}}" placeholder="Code">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <div class="row">
+                                    <div class="col-md-3">
+                                        <label class="form-label mb-0 mt-2">Tax Payer ID (PAN)
+                                            <span class="form-help" data-bs-toggle="tooltip" data-bs-placement="top"
+                                                title="Taxpayer Identification Number Used in your Country">?</span>
+                                        </label>
+                                    </div>
+                                    <div class="col-md-9">
+                                        <input type="text" class="form-control" name="tax_id"
+                                            value="{{employee.employee_bank_details.tax_id}}" placeholder="ID No">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="tab-pane" id="tab8">
+                        <div class="card-body">
+                            <div class="text-end">
+                                <!-- <button class="btn btn-primary" id="add_more"> Add Document</button> -->
+                                <a  href="#" class="btn btn-primary" id="add_more">Add New Document</a>
+                            </div>
+
+                            <div class="form-group input-files">
+                                <!-- <div class="row">
+                                    <div class="col-md-3">
+                                        <label for="form-label" class="form-label">Select Document</label>
+                                         <select name="document_type[]"  class="form-control custom-select select2 salary-type" data-placeholder="Select Document Type">
+                                            <option label="Select Document Type" value=""></option>
+                                            <option value="passport_copy">Passport Copy</option>
+                                            <option value="id_proof">Emirates ID</option>
+                                            <option value="visa_copy">Visa Copy</option>
+                                            <option value="offer_letter">Offer Letter</option>
+                                            <option value="other">Other</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-3 mt-1">
+                                        <div class="form-group">
+                                        <label for="form-label" class="form-label">Days Before Expiry Alert</label>
+                                            <input class="form-control" name="alert_before[]" type="input">
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3 mt-1">
+                                        <div class="form-group">
+                                        <label for="form-label" class="form-label">Document Expiry Date</label>
+                                            <input class="form-control" name="expiry_date[]" type="input">
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <div class="form-group">
+                                        <label for="form-label" class="form-label">Select File</label>
+                                            <input class="form-control" name="document[]" type="file">
+                                        </div>
+                                    </div>
+                                </div> -->
+                                <!-- Error message -->
+                                <div id="file-size-error" class="text-danger" style="display:none;">
+                                    The selected file is too large.
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="card" id="tabs-style3">
+                            <div class="card-header border-bottom-0">
+                                <div class="card-title">
+                                    Uploaded Documents
+                                </div>
+                            </div>
+                            <div class="card-body">
+                                <div class="panel panel-primary tabs-style-3">
+
+                                    <div class="tab-menu-heading table_tabs mt-2 p-0 ">
+                                        <div class="tabs-menu1">
+                                            <!-- Tabs -->
+                                            <ul class="nav panel-tabs">
+                                                <li class=""><a href="#tab11" class="active" data-bs-toggle="tab"><i
+                                                            class="fa fa-globe"></i> Passport Copy</a></li>
+                                                <li><a href="#tab12" data-bs-toggle="tab"><i
+                                                            class="fa fa-id-card-o"></i> Emirates ID</a></li>
+                                                <li><a href="#tab13" data-bs-toggle="tab"><i
+                                                            class="fa fa-drivers-license"></i> Visa Copy</a></li>
+                                                <li><a href="#tab14" data-bs-toggle="tab"><i
+                                                            class="fa fa-file-pdf-o"></i> Offer Letter</a></li>
+                                                <li><a href="#tab15" data-bs-toggle="tab"><i class="fa fa-file"></i>
+                                                        Other Documents</a></li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                    <div class="panel-body tabs-menu-body table_tabs1 p-0 border-0">
+                                        <div class="tab-content">
+                                            <div class="tab-pane active" id="tab11">
+                                                <div class="table-responsive recent_jobs pt-2 pb-2 ps-2 pe-2 card-body">
+                                                    {% if employee.documents|selectattr('document_type', 'equalto', 'passport_copy')|list|length > 0 %}
+                                                        <table class="table mb-0 text-nowrap">
+                                                            <thead>
+                                                                <tr>
+                                                                    <th class="border-bottom-0 w-5">No</th>
+                                                                    <th class="border-bottom-0 w-5">FIle Name</th>
+                                                                    <th class="border-bottom-0">Expiry On</th>
+                                                                    <th class="border-bottom-0 w-10">Actions</th>
+                                                                </tr>
+                                                            </thead>
+                                                            <tbody>
+                                                                {% for doc in employee.documents|selectattr('document_type', 'equalto', 'passport_copy') %}
+                                                                <tr class="border-bottom">
+                                                                    <td>{{loop.index}}</td>
+                                                                    <td>
+                                                                        <div class="d-flex">
+                                                                            <div class="me-3 mt-3 d-block">
+                                                                                <h6 class="mb-0 fs-13 font-weight-semibold">
+                                                                                    {{doc.document_name}}</h6>
+                                                                                <div class="clearfix"></div>
+                                                                                <small
+                                                                                    class="text-muted">{{doc.uploaded_on.strftime('%d %B %Y , %H:%M:%S')}}</small>
+                                                                            </div>
+                                                                        </div>
+                                                                    </td>
+                                                                    <td class="text-start fs-13">{{doc.document_expiry_on.strftime('%d %B %Y')}}
+                                                                    </td>
+                                                                    <td class="text-end">
+                                                                        <a href="{{url_for('static', filename='uploads/documents/'+departments.company_name.strip()+'/'+doc.document_name)}}" class="action-btns" download><i
+                                                                            class="fa fa-cloud-download"></i></a>
+                                                                        <a href="{{ url_for('company.delete_employee_document',doc_id=doc._id,emp_id=employee._id) }}" class="action-btns"><i
+                                                                                class="feather feather-x text-danger"></i></a>
+                                                                    </td>
+                                                                </tr>
+                                                                {% endfor %}
+
+                                                            </tbody>
+                                                        </table>
+                                                    {% else %}
+                                                        <div class="expanel expanel-default mt-4">
+                                                            <div class="expanel-body">
+                                                                No Documents Added.
+                                                            </div>
+                                                        </div>
+                                                    {% endif %}
+                                                </div>
+                                            </div>
+                                            <div class="tab-pane" id="tab12">
+                                                <div class="table-responsive recent_jobs pt-2 pb-2 ps-2 pe-2 card-body">
+                                                    {% if employee.documents|selectattr('document_type', 'equalto', 'id_proof')|list|length > 0 %}
+                                                        <table class="table mb-0 text-nowrap">
+                                                            <thead>
+                                                                <tr>
+                                                                    <th class="border-bottom-0 w-5">No</th>
+                                                                    <th class="border-bottom-0 w-5">FIle Name</th>
+                                                                    <th class="border-bottom-0">Expiry On</th>
+                                                                    <th class="border-bottom-0 w-10">Actions</th>
+                                                                </tr>
+                                                            </thead>
+                                                            <tbody>
+                                                                {% for doc in employee.documents|selectattr('document_type', 'equalto', 'id_proof') %}
+                                                                <tr class="border-bottom">
+                                                                    <td>{{loop.index}}</td>
+                                                                    <td>
+                                                                        <div class="d-flex">
+                                                                            <div class="me-3 mt-3 d-block">
+                                                                                <h6 class="mb-0 fs-13 font-weight-semibold">
+                                                                                    {{doc.document_name}}</h6>
+                                                                                <div class="clearfix"></div>
+                                                                                <small
+                                                                                    class="text-muted">{{doc.uploaded_on.strftime('%d %B %Y , %H:%M:%S')}}</small>
+                                                                            </div>
+                                                                        </div>
+                                                                    </td>
+                                                                    <td class="text-start fs-13">{{doc.document_expiry_on.strftime('%d %B %Y')}}
+                                                                    </td>
+                                                                    <td class="text-end">
+                                                                        <a href="{{url_for('static', filename='uploads/documents/'+departments.company_name.strip()+'/'+doc.document_name)}}" class="action-btns" download><i
+                                                                            class="fa fa-cloud-download"></i></a>
+                                                                        <a href="{{ url_for('company.delete_employee_document',doc_id=doc._id,emp_id=employee._id) }}" class="action-btns"><i
+                                                                                class="feather feather-x text-danger"></i></a>
+                                                                    </td>
+                                                                </tr>
+                                                                {% endfor %}
+                                                            </tbody>
+                                                        </table>
+                                                    {% else %}
+                                                        <div class="expanel expanel-default mt-4">
+                                                            <div class="expanel-body">
+                                                                No Documents Added.
+                                                            </div>
+                                                        </div>
+                                                    {% endif %}
+                                                </div>
+                                            </div>
+                                            <div class="tab-pane " id="tab13">
+                                                <div class="table-responsive recent_jobs pt-2 pb-2 ps-2 pe-2 card-body">
+                                                    {% if employee.documents|selectattr('document_type', 'equalto', 'visa_copy')|list|length > 0 %}
+                                                        <table class="table mb-0 text-nowrap">
+                                                            <thead>
+                                                                <tr>
+                                                                    <th class="border-bottom-0 w-5">No</th>
+                                                                    <th class="border-bottom-0 w-5">FIle Name</th>
+                                                                    <th class="border-bottom-0">Expiry On</th>
+                                                                    <th class="border-bottom-0 w-10">Actions</th>
+                                                                </tr>
+                                                            </thead>
+                                                            <tbody>
+                                                                {% for doc in employee.documents|selectattr('document_type', 'equalto', 'visa_copy') %}
+                                                                <tr class="border-bottom">
+                                                                    <td>{{loop.index}}</td>
+                                                                    <td>
+                                                                        <div class="d-flex">
+                                                                            <div class="me-3 mt-3 d-block">
+                                                                                <h6 class="mb-0 fs-13 font-weight-semibold">
+                                                                                    {{doc.document_name}}</h6>
+                                                                                <div class="clearfix"></div>
+                                                                                <small
+                                                                                    class="text-muted">{{doc.uploaded_on.strftime('%d %B %Y , %H:%M:%S')}}</small>
+                                                                            </div>
+                                                                        </div>
+                                                                    </td>
+                                                                    <td class="text-start fs-13">{{doc.document_expiry_on.strftime('%d %B %Y')}}
+                                                                    </td>
+                                                                    <td class="text-end">
+                                                                        <a href="{{url_for('static', filename='uploads/documents/'+departments.company_name.strip()+'/'+doc.document_name)}}" class="action-btns" download><i
+                                                                            class="fa fa-cloud-download"></i></a>
+                                                                        <a href="{{ url_for('company.delete_employee_document',doc_id=doc._id,emp_id=employee._id) }}" class="action-btns"><i
+                                                                                class="feather feather-x text-danger"></i></a>
+                                                                    </td>
+                                                                </tr>
+                                                                {% endfor %}
+                                                            </tbody>
+                                                        </table>
+                                                    {% else %}
+                                                        <div class="expanel expanel-default mt-4">
+                                                            <div class="expanel-body">
+                                                                No Documents Added.
+                                                            </div>
+                                                        </div>
+                                                    {% endif %}
+                                                </div>
+                                            </div>
+                                            <div class="tab-pane" id="tab14">
+                                                <div class="table-responsive recent_jobs pt-2 pb-2 ps-2 pe-2 card-body">
+                                                    {% if employee.documents|selectattr('document_type', 'equalto', 'offer_letter')|list|length > 0 %}
+                                                        <table class="table mb-0 text-nowrap">
+                                                            <thead>
+                                                                <tr>
+                                                                    <th class="border-bottom-0 w-5">No</th>
+                                                                    <th class="border-bottom-0 w-5">FIle Name</th>
+                                                                    <th class="border-bottom-0">Expiry On</th>
+                                                                    <th class="border-bottom-0 w-10">Actions</th>
+                                                                </tr>
+                                                            </thead>
+                                                            <tbody>
+                                                                {% for doc in employee.documents|selectattr('document_type', 'equalto', 'offer_letter') %}
+                                                                <tr class="border-bottom">
+                                                                    <td>{{loop.index}}</td>
+                                                                    <td>
+                                                                        <div class="d-flex">
+                                                                            <div class="me-3 mt-3 d-block">
+                                                                                <h6 class="mb-0 fs-13 font-weight-semibold">
+                                                                                    {{doc.document_name}}</h6>
+                                                                                <div class="clearfix"></div>
+                                                                                <small
+                                                                                    class="text-muted">{{doc.uploaded_on.strftime('%d %B %Y , %H:%M:%S')}}</small>
+                                                                            </div>
+                                                                        </div>
+                                                                    </td>
+                                                                    <td class="text-start fs-13">{{doc.document_expiry_on.strftime('%d %B %Y')}}
+                                                                    </td>
+                                                                    <td class="text-end">
+                                                                        <a href="{{url_for('static', filename='uploads/documents/'+departments.company_name.strip()+'/'+doc.document_name)}}" class="action-btns" download><i
+                                                                            class="fa fa-cloud-download"></i></a>
+                                                                        <a href="{{ url_for('company.delete_employee_document',doc_id=doc._id,emp_id=employee._id) }}" class="action-btns"><i
+                                                                                class="feather feather-x text-danger"></i></a>
+                                                                    </td>
+                                                                </tr>
+                                                                {% endfor %}
+                                                            </tbody>
+                                                        </table>
+                                                    {% else %}
+                                                        <div class="expanel expanel-default mt-4">
+                                                            <div class="expanel-body">
+                                                                No Documents Added.
+                                                            </div>
+                                                        </div>
+                                                    {% endif %}
+                                                </div>
+                                            </div>
+                                            <div class="tab-pane " id="tab15">
+                                                <div class="table-responsive recent_jobs pt-2 pb-2 ps-2 pe-2 card-body">
+                                                    {% if employee.documents|selectattr('document_type', 'equalto', 'other')|list|length > 0 %}
+                                                        <table class="table mb-0 text-nowrap">
+                                                            <thead>
+                                                                <tr>
+                                                                    <th class="border-bottom-0 w-5">No</th>
+                                                                    <th class="border-bottom-0 w-5">FIle Name</th>
+                                                                    <th class="border-bottom-0">Expiry On</th>
+                                                                    <th class="border-bottom-0 w-10">Actions</th>
+                                                                </tr>
+                                                            </thead>
+                                                            <tbody>
+                                                                {% for doc in employee.documents|selectattr('document_type', 'equalto', 'other') %}
+                                                                <tr class="border-bottom">
+                                                                    <td>{{loop.index}}</td>
+                                                                    <td>
+                                                                        <div class="d-flex">
+                                                                            <div class="me-3 mt-3 d-block">
+                                                                                <h6 class="mb-0 fs-13 font-weight-semibold">
+                                                                                    {{doc.document_name}}</h6>
+                                                                                <div class="clearfix"></div>
+                                                                                <small
+                                                                                    class="text-muted">{{doc.uploaded_on.strftime('%d %B %Y , %H:%M:%S')}}</small>
+                                                                            </div>
+                                                                        </div>
+                                                                    </td>
+                                                                    <td class="text-start fs-13">{{doc.document_expiry_on.strftime('%d %B %Y')}}
+                                                                    </td>
+                                                                    <td class="text-end">
+                                                                        <a href="{{url_for('static', filename='uploads/documents/'+departments.company_name.strip()+'/'+doc.document_name)}}" class="action-btns" download><i
+                                                                            class="fa fa-cloud-download"></i></a>
+                                                                        <a href="{{url_for('company.delete_employee_document',doc_id=doc._id,emp_id=employee._id)}}" class="action-btns"><i
+                                                                                class="feather feather-x text-danger"></i></a>
+                                                                    </td>
+                                                                </tr>
+                                                                {% endfor %}
+
+                                                            </tbody>
+                                                        </table>
+                                                    {% else %}
+                                                        <div class="expanel expanel-default mt-4">
+                                                            <div class="expanel-body">
+                                                                No Documents Added.
+                                                            </div>
+                                                        </div>
+                                                    {% endif %}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="tab-pane" id="tab9">
+                        <div class="card-body">
+                            <div class="row">
+                                {% for item in departments.leave_policies %}
+                                    <div class="col-xl-4 col-lg-6 col-md-12">
+                                        <div class="card">
+                                            <div class="card-body">
+                                                <div class="mt-0 text-start">
+                                                    <a  href="javascript:void(0);" class="mb-0 mt-2 mb-1 font-weight-semibold fs-20">{{item.leave_policy_name}}</a>
+                                                    <p class="text-muted mb-0">Default Allowance: <span class="badge badge-md badge-primary-light ms-2 fs-15">{{item.allowance_days}} </span></p>
+                                                </div>
+                                            </div>
+                                            {% set items = namespace(counter=0) %}
+                                            {% for subitem in employee.employee_leave_policies %}
+                                                {% if subitem.leave_policy_id._id == item._id %}
+                                                    {% set items.counter = items.counter + 1 %}
+                                                    <div class="card-footer">
+                                                        <div class="d-md-flex">
+                                                            <div class="mb-md-0">
+                                                                <h6 class="mb-1 text-muted fs-16">Remaining Leaves : <span class="font-weight-semibold fs-18 text-danger">{{subitem.balance}}</span></h6>
+                                                            </div>
+                                                            <div class="ms-auto mt-1">
+                                                                <a class="task-btn btn-success border-0 me-0" data-bs-toggle="modal"data-bs-target="#editLeavemodal" 
+                                                                data-leave_id="{{item._id}}"
+                                                                data-emp_details_id="{{employee._id}}"
+                                                                data-selected_leavetype="{{item.leave_policy_name}}"
+                                                                data-current_balance="{{subitem.balance}}"
+                                                                data-employee_leave_policy_id="{{subitem._id}}">Edit</a>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                {% endif %} 
+                                            {% endfor %}
+                                            {% if items.counter==0 %}
+                                                    <div class="card-footer">
+                                                        <div class="d-md-flex">
+                                                            <div class="ms-auto mt-1">
+                                                                <a class="task-btn btn-danger  border-0 me-0 font-weight-semibold" data-bs-toggle="modal"data-bs-target="#setupLeavemodal" 
+                                                                data-leave_id="{{item._id}}"
+                                                                data-emp_details_id="{{employee._id}}"
+                                                                data-selected_leavetype="{{item.leave_policy_name}}">Set up</a>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                {% endif %} 
+                                        </div>
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+
+                      
+                    </div>           
+                    <div class="tab-pane" id="tab17">
+                        <div class="card-body">
+                            <div class="form-group">
+                                <div class="row">
+                                    <div class="col-md-3">
+                                        <label class="form-label mb-0 mt-2">MOL. ID</label>
+                                    </div>
+                                    <div class="col-md-9">
+                                        <input type="number" class="form-control" name="employee_mol_no"
+                                            value="{{employee.employee_sif_details.employee_mol_no}}"
+                                            placeholder="Mol Number">
+                                            <!-- Here there are few more field related to the Salary file or SIF file needs to be added.. -->
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <div class="row">
+                                    <div class="col-md-3">
+                                        <label class="form-label mb-0 mt-2">MOL. Company No</label>
+                                    </div>
+                                    <div class="col-md-9">
+                                        <input type="text" class="form-control" name="company_mol_no"
+                                            value="{{employee.employee_sif_details.company_mol_no}}" placeholder="Number">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <div class="row">
+                                    <div class="col-md-3">
+                                        <label class="form-label mb-0 mt-2">Select Default Exchange/Bank</label>
+                                    </div>
+                                    <div class="col-md-9">
+                                        <select name="company_exchange" class="form-control custom-select select2"
+                                             data-placeholder="Select Default Exchange/Bank">
+                                            <option label="Select Default Exchange/Bank"></option>
+                                            {% if employee.employee_sif_details %}
+                                            {% for item in departments.company_exchanges %}
+                                                <option value="{{item.id}}"{% if employee.employee_sif_details.company_exchange and item._id==employee.employee_sif_details.company_exchange._id %}selected{% endif %}>{{item.exchange_name}}</option>
+                                            {% endfor %}
+                                            {% else %}
+                                            {% for item in departments.company_exchanges %}
+                                                <option value="{{item.id}}">{{item.exchange_name}}</option>
+                                            {% endfor %}
+                                            {% endif %}
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                           
+                        </div>
+                    </div>
+        </form>
+
+    </div>
+</div>
+</div>
+</div>
+<!-- End Row-->
+
+
+<!--Add Clockin Options Modal -->
+<div class="modal fade" id="setupLeavemodal">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <form class="card-body pt-3" method="POST" action="/update/employeeleaves/">
+                <div class="modal-header">
+                    <h5 class="modal-title">Setup Open Leaves </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">×</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div id="message"></div>
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+
+                    <input type="hidden" name="leave_id" id="leave_id" value="" />
+                    <input type="hidden" name="emp_details_id" id="emp_details_id" value="" />
+
+                    <div class="form-group">
+                        <label class="form-label"><span id="selected_leavetype"></span> days allowed per leave cycle*</label>
+                        <input type="text" class="form-control" placeholder="Balance Days" name="balance_days" value=""
+                            required>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <a href="javascript:void(0);" class="btn btn-outline-primary" data-bs-dismiss="modal">Close</a>
+                    <button class="btn btn-primary" id="btnClockInOption">Submit</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+<!-- End Clockin Options Modal  -->
+
+<!--Add Clockin Options Modal -->
+<div class="modal fade" id="editLeavemodal">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <form class="card-body pt-3" method="POST" action="/update/employeeleaves/">
+                <div class="modal-header">
+                    <h5 class="modal-title">Edit <span class="edit_selected_leavetype"></span> </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">×</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div id="message"></div>
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+
+                    <input type="hidden" name="leave_id" id="edit_leave_id" value="" />
+                    <input type="hidden" name="emp_details_id" id="edit_emp_details_id" value="" />
+                    <input type="hidden" name="employee_leave_policy_id" id="edit_employee_leave_policy_id" value="" />
+
+                    <div class="form-group">
+                        <label class="form-label">Current <span class="edit_selected_leavetype"></span> Balance</label>
+                        <input type="text" class="form-control" placeholder="Balance Days" name="current_balance_days"  id="current_balance_days" value="" readonly>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">New <span class="edit_selected_leavetype"></span> Balance*</label>
+                        <input type="text" class="form-control" placeholder="New Balance Days" name="new_balance_days" value=""
+                            required>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <a href="javascript:void(0);" class="btn btn-outline-primary" data-bs-dismiss="modal">Close</a>
+                    <button class="btn btn-primary" id="btnClockInOption">Submit</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+<!-- End Clockin Options Modal  -->
+
+{% endblock %}
+
+{% block script %}
+{{ super() }}
+<!-- INTERNAL Index js-->
+<script src="{{ url_for('static', filename='assets/js/hr/hr-empview.js') }}"></script>
+<script>
+    $(document).ready(function () {
+        var sal_type = $('.salary-type').val()
+        if (sal_type === "0") {
+            $('.full-sal').show();
+            $('.per-hour').hide();
+        } else if (sal_type === "1") {
+            $('.per-hour').show();
+            $('.full-sal').hide();
+        } else {
+            $('.per-hour').hide();
+            $('.full-sal').hide();
+        }
+        $('.salary-type').change(
+            function () {
+                if (this.value == 0) {
+                    $('.full-sal').show();
+                    $('.per-hour').hide();
+                } else {
+                    $('.per-hour').show();
+                    $('.full-sal').hide();
+                }
+            }
+        )
+    });
+    $( ".fc-datepicker" ).datepicker({
+        dateFormat:"dd/mm/yy"
+    });
+    $('.basic_salary,.housing_allowance,.travel_allowance,.other_allowances,.mobile_allowance,.fuel_allowance,.medical_allowance').keyup(function () {
+        var bs = parseInt($('.basic_salary').val());
+        var h_a = parseInt($('.housing_allowance').val());
+        var t_a = parseInt($('.travel_allowance').val());
+        var o_a = parseInt($('.other_allowances').val());
+        var m_a = parseInt($('.mobile_allowance').val());
+        var f_a = parseInt($('.fuel_allowance').val());
+        var med_a = parseInt($('.medical_allowance').val());
+        
+        var total = bs + h_a + t_a + o_a+m_a+f_a+med_a;
+        $('.over-all-sal').val(total)
+    });
+
+    $(document).ready(function(){
+        var id = 1;
+        $("#add_more").click(function(){
+            var showId = ++id;
+            if(showId <=25)
+            {
+                $(".input-files").append(' <div class="row new-row">\
+                    <div class="col-md-3">\
+                        <label for="form-label" class="form-label">Select Document</label>\
+                         <select id="document_type'+showId+'" name="document_type[]"  class="form-control custom-select select2 salary-type" data-placeholder="Select Document Type">\
+                            <option label="Select Document Type" value=""></option>\
+                            <option value="passport_copy" data-stored-value="{{departments.passport_expiry_alert|default('0')}}">Passport Copy</option>\
+                            <option value="id_proof" data-stored-value="{{departments.emirates_expiry_alert|default('0')}}">Emirates ID</option>\
+                            <option value="visa_copy" data-stored-value="{{departments.visa_expiry_alert|default('0')}}">Visa Copy</option>\
+                            <option value="offer_letter" data-stored-value="{{departments.offer_expiry_alert|default('0')}}">Offer Letter</option>\
+                            <option value="other" data-stored-value="{{departments.other_expiry_alert|default('0')}}">Other</option>\
+                        </select>\
+                    </div>\
+                    <div class="col-md-2 mt-1 p-0 d-none" id="doc_remark_other'+showId+'">\
+                        <div class="form-group">\
+                        <label for="form-label" class="form-label">Document Remark</label>\
+                            <input class="form-control" name="document_remark[]" id="document_remark'+showId+'" type="input" value="">\
+                        </div>\
+                    </div>\
+                    <div class="col-md-2 mt-1">\
+                        <div class="form-group">\
+                        <label for="form-label" class="form-label">Days Before Expiry Alert</label>\
+                            <input class="form-control" name="alert_before[]" id="alert_before'+showId+'" type="input">\
+                        </div>\
+                    </div>\
+                    <div class="col-md-2 mt-1">\
+                        <div class="form-group">\
+                        <label for="form-label" class="form-label">Document Expiry Date</label>\
+                             <input type="text" class="form-control fc-datepicker" name="expiry_date[]"  placeholder="DD/MM/YYYY" id="expiry_date'+showId+'">\
+                        </div>\
+                    </div>\
+                    <div class="col-md-4">\
+                        <div class="form-group">\
+                        <label for="form-label" class="form-label">Select File</label>\
+                            <input class="form-control fp-upload" name="document[]" id="document'+showId+'" type="file">\
+                        </div>\
+                    </div>\
+                    <div class="col-md-1">\
+                        <div class="form-group">\
+                        <label for="form-label" class="form-label">&nbsp;</label>\
+                        <a  href="#" class="btn btn-danger" id="removeRegular"><i class="fa fa-times"></i></a>\
+                        </div>\
+                    </div>\
+                </div>');
+
+                var maxFileSize = 1 * 1024 * 1024;
+        
+                // Detect when the file input field has changed
+                $('.fp-upload').on('change', function() {
+                    // Get the selected file object
+                    var file = this.files[0];
+                    $('#file-size-error').hide();
+                
+                    // Check if the file is too large
+                    if (file && file.size > maxFileSize) {
+                    // Display the error message
+                    $('#file-size-error').show();
+                    // Clear the file input field
+                    $(this).val('');
+                    } else {
+                    // Hide the error message
+                    $('#file-size-error').hide();
+                    }
+                });
+                // Event listener for the document_type select element
+                $('#document_type' + showId).on('change', function() {
+                    var alert_beforeDateInput = $('#alert_before' + showId);
+                    var docInput = $('#document_type' + showId);
+                    var docremarkInput = $('#document_remark' + showId);
+
+                    
+                    var documentTypeValue = $(this).val();
+                    // Set the expiry date based on the selected document type
+                    if (documentTypeValue === 'other') {
+                        $('#doc_remark_other' + showId).removeClass("d-none");
+
+                    } else {
+                        $('#doc_remark_other' + showId).addClass("d-none");
+                    }
+                    switch (documentTypeValue) {
+                    case 'passport_copy':
+                        // Alert Expiry days for passport
+                        var passportExpiryAlert = $('#document_type' + showId + ' option[value="passport_copy"]').data('stored-value');
+                        alert_beforeDateInput.val(passportExpiryAlert);
+                        break;
+                    case 'id_proof':
+                        // Alert Expiry days for Emirates ID 
+                        var idExpiryAlert = $('#document_type' + showId + ' option[value="id_proof"]').data('stored-value');
+                        alert_beforeDateInput.val(idExpiryAlert);
+
+                        break;
+                    case 'visa_copy':
+                        // Alert Expiry days for visa 
+                        var visaExpiryAlert = $('#document_type' + showId + ' option[value="visa_copy"]').data('stored-value');
+                        alert_beforeDateInput.val(visaExpiryAlert);
+
+                        break;
+                    case 'offer_letter':
+                        // Alert Expiry days for offer letter 
+                        var offerExpiryAlert = $('#document_type' + showId + ' option[value="offer_letter"]').data('stored-value');
+                        alert_beforeDateInput.val(offerExpiryAlert);
+
+                        break;
+                    case 'other':
+                        // Alert Expiry days for other documents here
+                        alert_beforeDateInput.val('');
+                        break;
+                    default:
+                    alert_beforeDateInput.val('');
+                    }
+                });
+            }
+        });
+        $(".input-files").on('click', '#removeRegular', function(){
+            $(this).parent().parent().parent().remove();
+            $('#file-size-error').hide();
+        });
+
+
+            // Maximum file size in bytes (10 MB)
+       
+        // Datepicker
+        $('body').on('focus',".fc-datepicker", function(){
+            $(this).datepicker({
+                dateFormat:"dd/mm/yy"
+            });
+          });
+        });
+
+    $(document).on("show.bs.modal", '#setupLeavemodal', function (e) {
+        var leave_id = $(e.relatedTarget).data('leave_id');
+        var emp_details_id = $(e.relatedTarget).data('emp_details_id');
+        var selected_leavetype = $(e.relatedTarget).data('selected_leavetype');
+        $("#leave_id").val(leave_id);
+        $("#emp_details_id").val(emp_details_id);
+        $("#selected_leavetype").html(selected_leavetype);
+    });
+
+    $(document).on("show.bs.modal", '#editLeavemodal', function (e) {
+        var leave_id = $(e.relatedTarget).data('leave_id');
+        var emp_details_id = $(e.relatedTarget).data('emp_details_id');
+        var selected_leavetype = $(e.relatedTarget).data('selected_leavetype');
+        var current_balance = $(e.relatedTarget).data('current_balance');
+        var employee_leave_policy_id = $(e.relatedTarget).data('employee_leave_policy_id');
+
+
+        $("#edit_leave_id").val(leave_id);
+        $("#edit_emp_details_id").val(emp_details_id);
+        $(".edit_selected_leavetype").html(selected_leavetype);
+        $("#current_balance_days").val(current_balance);
+        $("#edit_employee_leave_policy_id").val(employee_leave_policy_id);
+    });
+
+
+</script>
+{% endblock %}

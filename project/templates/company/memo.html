@@ -1,0 +1,277 @@
+<!-- templates/admin/index.html -->
+{% extends "layout/base.html" %}
+{% block head %}
+{{ super() }}
+<!-- INTERNAL Daterangepicker css-->
+<link rel="stylesheet" href="{{ url_for('static', filename='assets/plugins/daterangepicker/daterangepicker.css') }}">
+<link href="https://cdn.datatables.net/buttons/2.2.3/css/buttons.dataTables.min.css"></link>
+<style>
+    table.dataTable tbody th,
+    table.dataTable tbody td,
+    table.dataTable thead th,
+    table.dataTable thead td {
+        padding: 5px 10px !important;
+    }
+    
+</style>
+
+{% endblock %}
+
+{% block content %}
+<!--Page header-->
+<div class="page-header d-xl-flex d-block">
+    <div class="page-leftheader">
+        <div class="page-title">Memo/Notice Board</div>
+    </div>
+    <div class="page-rightheader ms-md-auto">
+        <div class="d-flex align-items-end flex-wrap my-auto end-content breadcrumb-end">
+            <div class="btn-list">
+                <a  href="javascript:void(0);" class="btn btn-primary me-3" data-bs-toggle="modal" data-bs-target="#addnoticemodal">Add New</a>
+                <button  class="btn btn-light" data-bs-toggle="tooltip" data-bs-placement="top" title="E-mail"> <i class="feather feather-mail"></i> </button>
+                <button  class="btn btn-light" data-bs-placement="top" data-bs-toggle="tooltip" title="Contact"> <i class="feather feather-phone-call"></i> </button>
+                <button  class="btn btn-primary" data-bs-placement="top" data-bs-toggle="tooltip" title="Info"> <i class="feather feather-info"></i> </button>
+            </div>
+        </div>
+    </div>
+</div>
+<!--End Page header-->
+
+<!-- Row -->
+<div class="row">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header  border-0">
+                <h4 class="card-title">Notice Summary</h4>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table  table-vcenter text-nowrap table-bordered border-bottom" id="hr-notice">
+                        <thead>
+                            <tr>
+                                <th class="border-bottom-0 w-5">No</th>
+                                <th class="border-bottom-0">Title</th>
+                                <th class="border-bottom-0">Description</th>
+                                <th class="border-bottom-0">Priority</th>
+                                <th class="border-bottom-0">Created On</th>
+                                <th class="border-bottom-0">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in memo_details %}
+                                <tr>
+                                    <td>{{loop.index}}</td>
+                                    <td>{{item.memo_title}}</td>
+                                    <td>{{item.memo_description|truncate(50)}}</td>
+                                    <td>{% if item.memo_priority == "high" %}
+                                            <span class="badge badge-danger">High</span>
+                                        {% elif item.memo_priority == "medium" %}
+                                            <span class="badge badge-primary">Medium</span>
+                                        {% else %}
+                                            <span class="badge badge-warning">Low</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>{{item.created_at.strftime('%d/%m/%Y')}}</td>
+                                    <td>
+                                    <div class="d-flex">
+                                        <a class="btn btn-danger btn-icon btn-sm btnDelMemo"
+                                            data-bs-toggle="tooltip"
+                                            data-original-title="Delete"
+                                            data-id="{{item._id}}"
+                                            href="javascript:void(0)"><i
+                                        class="feather feather-trash-2"></i></a>
+                                    </div>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- End Row -->
+
+
+<!-- Add leave Modal -->
+<div class="modal fade"  id="addnoticemodal">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Add New Notice/Memo</h5>
+                <button  class="btn-close" data-bs-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">×</span>
+                </button>
+            </div>
+            <form id="new_memo_form" enctype="multipart/form-data">
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label class="form-label">Title</label>
+                        <input class="form-control" name="memo_title" id="memo_title" placeholder="Text" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Message:</label>
+                        <textarea class="form-control" rows="3" name="memo_description" id="memo_description" placeholder="Write message here, If any...." name="description" required></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Attachment(if Any):</label>
+                        <div class="form-group">
+                        <label for="form-label" class="form-label"></label>
+                            <input class="form-control" name="file" type="file" id="attachment">
+                        </div>
+                    </div>
+                    <div class="form-group">
+
+                        <label class="form-label mt-1 me-5">Priority :</label>
+                        
+                        <select class="form-control custom-select select2" name="memo_priority" id="memo_priority"
+                            data-placeholder="Select">
+                            <option value="high">High</option>
+                            <option value="medium">Medium</option>
+                            <option value="low">Low</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Expiry Date:</label>
+                        <div class="input-group">
+                            <div class="input-group-prepend">
+                                <div class="input-group-text">
+                                    <i class="feather feather-calendar"></i>
+                                </div>
+                            </div><input class="form-control fc-datepicker" placeholder="DD-MM-YYYY" type="text" id="memo_expiry">
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button  class="btn btn-outline-primary" data-bs-dismiss="modal">Close</button>
+                    <button  class="btn btn-success btnAddMemo">Save</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+<!-- Add leave Modal -->
+{% endblock %}
+{% block script %}
+{{ super() }}
+<!-- INTERNAL Datepicker js -->
+<script src="{{ url_for('static', filename='assets/plugins/modal-datepicker/datepicker.js') }}"></script>
+<script>
+    // Data Table
+	$('#hr-notice').DataTable();
+	// Datepicker
+	$( '.fc-datepicker').datepicker({
+		format:'dd/mm/yyyy',
+		zIndex: 999998,
+	});
+     // Ajax Edit Clock In
+     $(document).on("click", '.btnAddMemo', function (e) {
+        e.preventDefault();
+        var cs = "{{ csrf_token() }}";
+        var form_data = new FormData();
+        
+        var memo_title = $('#memo_title').val()
+        var memo_description = $('#memo_description').val()
+        var memo_priority = $('#memo_priority :selected').val()
+        var memo_expiry = $('#memo_expiry').val()
+
+        form_data.append("memo_title", memo_title);
+        form_data.append("memo_description", memo_description);
+        form_data.append("memo_priority", memo_priority);
+        form_data.append("memo_expiry", memo_expiry);
+        
+        if (document.getElementById('attachment').files[0]) {
+            form_data.append("has_file", true);
+            form_data.append("files", document.getElementById('attachment').files[0]);
+        }
+        else{
+            form_data.append("has_file", false);
+        }
+        swal({
+            title: "Are you sure?",
+            text: "You want to create a Memo/Notice?",
+            icon: "warning",
+            buttons: true,
+            dangerMode: true,
+        }).then((willDelete) => {
+            if (willDelete) {
+                $.ajax({
+                        headers: {
+                            'X-CSRF-TOKEN': cs
+                        },
+                        url: '/memos',
+                        data: form_data,
+                        type: 'POST',
+                        contentType: false,
+                        processData: false,
+                    })
+                    .done(function (data) {
+                        //$('#offices-table tbody').empty();
+                        $('#addnoticemodal').modal('toggle');
+                        swal({
+                            title: "Success",
+                            text: "Successfully Created a New Memo/Notice(s)!",
+                            icon: "success",
+                        }).then(function(){ 
+                            $("#global-loader").show();
+                            location.reload();
+                            });
+                    })
+                    .fail(function (err) {
+                        console.log(err);
+                        $('#message').html(err);
+                    })
+            }
+        });
+    });
+    //EnD Ajax Edit Clock In
+
+    // Ajax Del Memo
+    $(document).on("click", '.btnDelMemo', function (e) {
+        e.preventDefault();
+        swal({
+            title: "Are you sure?",
+            text: "You want to delete this Notice/Memo ",
+            icon: "warning",
+            buttons: true,
+        }).then((willDelete) => {
+            if (willDelete) {
+                var cs = "{{ csrf_token() }}";
+                var memo_id = $(this).attr("data-id");
+                $.ajax({
+                        headers: {
+                            'X-CSRF-TOKEN': cs
+                        },
+                        url: '/deletememo',
+                        data: {
+                            id: memo_id
+                        },
+                        type: 'POST',
+                    }).done(function (data) {
+                        if (data.status == "success") {
+                            swal({
+                                title: "Success",
+                                text: "Successfully Deleted a Memo/Notice(s)!",
+                                icon: "success",
+                            }).then(function(){ 
+                                $("#global-loader").show();
+                                location.reload();
+                            });
+                        } else {
+                            swal({
+                                title: "Error",
+                                text: "Cannot Delete this Memo/Notice!",
+                                icon: "error",
+                            });
+                        }
+                    })
+                    .fail(function (err) {
+                        console.log(err);
+                        $('#message').html(err);
+                    })
+            }
+        });
+    });
+    //EnD Ajax Del Memo
+</script>
+{% endblock %}

@@ -1,0 +1,158 @@
+<!-- templates/employee/index.html -->
+
+{% extends "layout/base.html" %}
+{% block head %}
+{{ super() }}
+<!-- INTERNAL Daterangepicker css-->
+<link rel="stylesheet" href="{{ url_for('static', filename='assets/plugins/daterangepicker/daterangepicker.css') }}">
+<style>
+    table.dataTable tbody th,
+    table.dataTable tbody td,
+    table.dataTable thead th,
+    table.dataTable thead td {
+        padding: 5px 10px !important;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!--Page header-->
+<div class="page-header d-xl-flex d-block">
+    <div class="page-leftheader">
+        <div class="page-title"> Biometric Attendance List </div>
+    </div>
+    <div class="page-rightheader ms-md-auto">
+        <div class="align-items-end flex-wrap my-auto right-content breadcrumb-right">
+            <div class="btn-list">
+                <button  class="btn btn-light" data-bs-toggle="tooltip" data-bs-placement="top" title="E-mail"> <i class="feather feather-mail"></i> </button>
+                <button  class="btn btn-light" data-bs-placement="top" data-bs-toggle="tooltip" title="Contact"> <i class="feather feather-phone-call"></i> </button>
+                <button  class="btn btn-primary" data-bs-placement="top" data-bs-toggle="tooltip" title="Info"> <i class="feather feather-info"></i> </button>
+            </div>
+        </div>
+    </div>
+</div>
+<!--End Page header-->
+
+<!-- Row -->
+<div class="row">
+    <div class="col-md-12 col-sm-12 col-lg-12 col-xl-12 col-xxl-12">
+        <div class="card">
+            <div class="card-header border-0">
+                <h4 class="card-title">Attendance List</h4>
+            </div>
+            <div class="table-responsive mt-5 p-3">
+                <table class="table  table-vcenter text-nowrap table-bordered border-bottom  attendance-history ">
+                    <thead>
+                        <tr>
+                            <th class="text-start border-bottom-0">Name</th>
+                            <th class="text-start border-bottom-0">Employee ID</th>
+                            <th class="text-start border-bottom-0">Time</th>
+                            <th class="text-start border-bottom-0">Type</th>
+                        </tr>
+                    </thead>
+                    <tbody >
+                        {% for match in data| selectattr('attendanceStatus', 'ne', 'undefined')%}
+                        <tr class="border-bottom fs-15">
+                            <td class="text-start">{{ match.name }}</td>
+                            <td class="text-start">{{ match.employee_no_string }}</td>
+                            <td class="text-start">{{ match.time }}</td>
+                            <td class="text-start fs-15">
+                                {% if match.attendance_status == 'checkIn' %}
+                                <span class="badge badge-success-light">Check In</span>
+                                {% elif match.attendance_status == 'checkOut' %}
+                                <span class="badge badge-danger-light">Check Out</span>
+                                {% elif match.attendance_status == 'breakIn' %}
+                                <span class="badge badge-orange-light">Break In</span>
+                                {% elif match.attendance_status == 'breakOut' %}
+                                <span class="badge badge-orange-light">Break Out</span>
+                                {% elif match.attendance_status == 'overtimeIn' %}
+                                <span class="badge badge-info-light">Overtime In</span>
+                                {% elif match.attendance_status == 'overtimeOut' %}
+                                <span class="badge badge-danger-light">Overtime Out</span>
+                                {% elif match.attendance_status == 'undefined' %}
+                                <span class="badge badge-danger-light">Undefined</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- End Row-->
+
+{% endblock %}
+
+{% block script %}
+{{ super() }}
+<script>
+	/* Data Table */
+	$('.attendance-history').DataTable({
+		order: [],
+		columnDefs: [ { orderable: false, targets: [0] } ],
+		language: {
+			searchPlaceholder: 'Search...',
+			sSearch: '',
+
+		}
+	});
+	/* End Data Table */
+</script>
+
+
+<script>
+    // $(document).ready(function() {
+    //     // Fetch and display data on page load
+    //     fetchAndDisplayData();
+
+    //     // Fetch and display data every 5 seconds
+    //     setInterval(fetchAndDisplayData, 5000);
+    // });
+
+    function fetchAndDisplayData() {
+        $.ajax({
+            url: '/real_time_device_attendance_list/{{deviceIndex}}/{{current_search_position}}',
+            method: 'get',
+            dataType: 'json',
+            success: function(response) {
+                // Clear existing data
+                $('.attendance-history tbody').empty();
+
+                // Build and append table rows
+                response.forEach(function(item) {
+                    if(item.attendanceStatus != "undefined"){
+                        let statusBadge = '';
+
+                        // var row = '<tr><td>' + item.employeeNoString + '</td><td>' + item.time + '</td><td>' + item.attendanceStatus + '</td></tr>';
+                        if (item.attendanceStatus === 'checkIn') {
+                            statusBadge = '<span class="badge badge-success-light">Check In</span>';
+                        } else if (item.attendanceStatus === 'checkOut') {
+                            statusBadge = '<span class="badge badge-danger-light">Check Out</span>';
+                        } else if (item.attendanceStatus === 'breakIn' || item.attendanceStatus === 'breakOut') {
+                            statusBadge = '<span class="badge badge-orange-light">Break ' + (item.attendanceStatus === 'breakIn' ? 'In' : 'Out') + '</span>';
+                        } else if (item.attendanceStatus === 'overtimeIn') {
+                            statusBadge = '<span class="badge badge-info-light">Overtime In</span>';
+                        } else if (item.attendanceStatus === 'overtimeOut') {
+                            statusBadge = '<span class="badge badge-danger-light">Overtime Out</span>';
+                        } else if (item.attendanceStatus === 'undefined') {
+                            statusBadge = '<span class="badge badge-danger-light">Undefined</span>';
+                        }
+                        var row = '<tr class="border-bottom fs-15">\
+                                <td class="text-start">'+item.employeeNoString+' </td>\
+                                <td class="text-start">'+item.time+'</td>\
+                                <td class="text-start fs-15">'+statusBadge+' </td>\
+                            </tr>'
+                        $('.attendance-history tbody').append(row);
+                    }
+                });
+            },
+            error: function(error) {
+                console.error('Error fetching data:', error);
+            }
+        });
+    }
+</script>
+
+{% endblock %}

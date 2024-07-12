@@ -1,0 +1,696 @@
+<!-- templates/admin/index.html -->
+{% extends "layout/base.html" %}
+{% block head %}
+{{ super() }}
+<style>
+    table.dataTable tbody th,
+    table.dataTable tbody td,
+    table.dataTable thead th,
+    table.dataTable thead td {
+        padding: 5px 10px !important;
+    }
+</style>
+
+{% endblock %}
+
+{% block content %}
+<!--Page header-->
+<div class="page-header d-xl-flex d-block">
+    <div class="page-leftheader">
+        <div class="page-title">Monthly Payroll</div>
+    </div>
+    <div class="page-rightheader ms-md-auto">
+        <div class="d-flex align-items-end flex-wrap my-auto end-content breadcrumb-end">
+            <div class="btn-list">
+                <!-- <button class="btn btn-primary" data-bs-placement="top" data-bs-toggle="modal"
+                    data-bs-target="#largemodal" id="queue-status"> <i class="feather fe fe-upload-cloud"> </i> Queue
+                    Status </button> -->
+                <button class="btn btn-light" data-bs-toggle="tooltip" data-bs-placement="top" title="E-mail"> <i
+                        class="feather feather-mail"></i> </button>
+                <button class="btn btn-light" data-bs-placement="top" data-bs-toggle="tooltip" title="Contact"> <i
+                        class="feather feather-phone-call"></i> </button>
+                <button class="btn btn-primary" data-bs-placement="top" data-bs-toggle="tooltip" title="Info"> <i
+                        class="feather feather-info"></i> </button>
+            </div>
+        </div>
+    </div>
+</div>
+<!--End Page header-->
+<!-- Row -->
+<div class="row">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-body">
+                <form class="card-body pt-3" method="POST" action="/wps">
+                    <input type="hidden" name="csrf_token" id="csrf_gen" value="{{ csrf_token() }}" />
+                    <div class="row mt-5">
+                        <div class="col-md-6 col-lg-3">
+                            <label class="form-label">Attendance Month:</label>
+                            <input class="form-control" placeholder="Month Range" type="text" name="selected_month"
+                                id="selected_month" value="{{start_of_month.strftime('%Y-%m-%d')}}" hidden>
+                            <div class="input-group">
+                                <div class="input-group-prepend">
+                                    <div class="input-group-text">
+                                        <span class="feather feather-clock"></span>
+                                    </div>
+                                </div>
+
+                                <input class="form-control" id="filter-datepicker-month" placeholder="Month Range"
+                                    type="text" name="month_range_input" value="{{start_of_month.strftime('%B')}}">
+                            </div>
+                        </div>
+                        <div class="col-md-2 col-lg-3">
+                            <div class="form-group">
+                                <label class="form-label">Select Sub Company:</label>
+                                <div class="input-group">
+                                    <select class="w-100 form-control form-select" name="sub_company" id="sub_company">
+                                        <option value="" selected disabled>Select Sub Company</option>
+                                        {% if company_details.sub_companies|length > 0 %}
+                                        {% for item in company_details.sub_companies %}
+                                        <option value="{{ item.id }}" {% if item.id == selected_sub_company %}selected{% endif %}>{{ item.company_name }}</option>
+                                        {% endfor %} 
+                                        {% endif %}
+                                        <option value="">All Company</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6 col-lg-2">
+                            <div class="form-group mt-5">
+                                <button href="javascript:void(0);" class="btn btn-primary btn-block">Search</button>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+
+            <div class="card">
+                    <div class="panel panel-primary">
+                        <div class=" tab-menu-heading p-0 bg-light">
+                            <div class="tabs-menu1 ">
+                                <!-- Tabs -->
+                                <ul class="nav panel-tabs">
+                                    <li><a href="#tab6" class="active" data-bs-toggle="tab">Al Ansari Exchange</a></li>
+                                    {% if payroll_details|selectattr('sif_details.exchange', 'equalto', 'JOYALUKKAS EXCHANGE')|list|length > 0 %}
+                                         <li><a href="#tab7" data-bs-toggle="tab">Joyalukkas Exchange</a></li>
+                                    {% endif %}
+                                    {% if payroll_details|selectattr('sif_details.exchange', 'equalto', 'RAK Bank')|list|length > 0 %}
+                                        <li><a href="#tab9" data-bs-toggle="tab">RAK Bank</a></li>
+                                    {% endif %}
+                                    {% if payroll_details|selectattr('sif_details.exchange', 'equalto', '')|list|length > 0 %}
+                                        <li><a href="#tab8" data-bs-toggle="tab">Non Assigned Exchange</a></li>
+                                    {% endif %}
+                                    {% if payroll_details|selectattr('sif_details.exchange', 'equalto', 'Cash')|list|length > 0 %}
+                                        <li><a href="#tab9" data-bs-toggle="tab">Cash</a></li>
+                                    {% endif %}
+                                    {% if payroll_details|selectattr('sif_details.exchange', 'equalto', 'Commercia Bank International (CBI)')|list|length > 0 %}
+                                        <li><a href="#tab10" data-bs-toggle="tab">Commercia Bank International (CBI)</a></li>
+                                    {% endif %}
+
+                                    {% if payroll_details|selectattr('sif_details.exchange', 'equalto', 'CBD')|list|length > 0 %}
+                                        <li><a href="#tab11" data-bs-toggle="tab">Commercia Bank Dubai (CBD)</a></li>
+                                    {% endif %}
+                                </ul>
+                            </div>
+                        </div>
+                        <div class="panel-body tabs-menu-body">
+                            <div class="tab-content">
+                                <!-- Al Ansari   -->
+                                <div class="tab-pane active" id="tab6">
+                                    <div class="card-body">
+                                        <div class="table-responsive">
+                                            <table class="table  table-vcenter text-nowrap table-bordered border-bottom table-striped fs-12" id="sif-report">
+                                                <thead>
+                                                    <tr>
+                                                        <th class="border-bottom-0 fs-12 w-5">Record Type</th>
+                                                        <th class="border-bottom-0 fs-12">Employee Unique ID</th>
+                                                        <th class="border-bottom-0 fs-12">Employee Name</th>
+                                                        <th class="border-bottom-0 fs-12">Agent ID</th>
+                                                        <th class="border-bottom-0 fs-12">IBAN/Account No</th>
+                                                        <th class="border-bottom-0 fs-12">Pay Start Date</th>
+                                                        <th class="border-bottom-0 fs-12">Pay End Date</th>
+                                                        <th class="border-bottom-0 fs-12">Days in Period</th>
+                                                        <th class="border-bottom-0 fs-12">Income Fixed Component</th>
+                                                        <th class="border-bottom-0 fs-12">Income Variable Component</th>
+                                                        <th class="border-bottom-0 fs-12">Days on leave for period</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    <tr>
+                                                        <td>{{sdr_details.sif_type}}</td>
+                                                        <td>{{sdr_details.company_unique_id}}</td>
+                                                        <td>{{sdr_details.company_routing_code}}</td>
+                                                        <td>{{sdr_details.file_creation_date}}</td>
+                                                        <td>{{sdr_details.file_creation_time}}</td>
+                                                        <td>{{sdr_details.salary_month}}</td>
+                                                        <td>{{sdr_details.edr_count}}</td>
+                                                        <td class="font-weight-semibold">{{"%0.2f" | format(sdr_details.overal_salary_to_be_paid_aa | default(0.0) | float)}}</td>
+                                                        <td>{{sdr_details.currency}}</td>
+                                                        <td>{{sdr_details.reference}}</td>
+                                                        <td></td>
+                                                    </tr>
+                                                    {% for item in payroll_details|selectattr('sif_details.exchange', 'equalto', 'Al Ansari Exchange') %}
+                                                        <tr>
+                                                            <td>{{item.sif_details.sif_type}}</td>
+                                                            <td>{{item.employee_details_id.employee_sif_details.company_mol_no}}</td>
+                                                            <td>{{item.employee_details_id.first_name + ' ' +item.employee_details_id.last_name}}</td>
+                                                            <td>{{item.employee_details_id.employee_bank_details.routing_code}}</td>
+                                                            <td>{{item.employee_details_id.employee_bank_details.iban_no}}</td>
+                                                            <td>{{item.sif_details.pay_start}}</td>
+                                                            <td>{{item.sif_details.pay_end}}</td>
+                                                            <td>{{item.sif_details.days_in_month}}</td>
+                                                            <td class="font-weight-semibold">{{"%0.2f" | format(item.sif_details.salary | default(0.0) | float)}}</td>
+                                                            <td class="font-weight-semibold">{{"%0.2f" | format(item.sif_details.variable_pay | default(0.0) | float)}}</td>
+                                                            <td>{{item.sif_details.on_leave_days}}</td>
+                                                        </tr>
+                                                    {% endfor %}
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
+                                        
+
+                                {% if payroll_details|selectattr('sif_details.exchange', 'equalto', 'JOYALUKKAS EXCHANGE')|list|length > 0 %}
+                                   <!-- Joyalukkas Exchange -->
+                                    <div class="tab-pane " id="tab7">
+                                        <div class="card-body">
+                                            <div class="table-responsive">
+                                                <table class="table  table-vcenter text-nowrap table-bordered border-bottom table-striped" id="hr-payroll1">
+                                                    <thead>
+                                                        <tr>
+                                                            <th class="border-bottom-0 w-5">COMPMOLCODE</th>
+                                                            <th class="border-bottom-0">EMPMOLID</th>
+                                                            <th class="border-bottom-0">EMPNAME</th>
+                                                            <th class="border-bottom-0">INCOMEFIX</th>
+                                                            <th class="border-bottom-0">INCOMEVAR</th>
+                                                            <th class="border-bottom-0">LEAVEDAYS</th>
+                                                            <th class="border-bottom-0">SALMNTH</th>
+                                                            <th class="border-bottom-0">SALYR</th>
+                                                            <th class="border-bottom-0">BANKACCNO</th>
+                                                            <th class="border-bottom-0">BANKNAME</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tfoot>
+                                                        <tr>
+                                                            <th class="border-bottom-2 "></th>
+                                                            <th class="border-bottom-2"></th>
+                                                            <th class="border-bottom-2 ">Total Salary</th>
+                                                            <th class="border-bottom-2">{{"%0.2f" | format(sdr_details.overal_salary_to_be_paid_ja | default(0.0) | float)}}</th>
+                                                            <th class="border-bottom-2 "></th>
+                                                            <th class="border-bottom-2"></th>
+                                                            <th class="border-bottom-2 "></th>
+                                                            <th class="border-bottom-2"></th>
+                                                            <th class="border-bottom-2 "></th>
+                                                            <th class="border-bottom-2"></th>
+                                                        </tr>
+                                                    </tfoot>
+                                                    <tbody>
+                                                        {% for item in payroll_details|selectattr('sif_details.exchange', 'equalto', 'JOYALUKKAS EXCHANGE')|list %}
+                                                            <tr>
+                                                                <td>{{item.employee_details_id.employee_sif_details.company_mol_no}}</td>
+                                                                <td>{{item.employee_details_id.employee_sif_details.employee_mol_no|default('-')}}</td>
+                                                                <td>
+                                                                    <div class="d-flex">
+                                                                        <div class="me-3 mt-0 mt-sm-1 d-block">
+                                                                            <h6 class="mb-1 fs-14">{{item.employee_details_id.first_name + ' ' + item.employee_details_id.last_name}}</h6>
+                                                                        </div>
+                                                                    </div>
+                                                                </td>
+                                                                <td>{{"%0.2f" | format(item.salary_to_be_paid | default(0.0) | float)}}</td>
+                                                                <td>{{"%0.2f" | format(item.variable_pay | default(0.0) | float)}}</td>
+                                                                <!-- <td>{{"%0.2f" | format(item.salary_to_be_paid | default(0.0) | float)}}</td> -->
+                                                                <td class="text-start">{{item.on_leave_days}}</td>
+                                                                <td class="text-start">{{start_of_month.strftime('%m')}}</td>
+                                                                <td class="text-start">{{start_of_month.strftime('%Y')}}</td>
+                                                                <td>{{item.employee_details_id.employee_bank_details.iban_no}}</td>
+                                                                <td>{{item.employee_details_id.employee_bank_details.bank_name}}</td>
+                                                            </tr>
+                                                        {% endfor %}
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        </div>
+                                    </div> 
+                                {% endif %}
+                                {% if payroll_details|selectattr('sif_details.exchange', 'equalto', 'RAK Bank')|list|length > 0 %}
+                                    <!-- Rak Bank -->
+                                    <div class="tab-pane " id="tab9">
+                                        <div class="card-body">
+                                            <div class="table-responsive">
+                                                <table class="table  table-vcenter text-nowrap table-bordered border-bottom table-striped fs-12" id="sif-rakreport">
+                                                    <thead>
+                                                        <tr>
+                                                            <th class="border-bottom-0 fs-12 w-5">Record Type</th>
+                                                            <th class="border-bottom-0 fs-12">Employee Unique ID</th>
+                                                            <th class="border-bottom-0 fs-12">Routing Agent Code</th>
+                                                            <th class="border-bottom-0 fs-12">IBAN/Account No</th>
+                                                            <th class="border-bottom-0 fs-12">Pay Start Date</th>
+                                                            <th class="border-bottom-0 fs-12">Pay End Date</th>
+                                                            <th class="border-bottom-0 fs-12">Days in Period</th>
+                                                            <th class="border-bottom-0 fs-12">Income Fixed Component</th>
+                                                            <th class="border-bottom-0 fs-12">Income Variable Component</th>
+                                                            <th class="border-bottom-0 fs-12">Days on leave for period</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        
+                                                        {% for item in payroll_details|selectattr('sif_details.exchange', 'equalto', 'RAK Bank') %}
+                                                            <tr>
+                                                                <td>{{item.sif_details.sif_type}}</td>
+                                                                <td>{{item.employee_details_id.employee_sif_details.employee_mol_no}}</td>
+                                                                <td>{{item.employee_details_id.employee_bank_details.routing_code}}</td>
+                                                                <td>{{item.employee_details_id.employee_bank_details.iban_no}}</td>
+                                                                <td>{{item.sif_details.pay_start}}</td>
+                                                                <td>{{item.sif_details.pay_end}}</td>
+                                                                <td>{{item.sif_details.days_in_month}}</td>
+                                                                <td class="font-weight-semibold">{{"%0.2f" | format(item.sif_details.salary_with_deduction | default(0) | float)}}</td>
+                                                                <td class="font-weight-semibold">{{"%0.2f" | format(item.sif_details.variable_pay | default(0) | float)}}</td>
+                                                                <td>{{item.sif_details.on_leave_days}}</td>
+                                                            </tr>
+                                                        {% endfor %}
+
+                                                        <tr>
+                                                            <td>{{sdr_details.sif_type}}</td>
+                                                            <td>{{sdr_details.company_unique_id}}</td>
+                                                            <td>{{sdr_details.company_routing_code}}</td>
+                                                            <td>{{sdr_details.file_creation_date}}</td>
+                                                            <td>{{sdr_details.file_creation_time}}</td>
+                                                            <td>{{sdr_details.salary_month}}</td>
+                                                            <td>{{sdr_details.edr_count_rb}}</td>
+                                                            <td class="font-weight-semibold">{{"%0.2f" | format(sdr_details.overal_salary_to_be_paid_rb | default(0) | float)}}</td>
+                                                            <td>{{sdr_details.currency}}</td>
+                                                            <td>{{sdr_details.reference}}</td>
+                                                        </tr>
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        </div>
+                                    </div>
+                                {% endif %}
+                               
+                               
+                                {% if payroll_details|selectattr('sif_details.exchange', 'equalto', 'Cash')|list|length > 0  %}
+                                    <!-- Cash Exchange-->
+                                    <div class="tab-pane " id="tab9">
+                                        <div class="card-body">
+                                            <div class="table-responsive">
+                                                <table class="table  table-vcenter text-nowrap table-bordered border-bottom table-striped fs-12" id="sif-cashreport">
+                                                    <thead>
+                                                        <tr>
+                                                            <th class="border-bottom-0 fs-12 w-5">Record Type</th>
+                                                            <th class="border-bottom-0 fs-12">Employee Unique ID</th>
+                                                            <th class="border-bottom-0 fs-12">Employee Name</th>
+                                                            <th class="border-bottom-0 fs-12">Agent ID</th>
+                                                            <th class="border-bottom-0 fs-12">IBAN/Account No</th>
+                                                            <th class="border-bottom-0 fs-12">Pay Start Date</th>
+                                                            <th class="border-bottom-0 fs-12">Pay End Date</th>
+                                                            <th class="border-bottom-0 fs-12">Days in Period</th>
+                                                            <th class="border-bottom-0 fs-12">Income Fixed Component</th>
+                                                            <th class="border-bottom-0 fs-12">Income Variable Component</th>
+                                                            <th class="border-bottom-0 fs-12">Days on leave for period</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        <tr>
+                                                            <td>{{sdr_details.sif_type}}</td>
+                                                            <td>{{sdr_details.company_unique_id}}</td>
+                                                            <td>{{sdr_details.company_routing_code}}</td>
+                                                            <td>{{sdr_details.file_creation_date}}</td>
+                                                            <td>{{sdr_details.file_creation_time}}</td>
+                                                            <td>{{sdr_details.salary_month}}</td>
+                                                            <td>{{sdr_details.edr_count_cash}}</td>
+                                                            <td class="font-weight-semibold">{{"%0.2f" | format(sdr_details.overal_salary_to_be_paid_cash | default(0.0) | float)}}</td>
+                                                            <td>{{sdr_details.currency}}</td>
+                                                            <td>{{sdr_details.reference}}</td>
+                                                            <td></td>
+                                                        </tr>
+                                                        {% for item in payroll_details|selectattr('sif_details.exchange', 'equalto', 'Cash') %}
+                                                            <tr>
+                                                                <td>{{item.sif_details.sif_type}}</td>
+                                                                <td>{{item.employee_details_id.employee_sif_details.company_mol_no}}</td>
+                                                                <td>{{item.employee_details_id.first_name + ' ' +item.employee_details_id.last_name}}</td>
+                                                                <td>{{item.employee_details_id.employee_bank_details.routing_code}}</td>
+                                                                <td>{{item.employee_details_id.employee_bank_details.iban_no}}</td>
+                                                                <td>{{item.sif_details.pay_start}}</td>
+                                                                <td>{{item.sif_details.pay_end}}</td>
+                                                                <td>{{item.sif_details.days_in_month}}</td>
+                                                                <td class="font-weight-semibold">{{"%0.2f" | format(item.sif_details.salary | default(0.0) | float)}}</td>
+                                                                <td class="font-weight-semibold">{{"%0.2f" | format(item.sif_details.variable_pay | default(0.0) | float)}}</td>
+                                                                <td>{{item.sif_details.on_leave_days}}</td>
+                                                            </tr>
+                                                        {% endfor %}
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        </div>
+                                    </div>
+                                {% endif %}
+
+
+                                {% if payroll_details|selectattr('sif_details.exchange', 'equalto', '')|list|length > 0  %}
+                                <!-- Non Assigned Exchange-->
+                                <div class="tab-pane " id="tab8">
+                                    <div class="card-body">
+                                        <div class="table-responsive">
+                                            <table class="table  table-vcenter text-nowrap table-bordered border-bottom table-striped fs-12" id="sif-nonreport">
+                                                <thead>
+                                                    <tr>
+                                                        <th class="border-bottom-0 fs-12 w-5">Record Type</th>
+                                                        <th class="border-bottom-0 fs-12">Employee Unique ID</th>
+                                                        <th class="border-bottom-0 fs-12">Employee Name</th>
+                                                        <th class="border-bottom-0 fs-12">Agent ID</th>
+                                                        <th class="border-bottom-0 fs-12">IBAN/Account No</th>
+                                                        <th class="border-bottom-0 fs-12">Pay Start Date</th>
+                                                        <th class="border-bottom-0 fs-12">Pay End Date</th>
+                                                        <th class="border-bottom-0 fs-12">Days in Period</th>
+                                                        <th class="border-bottom-0 fs-12">Income Fixed Component</th>
+                                                        <th class="border-bottom-0 fs-12">Income Variable Component</th>
+                                                        <th class="border-bottom-0 fs-12">Days on leave for period</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    <tr>
+                                                        <td>{{sdr_details.sif_type}}</td>
+                                                        <td>{{sdr_details.company_unique_id}}</td>
+                                                        <td>{{sdr_details.company_routing_code}}</td>
+                                                        <td>{{sdr_details.file_creation_date}}</td>
+                                                        <td>{{sdr_details.file_creation_time}}</td>
+                                                        <td>{{sdr_details.salary_month}}</td>
+                                                        <td>{{sdr_details.edr_count}}</td>
+                                                        <td class="font-weight-semibold">{{"%0.2f" | format(sdr_details.overal_salary_to_be_paid | default(0.0) | float)}}</td>
+                                                        <td>{{sdr_details.currency}}</td>
+                                                        <td>{{sdr_details.reference}}</td>
+                                                        <td></td>
+                                                    </tr>
+                                                    {% for item in payroll_details|selectattr('sif_details.exchange', 'equalto', '') %}
+                                                        <tr>
+                                                            <td>{{item.sif_details.sif_type}}</td>
+                                                            <td>{{item.employee_details_id.employee_sif_details.company_mol_no}}</td>
+                                                            <td>{{item.employee_details_id.first_name + ' ' +item.employee_details_id.last_name}}</td>
+                                                            <td>{{item.employee_details_id.employee_bank_details.routing_code}}</td>
+                                                            <td>{{item.employee_details_id.employee_bank_details.iban_no}}</td>
+                                                            <td>{{item.sif_details.pay_start}}</td>
+                                                            <td>{{item.sif_details.pay_end}}</td>
+                                                            <td>{{item.sif_details.days_in_month}}</td>
+                                                            <td class="font-weight-semibold">{{"%0.2f" | format(item.sif_details.salary | default(0.0) | float)}}</td>
+                                                            <td class="font-weight-semibold">{{"%0.2f" | format(item.sif_details.variable_pay | default(0.0) | float)}}</td>
+                                                            <td>{{item.sif_details.on_leave_days}}</td>
+                                                        </tr>
+                                                    {% endfor %}
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endif %}
+
+                                {% if payroll_details|selectattr('sif_details.exchange', 'equalto', 'Commercia Bank International (CBI)')|list|length > 0  %}
+                                <!-- CBD Exchange-->
+                                <div class="tab-pane " id="tab10">
+                                    <div class="card-body">
+                                        <div class="table-responsive">
+                                            <table class="table  table-vcenter text-nowrap table-bordered border-bottom table-striped fs-12" id="sif-cbdreport">
+                                                <thead>
+                                                    <tr>
+                                                        <th class="border-bottom-0 fs-12 w-5">MOLId</th>
+                                                        <th class="border-bottom-0 fs-12">Salary</th>
+                                                        <th class="border-bottom-0 fs-12">VarPay</th>
+                                                        <th class="border-bottom-0 fs-12">Fromdate</th>
+                                                        <th class="border-bottom-0 fs-12">Todate</th>
+                                                        <th class="border-bottom-0 fs-12">Accountno</th>
+                                                        <th class="border-bottom-0 fs-12">RoutingCode</th>
+                                                        <th class="border-bottom-0 fs-12">Leave</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    <tr>
+                                                        <td>Company Name:</td>
+                                                        <td>Ayaydin Miroglio General Trading LLC</td>
+                                                        <td>EST ID</td>
+                                                        <td>000000{{sdr_details.company_unique_id}}</td>
+                                                        <td></td>
+                                                        <td></td>
+                                                        <td></td>
+                                                        <td></td>
+                                                    </tr>
+                                                    <tr>
+                                                        <th >MOL Person Id</th>
+                                                        <th >Total Salary</th>
+                                                        <th >Salary Variable Component</th>
+                                                        <th >From Date (dd/mm/yyyy)</th>
+                                                        <th >To Date (dd/mm/yyyy)</th>
+                                                        <th >Agent Bank Account Number - IBAN</th>
+                                                        <th >Agent Bank Routing Code</th>
+                                                        <th >Leave</th>
+                                                    </tr>
+                                                    {% for item in payroll_details|selectattr('sif_details.exchange', 'equalto', 'Commercia Bank International (CBI)') %}
+                                                        <tr>
+                                                            <td>{{item.employee_details_id.employee_sif_details.employee_mol_no}}</td>
+                                                            <td class="font-weight-semibold">{{"%0.2f" | format(item.sif_details.salary | default(0.0) | float)}}</td>
+                                                            <td class="font-weight-semibold">{{"%0.2f" | format(item.sif_details.variable_pay | default(0.0) | float)}}</td>
+                                                            <td>{{item.sif_details.pay_start_cbd}}</td>
+                                                            <td>{{item.sif_details.pay_end_cbd}}</td>
+                                                            <td>{{item.employee_details_id.employee_bank_details.iban_no}}</td>
+                                                            <td>{{item.employee_details_id.employee_bank_details.routing_code}}</td>
+                                                            <td>{{item.sif_details.on_leave_days}}</td>
+                                                        </tr>
+                                                    {% endfor %}
+                                                   
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endif %}
+
+                                
+                                {% if payroll_details|selectattr('sif_details.exchange', 'equalto', 'CBD')|list|length > 0  %}
+                                <!-- CBD Exchange-->
+                                <div class="tab-pane " id="tab11">
+                                    <div class="card-body">
+                                        <div class="table-responsive">
+                                            <table class="table  table-vcenter text-nowrap table-bordered border-bottom table-striped fs-12" id="sif-cbdreport">
+                                                <thead>
+                                                    <tr>
+                                                        <th class="border-bottom-0 fs-12 w-5">MOLId</th>
+                                                        <th class="border-bottom-0 fs-12">Salary</th>
+                                                        <th class="border-bottom-0 fs-12">VarPay</th>
+                                                        <th class="border-bottom-0 fs-12">Fromdate</th>
+                                                        <th class="border-bottom-0 fs-12">Todate</th>
+                                                        <th class="border-bottom-0 fs-12">Accountno</th>
+                                                        <th class="border-bottom-0 fs-12">RoutingCode</th>
+                                                        <th class="border-bottom-0 fs-12">Leave</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    <tr>
+                                                        <td>Company Name:</td>
+                                                        <td>Ayaydin Miroglio General Trading LLC</td>
+                                                        <td>EST ID</td>
+                                                        <td>000000{{sdr_details.company_unique_id}}</td>
+                                                        <td></td>
+                                                        <td></td>
+                                                        <td></td>
+                                                        <td></td>
+                                                    </tr>
+                                                    <tr>
+                                                        <th >MOL Person Id</th>
+                                                        <th >Total Salary</th>
+                                                        <th >Salary Variable Component</th>
+                                                        <th >From Date (dd/mm/yyyy)</th>
+                                                        <th >To Date (dd/mm/yyyy)</th>
+                                                        <th >Agent Bank Account Number - IBAN</th>
+                                                        <th >Agent Bank Routing Code</th>
+                                                        <th >Leave</th>
+                                                    </tr>
+                                                    {% for item in payroll_details|selectattr('sif_details.exchange', 'equalto', 'CBD') %}
+                                                        <tr>
+                                                            <td>{{item.employee_details_id.employee_sif_details.employee_mol_no}}</td>
+                                                            <td class="font-weight-semibold">{{"%0.2f" | format(item.sif_details.salary | default(0.0) | float)}}</td>
+                                                            <td class="font-weight-semibold">{{"%0.2f" | format(item.sif_details.variable_pay | default(0.0) | float)}}</td>
+                                                            <td>{{item.sif_details.pay_start_cbd}}</td>
+                                                            <td>{{item.sif_details.pay_end_cbd}}</td>
+                                                            <td>{{item.employee_details_id.employee_bank_details.iban_no}}</td>
+                                                            <td>{{item.employee_details_id.employee_bank_details.routing_code}}</td>
+                                                            <td>{{item.sif_details.on_leave_days}}</td>
+                                                        </tr>
+                                                    {% endfor %}
+                                                   
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+            </div>
+
+
+           
+        </div>
+    </div>
+</div>
+<!-- End Row -->
+
+{% endblock %}
+{% block script %}
+{{ super() }}
+
+<!-- Datepicker js -->
+<!-- <script src="{{ url_for('static', filename='assets/plugins/date-picker/jquery-ui.js') }}"></script> -->
+<!-- INTERNAL Bootstrap-Datepicker js-->
+<script src="{{ url_for('static', filename='assets/plugins/bootstrap-datepicker/bootstrap-datepicker.js') }}"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.1.3/jszip.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/pdfmake.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/vfs_fonts.js"></script>
+<script src="https://cdn.datatables.net/buttons/2.2.3/js/buttons.html5.min.js"></script>
+<script>
+    // payslip
+    // Year picker
+    fpy = $('#datepicker-year').bootstrapdatepicker({
+        format: "yyyy",
+        viewMode: "year",
+        minViewMode: "years",
+        orientation: 'bottom',
+        multidate: false,
+        multidateSeparator: "-",
+    })
+    fpm = $('#filter-datepicker-month').bootstrapdatepicker({
+        format: "MM",
+        endDate: '+0m',
+        viewMode: "months",
+        minViewMode: "months",
+        orientation: 'bottom',
+        multidate: false,
+        multidateSeparator: "-",
+        autoclose: true
+    })
+    //fpy.on('changeDate', function (e) {
+    //  $('.action-btns').attr("data-selected_year", e.dates)
+    //});
+    fpm.on('changeDate', function (e) {
+        $('.action-btns').attr("data-selected_month", e.dates)
+        $('#selected_month').val(moment(new Date(e.dates)).format('YYYY-MM-DD'))
+    });
+
+    // Data Table
+	$('#hr-payroll').DataTable({
+		"order": [[ 0, "desc" ]],
+		order: [],
+		columnDefs: [ { orderable: false} ],
+		language: {
+			searchPlaceholder: 'Search...',
+			sSearch: '',
+			
+		}
+	});
+</script>
+<script>
+
+    // Data Table 
+    $('#sif-report,#hr-payroll1').DataTable({
+        "order": [
+            [0, "desc"]
+        ],
+        "paging": false,
+        language: {
+            searchPlaceholder: 'Search...',
+            sSearch: '',
+        },
+        dom: 'Bfrtip',
+        buttons: [
+        {
+            extend: 'csvHtml5',
+            fieldBoundary: '',
+            footer: true,
+            exportOptions: {
+                columns: ':visible'
+                 },
+            title: "{{sdr_details.company_unique_id}}"+"{{sdr_details.filedate}}"+"{{sdr_details.file_time}}"
+        },
+        ]
+    });
+
+    $('#sif-rakreport').DataTable({
+        language: {
+            searchPlaceholder: 'Search...',
+            sSearch: '',
+        },
+        "paging": false,
+        dom: 'Bfrtip',
+        buttons: [
+        {
+            extend: 'csvHtml5',
+            fieldBoundary: '',
+            footer: true,
+            header: false,
+            exportOptions: {
+                columns: ':visible'
+                 },
+            title: "{{sdr_details.company_unique_id}}"+"{{sdr_details.file_date}}"+"{{sdr_details.file_creation_time}}"+"00"
+        },
+        ]
+    });
+
+    $('#sif-cashreport').DataTable({
+        language: {
+            searchPlaceholder: 'Search...',
+            sSearch: '',
+        },
+        "paging": false,
+        dom: 'Bfrtip',
+        buttons: [
+        {
+            extend: 'csvHtml5',
+            fieldBoundary: '',
+            footer: true,
+            header: false,
+            exportOptions: {
+                columns: ':visible'
+                 },
+            title: "{{sdr_details.company_unique_id}}"+"{{sdr_details.file_date}}"+"{{sdr_details.file_creation_time}}"+"00"
+        },
+        ]
+    });
+
+    $('#sif-cbdreport').DataTable({
+        language: {
+            searchPlaceholder: 'Search...',
+            sSearch: '',
+        },
+        "paging": false,
+        dom: 'Bfrtip',
+        buttons: [
+        {
+            extend: 'csvHtml5',
+            fieldBoundary: '',
+            footer: false,
+            header: true,
+            exportOptions: {
+                columns: ':visible'
+                 },
+            title: "{{sdr_details.company_unique_id}}"+"{{sdr_details.file_date}}"+"{{sdr_details.file_creation_time}}"+"00",
+        },
+        {
+            extend: 'excelHtml5',
+            fieldBoundary: '',
+            footer: false,
+            header: true,
+            exportOptions: {
+                columns: ':visible'
+                 },
+            title: "{{sdr_details.reference}}"+"{{sdr_details.salary_month}}",
+        },
+        ],
+        columnDefs: [{
+        targets: '_all',
+        orderable: false // Disables sorting for all columns
+    }],
+    order: [] // Disables initial sorting
+    });
+    
+</script>
+{% endblock %}

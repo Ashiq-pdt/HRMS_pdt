@@ -1,0 +1,34 @@
+<!-- templates/profile.html -->
+
+{% extends "base.html" %}
+
+{% block content %}
+<h1 class="">
+  Edit Employee Document!
+</h1>
+<div class="column is-4 is-offset-4">
+  <div class="box">
+      {% with messages = get_flashed_messages() %}
+      {% if messages %}
+          <div class="notification is-danger">
+            <button class="delete"></button>
+              {{ messages[0] }}
+          </div>
+      {% endif %}
+      {% endwith %}
+      <form method="POST" action="{{ url_for('main.edit_employee_details',emp_id=employee._id) }}">
+          <div class="field">
+              <div class="control">
+                  <input class="input" type="email" name="email" placeholder="Email" value={{employee.email}}>
+              </div>
+          </div>
+          <div class="field">
+              <div class="control">
+                  <input class="input" type="text" name="name" placeholder="Name" value={{employee.employee_name}}>
+              </div>
+          </div>
+          <button class="button is-block is-info  is-fullwidth">Edit Employee</button>
+      </form>
+  </div>
+</div>
+{% endblock %}

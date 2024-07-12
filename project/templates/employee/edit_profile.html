@@ -1,0 +1,374 @@
+<!-- templates/employee/index.html -->
+
+{% extends "layout/base.html" %}
+
+{% block content %}
+
+<!--Page header-->
+<div class="page-header d-lg-flex d-block">
+    <div class="page-leftheader">
+        <div class="page-title">Edit Profile</div>
+    </div>
+    <!-- <div class="page-rightheader ms-md-auto">
+        <div class=" btn-list">
+            <button class="btn btn-light" data-bs-toggle="tooltip" data-bs-placement="top" title="E-mail"> <i
+                    class="feather feather-mail"></i> </button>
+            <button class="btn btn-light" data-bs-placement="top" data-bs-toggle="tooltip" title="Contact"> <i
+                    class="feather feather-phone-call"></i> </button>
+            <button class="btn btn-primary" data-bs-placement="top" data-bs-toggle="tooltip" title="Info"> <i
+                    class="feather feather-info"></i> </button>
+        </div>
+    </div> -->
+</div>
+<!--End Page header-->
+
+<!-- Row -->
+<div class="row">
+    <div class="col-xl-4 col-lg-5">
+        <form class="card-body pt-3" method="post" action="{{url_for('employee.update_password')}}"
+        id="edit_password_form">
+        <input type="hidden" name="csrf_token"  value="{{ csrf_token() }}" />
+        <div class="card">
+            <div class="card-header border-bottom-0">
+                <div class="card-title">Edit Password</div>
+            </div>
+            <div class="card-body">
+
+                <div class="form-group">
+                    <label class="form-label">Current Password</label>
+                    <div class="input-group mb-4">
+                        <div class="input-group" id="Password-toggle">
+                            <a href="" class="input-group-text">
+                                <i class="fe fe-eye-off" aria-hidden="true"></i>
+                            </a>
+                            <input class="form-control" name="current_password" type="password" placeholder="Password">
+                        </div>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">New Password</label>
+                    <div class="input-group mb-4">
+                        <div class="input-group" id="Password-toggle1">
+                            <a href="" class="input-group-text">
+                                <i class="fe fe-eye-off" aria-hidden="true"></i>
+                            </a>
+                            <input class="form-control" name="new_password" id="new_password" type="password" placeholder="Password">
+                        </div>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Confirm Password</label>
+                    <div class="input-group mb-4">
+                        <div class="input-group" id="Password-toggle2">
+                            <a href="" class="input-group-text">
+                                <i class="fe fe-eye-off" aria-hidden="true"></i>
+                            </a>
+                            <input class="form-control" name="cnf_new_password" id="confirm_password" type="password" placeholder="Password">
+                        </div>
+                    </div>
+                </div>
+                <div class="registrationFormAlert" style="color:red;" id="CheckPasswordMatch"></div>
+            </div>
+            <div class="card-footer text-end">
+                <button href="javascript:void(0);" id="updatePassBtn" class="btn btn-primary" disabled>Update</button>
+                <a href="{{url_for('employee.profile')}}" class="btn btn-danger">Cancel</a>
+            </div>
+        </div>
+        </form>
+    </div>
+    <div class="col-xl-8 col-lg-7">
+        <form class="card-body pt-3" method="post" action="{{url_for('employee.update_profile')}}"
+            id="edit_profile_form" enctype="multipart/form-data">
+            <input type="hidden" name="csrf_token" id="csrf_gen" value="{{ csrf_token() }}" />
+            <div class="card">
+                <div class="card-body">
+                    <div class="card-title">Basic info:</div>
+                    <div class="card-body">
+                        <h4 class="mb-4 font-weight-bold">Basic</h4>
+
+                        <div class="form-group ">
+                            <div class="row">
+                                <div class="col-md-3">
+                                    <label class="form-label mb-0 mt-2">User Name</label>
+                                </div>
+                                <div class="col-md-9">
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <input type="text" class="form-control mb-md-0 mb-5" name="first_name"
+                                                placeholder="First Name" value="{{employee_details.first_name}}"
+                                                required>
+                                            <span class="text-muted"></span>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <input type="text" class="form-control" name="last_name"
+                                                placeholder="Last Name" value="{{employee_details.last_name}}" required>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group ">
+                            <div class="row">
+                                <div class="col-md-3">
+                                    <label class="form-label mb-0 mt-2">Father Name</label>
+                                </div>
+                                <div class="col-md-9">
+                                    <input type="text" class="form-control" name="father_name" placeholder="Name"
+                                        value="{{employee_details.father_name}}">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <div class="row">
+                                <div class="col-md-3">
+                                    <label class="form-label mb-0 mt-2">Contact Number</label>
+                                </div>
+                                <div class="col-md-9">
+                                    <input type="text" class="form-control" name="contact_no"
+                                        value="{{employee_details.contact_no}}" placeholder="Phone Number" required>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <div class="row">
+                                <div class="col-md-3">
+                                    <label class="form-label mb-0 mt-2">Emergency Contact Number 01</label>
+                                </div>
+                                <div class="col-md-9">
+                                    <input type="text" class="form-control" name="emergency_contact_no_1"
+                                        value="{{employee_details.emergency_contact_no_1}}"
+                                        placeholder="Contact Number01">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <div class="row">
+                                <div class="col-md-3">
+                                    <label class="form-label mb-0 mt-2">Emergency Contact Number 02</label>
+                                </div>
+                                <div class="col-md-9">
+                                    <input type="text" class="form-control" name="emergency_contact_no_2"
+                                        value="{{employee_details.emergency_contact_no_2}}"
+                                        placeholder="Contact Number02">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group ">
+                            <div class="row">
+                                <div class="col-md-3">
+                                    <label class="form-label mb-0 mt-2">Date Of Birth</label>
+                                </div>
+                                <div class="col-md-9">
+                                    <input type="text" class="form-control fc-datepicker" name="dob"
+                                        value="{{employee_details.dob}}" placeholder="DD-MM-YYY">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group ">
+                            <div class="row">
+                                <div class="col-md-3">
+                                    <label class="form-label">Gender</label>
+                                </div>
+                                <div class="col-md-9">
+                                    <div class="custom-controls-stacked d-md-flex">
+                                        <label class="custom-control custom-radio me-4">
+                                            <input type="radio" class="custom-control-input" name="gender" value="male"
+                                                {% if employee_details.gender=="male" %} checked{% endif %}>
+                                            <span class="custom-control-label">Male</span>
+                                        </label>
+                                        <label class="custom-control custom-radio">
+                                            <input type="radio" class="custom-control-input" name="gender"
+                                                value="female" {% if employee_details.gender=="female" %}
+                                                checked{% endif %}>
+                                            <span class="custom-control-label">Female</span>
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <div class="row">
+                                <div class="col-md-3">
+                                    <label class="form-label mb-0 mt-2">Marital Status</label>
+                                </div>
+                                <div class="col-md-9">
+                                    <select class="form-control custom-select select2" name="marital_status"
+                                        data-placeholder="Select">
+                                        <option label="Select"></option>
+                                        <option value="single" {% if employee_details.marital_status=="single" %}
+                                            selected{% endif %}>Single</option>
+                                        <option value="married" {% if employee_details.marital_status=="married" %}
+                                            selected{% endif %}>Married</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <div class="row">
+                                <div class="col-md-3">
+                                    <label class="form-label mb-0 mt-2">Blood Group</label>
+                                </div>
+                                <div class="col-md-9">
+                                    <select class="form-control custom-select select2" name="blood_group"
+                                        data-placeholder="Select Group">
+                                        <option label="Select Group" default></option>
+                                        <option value="a+" {% if employee_details.blood_group=="a+" %}
+                                            selected{% endif %}>
+                                            A+</option>
+                                        <option value="b+" {% if employee_details.blood_group=="b+" %}
+                                            selected{% endif %}>
+                                            B+</option>
+                                        <option value="o+" {% if employee_details.blood_group=="o+" %}
+                                            selected{% endif %}>
+                                            O+</option>
+                                        <option value="ab+" {% if employee_details.blood_group=="ab+" %}
+                                            selected{% endif %}>AB+</option>
+                                        <option value="a-" {% if employee_details.blood_group=="a-" %}
+                                            selected{% endif %}>
+                                            A-</option>
+                                        <option value="b-" {% if employee_details.blood_group=="b-" %}
+                                            selected{% endif %}>
+                                            B-</option>
+                                        <option value="o-" {% if employee_details.blood_group=="o-" %}
+                                            selected{% endif %}>
+                                            O-</option>
+                                        <option value="ab-" {% if employee_details.blood_group=="ab-" %}
+                                            selected{% endif %}>AB-</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group ">
+                            <div class="row">
+                                <div class="col-md-3">
+                                    <label class="form-label mb-0 mt-2">Email</label>
+                                </div>
+                                <div class="col-md-9">
+                                    <input type="email" class="form-control" name="personal_email" placeholder="Email"
+                                        value="{{employee_details.personal_email}}" required>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <div class="row">
+                                <div class="col-md-3">
+                                    <label class="form-label mb-0 mt-2">Present Address</label>
+                                </div>
+                                <div class="col-md-9">
+                                    <textarea rows="3" class="form-control" name="present_address"
+                                        placeholder="Address1">{{employee_details.present_address}}</textarea>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <div class="row">
+                                <div class="col-md-3">
+                                    <label class="form-label mb-0 mt-2">Permanent Address</label>
+                                </div>
+                                <div class="col-md-9">
+                                    <textarea rows="3" class="form-control" name="permanent_address"
+                                        placeholder="Address2">{{employee_details.permanent_address}}</textarea>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <div class="row">
+                                <div class="col-md-3">
+                                    <div class="form-label mb-0 mt-2">Upload Photo</div>
+                                </div>
+                                <div class="col-md-9">
+                                    <div class="form-group">
+                                        <label for="form-label" class="form-label"></label>
+                                        <input class="form-control" name="profile_pic" type="file">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-title mt-5">External Links:</div>
+                    <div class="row">
+                        <div class="col-sm-6 col-md-6">
+                            <div class="form-group">
+                                <label class="form-label">Facebook</label>
+                                <input type="text" name="facebook_link" class="form-control"
+                                    placeholder="https://www.facebook.com/" value="{{employee_details.facebook_link}}">
+                            </div>
+                        </div>
+                        <div class="col-sm-6 col-md-6">
+                            <div class="form-group">
+                                <label class="form-label">Linked In</label>
+                                <input type="text" name="linkedin_link" class="form-control"
+                                    placeholder="https://www.linkedin.com/" value="{{employee_details.linkedin_link}}">
+                            </div>
+                        </div>
+                        <div class="col-sm-6 col-md-6">
+                            <div class="form-group">
+                                <label class="form-label">Twitter</label>
+                                <input type="text" name="twitter_link" class="form-control"
+                                    placeholder="https://twitter.com/" value="{{employee_details.twitter_link}}">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-title font-weight-bold mt-5">About:</div>
+                    <div class="row">
+                        <div class="col-md-12">
+                            <div class="form-group">
+                                <label class="form-label">About Me</label>
+                                <textarea rows="5" class="form-control" placeholder="Enter About your description"
+                                    name="about_me">{{employee_details.about_me}}</textarea>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-footer text-end">
+                    <button class="btn btn-lg btn-primary">Update</button>
+                    <a href="{{url_for('employee.profile')}}" class="btn btn-lg btn-danger">Cancel</a>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+<!-- End Row-->
+{% endblock %}
+
+{% block script %}
+{{ super() }}
+<!-- INTERNAL Index js-->
+<script src="{{ url_for('static', filename='assets/js/index2.js') }}"></script>
+<script src="{{ url_for('static', filename='assets/plugins/pg-calendar-master/pignose.calendar.full.min.js') }}">
+</script>
+<!-- INTERNAL Daterangepicker js-->
+<script src="{{ url_for('static', filename='assets/plugins/daterangepicker/moment.min.js') }}"></script>
+<script src="{{ url_for('static', filename='assets/plugins/daterangepicker/daterangepicker.js') }}"></script>
+<script>
+    function checkPasswordMatch() {
+        var password = $("#new_password").val();
+        var confirmPassword = $("#confirm_password").val();
+        if (password != confirmPassword){
+            $("#updatePassBtn").attr("disabled","true");
+            $("#CheckPasswordMatch").css("color","red");
+            $("#CheckPasswordMatch").html("Passwords does not match!");
+        }
+        else{
+            $("#CheckPasswordMatch").css("color","green");
+            $("#CheckPasswordMatch").html("Passwords match.");
+            $("#updatePassBtn").removeAttr("disabled");
+        }
+            
+
+    }
+    $(document).ready(function () {
+       $("#confirm_password").keyup(checkPasswordMatch);
+    });
+    // Datepicker
+    $('body').on('focus',".fc-datepicker", function(){
+        $(this).datepicker({
+            dateFormat:"dd/mm/yy"
+        });
+      });
+      $( ".fc-datepicker" ).datepicker({
+        dateFormat:"dd/mm/yy"
+    });
+    </script>
+
+{% endblock %}

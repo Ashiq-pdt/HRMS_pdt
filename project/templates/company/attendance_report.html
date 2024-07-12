@@ -1,0 +1,1345 @@
+{% extends "layout/base.html" %}
+{% block head %}
+{{ super() }}
+<!-- INTERNAL Daterangepicker css-->
+<link rel="stylesheet" href="{{ url_for('static', filename='assets/plugins/daterangepicker/daterangepicker.css') }}">
+<link href="https://cdn.datatables.net/buttons/2.2.3/css/buttons.dataTables.min.css"></link>
+<style>
+    table.dataTable tbody th,
+    table.dataTable tbody td,
+    table.dataTable thead th,
+    table.dataTable thead td {
+        padding: 5px 10px !important;
+    }
+</style>
+
+
+
+{% endblock %}
+
+{% block content %}
+{% autoescape off %}
+<!--Page header-->
+<div class="page-header d-xl-flex d-block">
+    <div class="page-leftheader">
+        <div class="page-title">Attendance Report</div>
+    </div>
+    <div class="page-rightheader ms-md-auto">
+        <div class="d-flex align-items-end flex-wrap my-auto end-content breadcrumb-end">
+            <div class="btn-list">
+                <!-- <button class="btn btn-primary">Mark Attendance</button> -->
+
+                <a class="btn btn-primary markattendanceBtn" href="javascript:void(0);"
+                                        data-bs-toggle="modal" data-bs-target="#markattendancemodal"
+                                        data-clock_type="clockin">
+                                        Mark Attendance
+                                    </a>
+            </div>
+        </div>
+    </div>
+</div>
+<!--End Page header-->
+<!-- Row -->
+<div class="row">
+    <div class="col-xl-12 col-md-12 col-lg-12">
+        <div class="card">
+            <div class="card-body">
+                <form class="card-body pt-3 pb-1" method="POST" action="/attendancereport">
+                    <input type="hidden" name="csrf_token" id="csrf_gen" value="{{ csrf_token() }}" />
+
+                    <div class="row">
+                        <div class="col-md-4 col-lg-4">
+                            <div class="form-group">
+                                <label class="form-label">Select Employee</label>
+                                <select class="form-control select2-show-search custom-select" name="employee_id"
+                                    data-placeholder="Select Employee">
+                                    <option label="Select Employee"></option>
+                                    {% for item in employees_details.employees %}
+                                    <option id="selectedEmpName" value="{{item._id}}" {% if item._id==selected_emp %}selected{% endif %}>
+                                        {{item.first_name + ' ' + item.last_name}}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-2 col-lg-2">
+                            <div class="leave-content active" id="multiple">
+                                <div class="form-group">
+                                    <label class="form-label">Date From:</label>
+                                    <!-- <div class="input-group">
+                                        <input type="text" name="daterange" class="form-control"
+                                            placeholder="select dates" id="dt_range"
+                                            value="{{start.strftime('%d/%m/%Y') + ' - ' + end.strftime('%d/%m/%Y')}}" />
+                                        <div class="input-group-append">
+                                            <div class="input-group-text">
+                                                <i class="bx bx-calendar"></i>
+                                            </div>
+                                        </div>
+                                    </div> -->
+                                    <div class="wd-200 mg-b-30">
+                                        <div class="input-group">
+                                            <div class="input-group-prepend">
+                                                <div class="input-group-text">
+                                                    <span class="feather feather-calendar"></span>
+                                                </div>
+                                            </div><input class="form-control fc-datepicker" name="attendance_date_from" placeholder="DD/MM/YYYY" type="text" value="{{start.strftime('%d/%m/%Y')}}">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-2 col-lg-2">
+                            <div class="leave-content active" id="multiple">
+                                <div class="form-group">
+                                    <label class="form-label">Date to:</label>
+                                    <!-- <div class="input-group">
+                                        <input type="text" name="daterange" class="form-control"
+                                            placeholder="select dates" id="dt_range"
+                                            value="{{start.strftime('%d/%m/%Y') + ' - ' + end.strftime('%d/%m/%Y')}}" />
+                                        <div class="input-group-append">
+                                            <div class="input-group-text">
+                                                <i class="bx bx-calendar"></i>
+                                            </div>
+                                        </div>
+                                    </div> -->
+                                    <div class="wd-200 mg-b-30">
+                                        <div class="input-group">
+                                            <div class="input-group-prepend">
+                                                <div class="input-group-text">
+                                                    <span class="feather feather-calendar"></span>
+                                                </div>
+                                            </div><input class="form-control fc-datepicker" name="attendance_date_to" placeholder="DD/MM/YYYY" type="text" value="{{end.strftime('%d/%m/%Y')}}">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-2 col-lg-2 ">
+                            <div class="form-group mt-5">
+                                <button class="btn btn-primary btn-block">Search</button>
+                            </div>
+                        </div>
+                        <div class="col-md-2 col-lg-2 ">
+                            <div class="form-group mt-5">
+                                <a href="/attendancereport" class="btn btn-orange btn-block">Reset</a>
+                            </div>
+                        </div>
+
+                    </div>
+                    {% if selected_emp %}
+                    <div class="row">
+                        <div class="row mb-0 pb-0">
+
+                            <div class="col-md-6 col-lg-2 col-sm-6 text-center py-1">
+                                <span
+                                    class="avatar avatar-md bradius fs-20 bg-success-transparent" id="daysPresent">{{employee_attendance|selectattr('attendance_status', 'equalto', 'present')|list|length}}</span>
+                                <h5 class="mb-0 mt-3">No of Days Present</h5>
+                            </div>
+                            <div class="col-md-6 col-lg-2 col-sm-6 text-center py-1 ">
+                                <span
+                                    class="avatar avatar-md bradius fs-20 bg-info-transparent" id="paidLeaves">{{employee_attendance|selectattr('attendance_status', 'equalto', 'absent')|selectattr('leave_name', '!=', '')|list|length}}</span>
+                                <h5 class="mb-0 mt-3">No of Absent (Paid)</h5>
+                            </div>
+                            <div class="col-md-6 col-lg-2 col-sm-6 text-center py-1 ">
+                                <span
+                                    class="avatar avatar-md bradius fs-20 bg-danger-transparent" id="unpaidLeaves">{{employee_attendance|selectattr('attendance_status', 'equalto', 'absent')|selectattr('leave_name', 'equalto', '')|list|length}}</span>
+                                <h5 class="mb-0 mt-3">No of Absent (Unpaid)</h5>
+                            </div>
+                            <div class="col-md-6 col-lg-2 col-sm-6 text-center py-1">
+                                <span
+                                    class="avatar avatar-md bradius fs-20 bg-pink-transparent" id="dayOffs">{{employee_attendance|selectattr('attendance_status', 'equalto', 'dayoff')|list|length}}</span>
+                                <h5 class="mb-0 mt-3">No of Day Off</h5>
+                            </div>
+                            <div class="col-md-6 col-lg-2 col-sm-6 text-center py-1">
+                                <span
+                                    class="avatar avatar-md bradius fs-20 bg-warning-transparent" id="holidays">{{employee_attendance|selectattr('attendance_status', 'equalto', 'holiday')|list|length}}</span>
+                                <h5 class="mb-0 mt-3">Holidays</h5>
+                            </div>
+                            <div class="col-md-6 col-lg-2 col-sm-6 text-center py-1">
+                                <span class="fs-20 text-success" id="totalHoursWorked">{{total_hrs_worked}}</span>
+                                <h5 class="mb-0 mt-3">Total Hours Worked</h5>
+                            </div>
+                            <!-- <div class="col-md-6 col-lg-3 col-sm-6 text-center py-5 ">
+                                    <span class="avatar avatar-md bradius fs-20 bg-orange-transparent">2</span>
+                                    <h5 class="mb-0 mt-3">Total Late Employees</h5>
+                                </div> -->
+                        </div>
+                    </div>
+                    {% endif %}
+
+                </form>
+
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table  table-vcenter text-nowrap table-bordered border-bottom table-striped" id="attendance-report">
+                        <thead>
+                            <tr>
+                                <th class="border-bottom-0">Date</th>
+                                <th class="border-bottom-0">Day</th>
+                                <th class="border-bottom-0">Employee Name</th>
+                                <th class="border-bottom-0">Status</th>
+                                <th class="border-bottom-0">Clock In From</th>
+                                <th class="border-bottom-0">Scheduled Office</th>
+                                <th class="border-bottom-0">Clock In</th>
+                                <th class="border-bottom-0">Clock Out</th>
+                                <th class="border-bottom-0" hidden>Has Used Break</th>
+                                <th class="border-bottom-0" hidden>Clock In Note</th>
+                                <th class="border-bottom-0" hidden>Clock Out Note</th>
+                                <th class="border-bottom-0" hidden>Break(In Minutes)</th>
+                                <th class="border-bottom-0">Total Hours Worked</th>
+                                <th class="border-bottom-0" hidden>Total Hours Worked(EB)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in employee_attendance %}
+                            <tr>
+                                <td>{{item.attendance_date.strftime('%d/%m/%Y')}}
+                                    <!-- {% if item.attendance_date.strftime('%A') == "Sunday" %}
+                                        <span class="badge badge-warning-light">{{item.attendance_date.strftime('%A')}}</span>
+                                    {% endif %} -->
+                                </td>
+                                <td>
+                                    {% if item.attendance_date.strftime('%A') == "Sunday" %}
+                                        <span class="badge badge-warning-light">{{item.attendance_date.strftime('%A')}}</span>
+                                    {% else %}
+                                        {{ item.attendance_date.strftime('%A') }}
+                                    {% endif %}
+
+                                </td>                                
+                                <td>
+                                    {% if item.employee_details_id %}
+                                        {{ item.employee_details_id.first_name }} {{ item.employee_details_id.last_name }}
+                                    {% else %}
+                                        ---
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if item.attendance_status == 'present' %}
+                                        <span class="badge badge-success-light">Present</span>
+                                        {% if item.half_day %}
+                                            <a href="javascript:void(0);" class="mark_half_day" data-attendance_id="{{item._id}}" class="">
+                                            <span class="fa fa-adjust text-orange" style="float:right"></span></a>
+                                         {% else %}
+                                            <a href="javascript:void(0);" class="mark_half_day" id="btnMarkHalfAttendance" data-attendance_id="{{item._id}}" class="">
+                                            <span class="fa fa-adjust text-success" style="float:right"></span></a>
+                                            
+                                         {% endif %}
+                                        </a>
+
+                                    {% if item.half_day %}
+                                        <span class="badge badge-warning-light">Half Day</span>
+                                    {% endif %}
+                                    
+                                    {% elif item.attendance_status == 'absent' %}
+                                    <span class="badge {{'badge-info-light' if item.leave_name else 'badge-danger-light'}}">{{item.leave_name if item.leave_name else 'Absent'}}</span>
+                                    {% elif item.attendance_status == 'dayoff' %}
+                                    <span class="badge badge-pink-light">Day off {{'('+item.leave_name+')' if item.leave_name else ''}}</span>
+                                    {% elif item.attendance_status == 'holiday' %}
+                                    <span class="badge badge-warning-light">Holiday({{item.occasion_for}})</span>
+                                    {% else %}
+                                    <span class="badge badge-pink-light">Week off</span>
+                                    {% endif %}
+
+                                    {% if item.on_break %}
+                                    <span class="badge badge-danger-light ms-3 px-2"><i class="ion-coffee text-danger"
+                                            data-bs-toggle="tooltip" data-bs-placement="top"
+                                            title="On Break"></i></span>
+                                    {% endif %}
+                                </td>
+                                <td>{{item.working_from.clock_in_from|default('-')}}</td>
+                                <td>{{item.working_office.office_name|default('-')}}</td>
+                                <td>
+                                    {% if item.attendance_status == 'present' %}
+                                        
+                                        {{item.employee_check_in_at.strftime('%I:%M %p') if item.employee_check_in_at else '-'}}
+                                            <a class="btn btn-light btn-icon btn-sm break_history p-0" href="javascript:void(0);"
+                                                data-bs-toggle="modal" data-bs-target="#presentmodal"
+                                                data-attendance_id="{{item._id}}">
+                                                <i class="feather fe fe-clock {{'text-success' if item.break_history else 'text-danger'}}" data-bs-toggle="tooltip"
+                                                    data-bs-placement="top" title="View History"></i>
+                                            </a>
+                                            {% if item.clock_in_coords %}
+                                                <a class="btn btn-light btn-icon btn-sm clockinlocation p-0" href="javascript:void(0);"
+                                                data-bs-toggle="modal" data-bs-target="#clockinmodal"
+                                                data-attendance_id="{{item._id}}">
+                                                <i class="feather fe fe-map text-info" data-bs-toggle="tooltip"
+                                                    data-bs-placement="top" title="Clock In Location"></i>
+                                                </a>
+                                            {% endif %}
+                                            {% if not (item.early_approval_status or item.late_approval_status or item.ot_approval_status) %}
+                                                <a class="btn btn-light btn-icon btn-sm editClockin p-0" href="javascript:void(0);"
+                                                    data-bs-toggle="modal" data-bs-target="#editmodal"
+                                                    data-attendance_id="{{item._id}}" data-clock_type="clockin">
+                                                    <i class="feather feather-edit-2 text-info" data-bs-toggle="tooltip"
+                                                        title="Edit"></i>
+                                                </a>
+                                            {% endif %}
+                                            {% if item.clock_in_note %}
+                                                <a class="btn btn-light btn-icon btn-sm p-0" href="javascript:void(0);">
+                                                    <i class="text-info ion-chatbubble-working" data-bs-toggle="tooltip"
+                                                        data-bs-placement="top" title="{{item.clock_in_note}}"></i>
+                                                </a>
+                                            {% endif %}
+                                        <!-- Late Tag If the employee clocks in Late -->
+                                        {% if item.is_late %}<span class="badge badge-orange-light mt-1" style="float:right">Late</span> {% endif %}
+                                    {% else %}
+                                        <span class="text-center">-</span>
+                                    {% endif %}
+                                    
+                                </td>
+                                <td>{% if item.employee_check_out_at %}
+                                        {{item.employee_check_out_at.strftime('%I:%M %p') if item.employee_check_out_at else '-'}}
+                                    {% else %}
+                                        <span class="text-center">-</span>
+                                    {% endif %}
+                                    {% if item.attendance_status == 'present' %}
+                                        {% if not (item.early_approval_status or item.late_approval_status or item.ot_approval_status) %}
+                                        <a class="btn btn-light btn-icon btn-sm editClockin p-0" href="javascript:void(0);"
+                                            data-bs-toggle="modal" data-bs-target="#editmodal"
+                                            data-attendance_id="{{item._id}}" data-clock_type="clockout">
+                                            <i class="feather feather-edit-2 text-info" data-bs-toggle="tooltip"
+                                                title="Edit"></i>
+                                        </a>
+                                        {% endif %}
+                                    {% endif %}
+                                    
+                                    
+                                    <!-- <a class="btn btn-light btn-icon btn-sm" href="javascript:void(0);"
+                                        data-bs-toggle="modal" data-bs-target="#presentmodal" data-attendance_id="{{item._id}}" id="break_history">
+                                        <i class="feather fe fe-git-commit text-info" data-bs-toggle="tooltip"
+                                            data-bs-placement="top" title="View History"></i>
+                                    </a> -->
+                                    {% if item.clock_out_coords %}
+                                        <a class="btn btn-light btn-icon btn-sm clockoutlocation p-0" href="javascript:void(0);"
+                                        data-bs-toggle="modal" data-bs-target="#clockinmodal"
+                                        data-attendance_id="{{item._id}}">
+                                        <i class="feather fe fe-map text-info" data-bs-toggle="tooltip"
+                                            data-bs-placement="top" title="View History"></i>
+                                        </a>
+                                    {% endif %}
+                                   
+                                    <!-- <a class="btn btn-light btn-icon btn-sm editClockin" href="javascript:void(0);"
+                                        data-bs-toggle="modal" data-bs-target="#editmodal"
+                                        data-attendance_id="{{item._id}}" data-clock_type="clockout">
+                                        <i class="feather feather-edit-2 text-info" data-bs-toggle="tooltip"
+                                            title="Edit"></i>
+                                    </a> -->
+                                    
+                                    {% if item.clock_out_note %}
+                                    <a class="btn btn-light btn-icon btn-sm p-0" href="javascript:void(0);">
+                                        <i class="text-info ion-chatbubble-working" data-bs-toggle="tooltip"
+                                            data-bs-placement="top" title="{{item.clock_out_note}}"></i>
+                                    </a>
+                                    {% endif %}
+                                    <!-- Left Early Tag If the employee clocks in Late -->
+                                    {% if item.has_left_early %}<span class="badge badge-danger-light mt-1" style="float:right">Left Early</span> {% endif %}
+                                
+                                </td>
+                                <td hidden>{{"Yes" if item.break_history else "No"}}</td>
+                                <td hidden>{{item.clock_in_note if item.clock_in_note else ""}}</td>
+                                <td hidden>{{item.clock_out_note if item.clock_out_note else ""}}</td>
+                                <td hidden>{{ item.break_history|selectattr('already_ended','equalto',true)|sum(attribute='break_difference') }}</td>
+                                <td>
+                                    {% if item.employee_check_out_at %}
+                                    {{(item.employee_check_out_at-item.employee_check_in_at) if item.employee_check_out_at else '-'}}
+                                    {% else %}
+                                    <span class="text-center">-</span>
+                                    {% endif %}
+                                </td>
+                                <td hidden>
+                                    {% if item.total_hr_worked_excluding %}
+                                    {{item.total_hr_worked_excluding}}
+                                    {% else %}
+                                    <span class="text-center">-</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                            {% if (end - start).days<=1 and not selected_emp %}
+                                {% for item in employees_details.employees %}
+                                    {% if employee_attendance|selectattr('employee_details_id.employee_company_details.employee_id','equalto',item.employee_company_details.employee_id)|list|length<=0 %}
+                                        <tr>
+                                            <td>-</td>
+
+                                            <td>{{item.first_name + ' ' + item.last_name}}
+                                            </td>
+                                            <td>
+                                                <span class="badge badge-pink-light">Not Clocked In For the Day.</span>
+                                            </td>
+                                            <td>-</td>
+                                            <td>-</td>
+                                            <td>
+                                                -
+                                            </td>
+                                            <td>
+                                                -
+                                            </td>
+                                            <td hidden>-</td>
+                                            <td hidden>-</td>
+                                            <td hidden>-</td>
+                                            <td hidden>-</td>
+                                            <td>
+                                                -
+                                            </td>
+                                            <td hidden>
+                                                -
+                                            </td>
+                                        </tr>
+                                    {% endif %}
+                                {% endfor %}
+                            {% endif %}
+                            
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- End Row-->
+<!--Present Modal -->
+<div class="modal fade" id="presentmodal">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Break History</h5>
+                <button class="btn-close" data-bs-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">×</span>
+                </button>
+            </div>
+            <!-- <div class="modal-body p-0">
+                <div class="row">
+                    <div class="col-md-12">
+                        <div class="pt-5 text-center">
+                            <h6 class="mb-1 fs-14 font-weight-semibold">Employee Name: <small
+                                    class="text-muted fs-14">Test Employee</small></h6>
+
+                        </div>
+                    </div>
+                </div>
+            </div> -->
+            <!-- Container -->
+            <div style="max-height:80vh;overflow-y:scroll;background:aliceblue">
+                <ul class="notification">
+                </ul>
+            </div>
+            <!-- End Container -->
+            <div class="modal-footer">
+                <a href="javascript:void(0);" class="btn btn-outline-primary" data-bs-dismiss="modal">Close</a>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- End Present Modal  -->
+
+<!--Present Modal -->
+<div class="modal fade" id="clockinmodal">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Clock In Location</h5>
+                <button class="btn-close" data-bs-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">×</span>
+                </button>
+            </div>
+            <!-- Container -->
+            <div style="max-height:80vh;overflow-y:scroll">
+                <div class="map" id="gmp-map"></div>
+            </div>
+            <!-- End Container -->
+            <div class="modal-footer">
+                <a href="javascript:void(0);" class="btn btn-outline-primary" data-bs-dismiss="modal">Close</a>
+                <!-- <a href="javascript:void(0);" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#editmodal"
+                    data-bs-dismiss="modal">Edit</a> -->
+            </div>
+        </div>
+    </div>
+</div>
+<!-- End Present Modal  -->
+
+
+<!--Edit Modal -->
+<div class="modal fade" id="editmodal">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Attendance Details</h5>
+                <button class="btn-close" data-bs-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">×</span>
+                </button>
+            </div>
+            <div class="modal-body edit_modal_body">
+                <!-- Current Clock In Time -->
+                <form id="edit_clockin_form">
+                
+                    <div class="clock_in_details d-none">
+                            <div class="row">
+                                <div class="col-md-12">
+                                    <input type="text" class="form-control attendance_id" name="attendance_id" value="" hidden>
+                                    <input type="text" class="form-control current_clock_in" name="current_clock_time" value="" hidden>
+
+                                    <div class="form-group">
+                                        <label class="form-label">Current Clock In</label>
+                                        <div class="input-group">
+                                            <input type="text" class="form-control current_clock_in"
+                                                value="9:30 AM" readonly>
+                                            <div class="input-group-text">
+                                                <i class="fa fa-clock-o"></i>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- End -->
+                            <div class="row">
+                                <div class="col-md-12">
+                                    <div class="form-group">
+                                        <label class="form-label">New Clock In</label>
+                                        <div class="input-group">
+                                            <input type="text" class="form-control timepicker new_clock_in" name="edited_clock_in" value="9:30 AM">
+                                            <div class="input-group-text">
+                                                <i class="fa fa-clock-o"></i>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label">Note:</label>
+                                <textarea class="form-control clock_in_note" rows="3" placeholder="Note by employee, If any...."
+                                    name="clock_in_note" disabled></textarea>
+                            </div>
+
+                            <div class="modal-footer">
+                                <a href="javascript:void(0);" class="btn btn-outline-primary"
+                                    data-bs-dismiss="modal">Close</a>
+                                <a href="javascript:void(0);" class="btn btn-primary" id="btnEditClockIn">Update</a>
+                            </div>
+                    </div>
+                </form>
+
+                <form id="edit_clockout_form">
+                    <div class="clock_out_details d-none">
+                            <!-- Current Clock Out Time -->
+                            <div class="row">
+                                <div class="col-md-12">
+                                    <input type="text" class="form-control attendance_id" name="attendance_id" value="" hidden>
+                                    <input type="text" class="form-control current_clock_out" name="current_clock_out" value="" hidden>
+
+                                    <div class="form-group">
+                                        <label class="form-label">Current Clock Out</label>
+                                        <div class="input-group">
+                                            <input type="text" class="form-control timepicker current_clock_out"
+                                                value="9:30 AM" disabled>
+                                            <div class="input-group-text">
+                                                <i class="fa fa-clock-o"></i>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- End -->
+                            <div class="row">
+                                <div class="col-md-12">
+                                    <div class="form-group">
+                                        <label class="form-label">New Clock Out</label>
+                                        <div class="input-group">
+                                            <input type="text" class="form-control timepicker" name="edited_clock_out" value="06:30 PM">
+                                            <div class="input-group-text">
+                                                <i class="fa fa-clock-o"></i>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label">Note:</label>
+                                <textarea class="form-control clock_out_note" rows="3" placeholder="Note by employee, If any...."
+                                    name="clock_out_note" disabled></textarea>
+                            </div>
+
+                            <div class="modal-footer">
+                                <a href="javascript:void(0);" class="btn btn-outline-primary"
+                                    data-bs-dismiss="modal">Close</a>
+                                <a href="javascript:void(0);" class="btn btn-primary" id="btnEditClockOut">Update</a>
+                            </div>
+                    </div>
+                </form>
+            </div>
+            <!-- <div class="modal-footer d-flex">
+                <div class="ms-auto">
+                    <a href="javascript:void(0);" class="btn btn-outline-primary" data-bs-dismiss="modal">close</a>
+                    <a href="javascript:void(0);" class="btn btn-primary">Save</a>
+                </div>
+            </div> -->
+        </div>
+    </div>
+</div>
+<!-- End Edit Modal  -->
+
+<!--Mark Attendance Modal -->
+<div class="modal fade"  id="markattendancemodal">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Employee Attendance</h5>
+                <button  class="btn-close" data-bs-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">×</span>
+                </button>
+            </div>
+            <form id="mark_attendance_form">
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-12">
+                            <div class="form-group">
+                                <label class="form-label">Attendance Date</label>
+                                <div class="input-group">
+                                    <div class="input-group-prepend">
+                                        <div class="input-group-text">
+                                            <i class="feather feather-calendar"></i>
+                                        </div>
+                                    </div><input class="form-control" data-bs-toggle="modaldatepicker" name="attendance_date" required>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-12">
+                            <div class="form-group">
+                                <label class="form-label">Employee Name</label>
+                                <div class="form-group">
+                                    <select name="employee_details_id" id="select2insidemodal" class="form-control select2-show-search custom-select"
+                                        data-placeholder="Select Employee" required>
+                                        <option label="Select Employee" selected></option>
+                                        {% for item in employees_details.employees %}
+                                            <option value="{{item.id}}">{{item.first_name + ' ' + item.last_name}}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Attendance Status</label>
+                        <select name="attendance_status" class="form-control custom-select select2 attendance_status" data-placeholder="Select">
+                                <option value="present">Present</option>
+                                <option value="absent">Absent</option>
+                        </select>
+                    </div>
+                    <div class="present_div">
+                        <div class="row">
+                            <div class="col-md-12">
+                                <div class="form-group">
+                                    <label class="form-label">Clock In</label>
+                                    <div class="input-group">
+                                        <input type="text" class="form-control timepicker" name="clock_in_time" value="9:30 AM">
+                                        <div class="input-group-text">
+                                            <i class="fa fa-clock-o"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-12">
+                                <div class="form-group">
+                                    <div class="row">
+                                        <div class="col-md-9">
+                                            <label class="custom-switch">
+                                                <input type="checkbox" class="custom-switch-input has_clocked_out" name="has_clocked_out" id="has_clocked_out">
+                                                <span class="custom-switch-indicator"></span>
+                                                <span class="custom-switch-description">Has Clocked Out?</span>
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="has_clocked_out_div" style="display:none">
+                            <div class="row">
+                                <div class="col-md-12">
+                                    <div class="form-group">
+                                        <label class="form-label">Clock Out</label>
+                                        <div class="input-group">
+                                            <input type="text" class="form-control timepicker" name="clocked_out_time" value="06: 30 PM">
+                                            <div class="input-group-text">
+                                                <i class="fa fa-clock-o"></i>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Working Form</label>
+                            <select name="working_from"  class="form-control custom-select select2" data-placeholder="Select">
+                                {% for item in employees_details.clock_in_options %}
+                                    <option value={{item._id}}>{{item.clock_in_from}}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Note:</label>
+                        <textarea class="form-control clock_out_note" rows="3" placeholder="Write Note, If any...."
+                            name="note"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer d-flex">
+                    <div class="ms-auto">
+                        <a  href="javascript:void(0);" class="btn btn-outline-primary" data-bs-dismiss="modal">Close</a>
+                        <a  href="javascript:void(0);" class="btn btn-primary" id="btnMarkAttendance">Save</a>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+<!-- End Mark Attendance Modal  -->
+{% endautoescape %}
+{% endblock %}
+{% block script %}
+{{ super() }}
+
+<!-- Datepicker js -->
+<!-- INTERNAL Bootstrap-Datepicker js-->
+<!--Othercharts js-->
+<!-- INTERNAL Pg-calendar-master js -->
+<script src="{{ url_for('static', filename='assets/plugins/pg-calendar-master/pignose.calendar.full.min.js') }}">
+</script>
+<script src="{{ url_for('static', filename='assets/plugins/daterangepicker/moment.min.js') }}"></script>
+<script src="{{ url_for('static', filename='assets/plugins/daterangepicker/daterangepicker.js') }}"></script>c
+<script src="{{ url_for('static', filename='assets/plugins/select2/select2.full.min.js') }}"></script>
+<script src="{{ url_for('static', filename='assets/js/select2.js') }}"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.1.3/jszip.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/pdfmake.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/vfs_fonts.js"></script>
+<script src="https://cdn.datatables.net/buttons/2.2.3/js/buttons.html5.min.js"></script>
+<script src="{{ url_for('static', filename='assets/plugins/modal-datepicker/datepicker.js') }}"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment.min.js"></script>
+<script src="https://cdn.datatables.net/plug-ins/1.10.19/sorting/datetime-moment.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/shim.min.js" integrity="sha512-nPnkC29R0sikt0ieZaAkk28Ib7Y1Dz7IqePgELH30NnSi1DzG4x+envJAOHz8ZSAveLXAHTR3ai2E9DZUsT8pQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<!-- INTERNAL Datepicker js -->
+<!-- <script src="{{ url_for('static', filename='assets/plugins/date-picker/jquery-ui.js')}}"></script> -->
+<!-- INTERNAl Bootstrap-timepicker js-->
+<script src="{{ url_for('static', filename='assets/plugins/bootstrap-timepicker/bootstrap-timepicker.js') }}"></script>
+<script
+    src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDeeEzz6bIkKS91kBSsTpbp0C8TcMvoC8Y&callback=initMap&libraries=places&v=weekly"
+    async defer></script>
+<script>
+
+    var points = [];
+
+    async function initMap() {
+        const myLatLng = {
+            lat: -25.363,
+            lng: 131.044
+        };
+        const { Map } = await google.maps.importLibrary("maps");
+        const { AdvancedMarkerElement, PinElement } = await google.maps.importLibrary(
+            "marker",
+        );
+        const map = new Map(document.getElementById("gmp-map"), {
+            zoom: 20,
+            center: points[0],
+            mapId: "4504f8b37365c3d0",
+        });
+        const markerViewWithText = new AdvancedMarkerElement({
+            map,
+            position:points[0],
+            title: "Hello World!",
+        });
+        // const map = new google.maps.Map(document.getElementById("gmp-map"), {
+        //     zoom: 20,
+        //     center: points[0],
+        // });
+
+        // new google.maps.Marker({
+        //     position: points[0],
+        //     map,
+        //     title: "Hello World!",
+        // });
+    }
+
+    window.initMap = initMap;
+</script>
+
+<script>
+
+    $(document).ready(function() {
+        $('#attendance-report').DataTable({
+            "order": [],
+            "paging": false,
+            language: {
+                searchPlaceholder: 'Search...',
+                sSearch: '',
+            },
+            dom: 'Bfrtip',
+            buttons: [
+                {
+                    extend: 'excelHtml5',
+                    title: 'Attendance Report ' + $('#dt_range').val()
+                },
+            ]
+        });
+    });
+
+    // function downloadSummary() {
+        //     const totalHoursWorked = document.getElementById('totalHoursWorked').innerText.trim();
+        //     const dayOffs = document.getElementById('dayOffs').innerText.trim();
+        //     const unpaidLeaves = document.getElementById("unpaidLeaves").innerText.trim();
+        //     const paidLeaves = document.getElementById("paidLeaves").innerText.trim();
+        //     const holidays = document.getElementById("holidays").innerText.trim();
+        //     const daysPresent = document.getElementById("daysPresent").innerText.trim();
+        //     const name = document.getElementById("selectedEmpName").innerText.trim();
+
+        //     const totalWorkingDays = parseInt(daysPresent) + parseInt(unpaidLeaves) + parseInt(paidLeaves);
+        //     const daysAbsent = parseInt(unpaidLeaves) + parseInt(paidLeaves);
+
+        //     // Create a workbook and worksheet
+        //     const wb = XLSX.utils.book_new();
+        //     const ws = XLSX.utils.aoa_to_sheet([
+        //         ['Name', 'Total working days', 'Days Present', 'Days Absent', 'Days Late', 'Days on leave'],
+        //         [name, totalWorkingDays, daysPresent, daysAbsent, 0, paidLeaves]
+        //     ]);
+
+        //     // Add the worksheet to the workbook
+        //     XLSX.utils.book_append_sheet(wb, ws, 'Attendance Summary');
+
+        //     // Generate a Blob object containing the workbook data
+        //     const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'blob' });
+
+        //     const selectedEmpName = document.getElementById("selectedEmpName").innerHTML;
+
+        //     // Trigger the download
+        //     const filename = `${selectedEmpName}_Summary.xlsx`;
+        //     if (navigator.msSaveBlob) {
+        //         // For IE and Edge
+        //         navigator.msSaveBlob(wbout, filename);
+        //     } else {
+        //         // For other browsers
+        //         const link = document.createElement('a');
+        //         link.href = URL.createObjectURL(wbout);
+        //         link.download = filename;
+        //         document.body.appendChild(link);
+        //         link.click();
+        //         document.body.removeChild(link);
+        //     }
+
+    //     const attendanceDateFrom = document.getElementsByName('attendance_date_from').value;
+    //     const attendanceDateTo = document.getElementsByName('attendance_date_to').value;
+
+    //     const data = {
+    //         attendance_date_from: attendanceDateFrom,
+    //         attendance_date_to: attendanceDateTo
+    //     };
+
+    //     fetch("/attendancesummary", {
+    //         method: 'POST',
+    //         headers: {
+    //             'Content-Type': 'application/json'
+    //         },
+    //         body: JSON.stringify(data)
+    //     })
+    //     .then(response => {
+    //         if (!response.ok) {
+    //             throw new Error('Network response was not ok ' + response.statusText);
+    //         }
+    //         return response.json(); // Assuming the server responds with JSON
+    //     })
+    //     .then(data => {
+    //         console.log(data); // Handle the data received from the server
+    //         // Display the data in the summaryContainer div
+    //         const summaryContainer = document.getElementById('summaryContainer');
+    //         summaryContainer.innerHTML = JSON.stringify(data, null, 2);
+    //     })
+    //     .catch(error => {
+    //         console.error('There was a problem with the fetch operation:', error);
+    //         // Handle the error
+    //     });
+    // }
+
+    function fetchAttendanceSummary() {
+    const attendanceDateFrom = document.querySelector('[name="attendance_date_from"]').value;
+    const attendanceDateTo = document.querySelector('[name="attendance_date_to"]').value;
+
+    const data = {
+        attendance_date_from: attendanceDateFrom,
+        attendance_date_to: attendanceDateTo
+    };
+
+    console.log('Sending data:', data);
+
+    const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+
+    fetch("/attendancesummary", {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': csrftoken
+        },
+        body: JSON.stringify(data)
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('Network response was not ok');
+        }
+        return response.text();
+    })
+    .then(response => {
+        console.log('Response received:', response);
+        $('#summaryContainer').html(response);
+        swal({
+            title: "Success",
+            text: "Attendance Summary Fetched Successfully!",
+            icon: "success",
+        });
+    })
+    .catch(error => {
+        console.error('Error occurred:', error);
+        swal({
+            title: "Error",
+            text: "An error occurred while fetching the attendance summary. Please try again.",
+            icon: "error",
+        });
+    });
+}
+
+
+
+
+    //Daterangepicker with Callback
+    $('input[name="daterange"]').daterangepicker({
+        opens: 'below',
+        locale: {
+            format: 'DD/MM/YYYY'
+        }
+    }, function (start, end, label) {
+        console.log("A new date selection was made: " + start.format('MMMM D, YYYY') + ' to ' + end.format(
+            'MMMM D, YYYY'));
+    });
+
+    $(document).ready(function () {
+        $('.break_history').click(function () {
+            // AJAX request
+            $("#global-loader").show();
+            var attendance_id = $(this).attr("data-attendance_id"); //Start or end
+
+            $.ajax({
+                url: '/breakhistory',
+                type: 'get',
+                data: {
+                    attendance_id: attendance_id
+                },
+                success: function (response) {
+                    // Add response in Modal body
+                    //data = JSON.parse(response)
+                    //console.log(response.details)
+
+                    if (response.details) {
+                        //console.log(response.details.employee_id)
+                        break_history_details = ''
+
+                        $.each(response.details, function (index, value) {
+                            break_history_details += '<li>\
+                            <div class="notification-time ">\
+                                <span class="date">' + value.attendance_date + '</span>\
+                                <span class="date mt-2 text-success">' + value.break_difference + ' Minutes</span>\
+                            </div>\
+                            <div class="notification-icon text-success">\
+                                <a href="javascript:void(0);" style="border-color:#128af9 !important;margin-top: 10px;"></a>\
+                            </div>\
+                            <div class="notification-time-date mb-2 d-block d-md-none">\
+                                <span class="date">' + value.attendance_date + '</span>\
+                                <span class="date ms-2 text-success">' + value.break_difference + ' Minutes</span>\
+                            </div>\
+                            <div class="notification-body mt-2" style="margin-right:30px !important">\
+                                <div class="media mt-0">\
+                                    <div class="media-body ms-3 d-flex">\
+                                        <div class="">\
+                                            <p class="fs-15 text-dark fw-bold mb-0">Break Time</p>\
+                                            <p class="mb-0 fs-13 text-dark">Start: ' + value.start_at + ', End: ' +
+                                value.end_at + '</p>\
+                                        </div>\
+                                        <div class="notify-time">\
+                                            <p class="mb-0 text-muted fs-11"><span\
+                                                    class="badge bg-danger ms-3 px-2 pb-1 mb-1">Break</span></p>\
+                                        </div>\
+                                    </div>\
+                                </div>\
+                            </div>\
+                        </li>'
+                        });
+                        //$('.modal-body').html(response);
+                        $('ul.notification').html(break_history_details);
+                        $("#global-loader").hide();
+                    } else {
+                        $('ul.notification').html(
+                            '<span class="px-3">Break History Not Found! </span>');
+                        //$('#largemodal').modal('toggle');
+                        $("#global-loader").hide();
+                    }
+                    // Display Modal
+                    $('#largemodal').modal('show');
+                }
+            });
+        });
+    });
+
+
+    $(document).ready(function () {
+        $('.clockinlocation').click(function () {
+            // AJAX request
+            $("#global-loader").show();
+            var attendance_id = $(this).attr("data-attendance_id"); //Start or end
+
+            $.ajax({
+                url: '/clockinhistory',
+                type: 'get',
+                data: {
+                    attendance_id: attendance_id
+                },
+                success: function (response) {
+                    // Add response in Modal body
+                    //data = JSON.parse(response)
+                    //console.log(response.details)
+
+                    if (response.details) {
+                        break_history_details = ''
+                        points = []
+                        points.push(new google.maps.LatLng(response.details[0]['lat'],
+                            response.details[0]['lng']));
+                        initMap()
+                        //$('.modal-body').html(response);
+                        //$('ul.notification').html(break_history_details);
+                        $("#global-loader").hide();
+                    } else {
+                        $('ul.notification').html(
+                            '<span class="px-3">Break History Not Found! </span>');
+                        //$('#largemodal').modal('toggle');
+                        $("#global-loader").hide();
+                    }
+                    // Display Modal
+                    $('#largemodal').modal('show');
+                }
+            });
+        });
+    });
+
+    $(document).ready(function () {
+        $('.clockoutlocation').click(function () {
+            // AJAX request
+            $("#global-loader").show();
+            var attendance_id = $(this).attr("data-attendance_id"); //Start or end
+
+            $.ajax({
+                url: '/clockouthistory',
+                type: 'get',
+                data: {
+                    attendance_id: attendance_id
+                },
+                success: function (response) {
+                    // Add response in Modal body
+                    //data = JSON.parse(response)
+                    //console.log(response.details)
+
+                    if (response.details) {
+                        break_history_details = ''
+                        points = []
+                        points.push(new google.maps.LatLng(response.details[0]['lat'],
+                            response.details[0]['lng']));
+                        initMap()
+                        //$('.modal-body').html(response);
+                        //$('ul.notification').html(break_history_details);
+                        $("#global-loader").hide();
+                    } else {
+                        $('ul.notification').html(
+                            '<span class="px-3">Break History Not Found! </span>');
+                        //$('#largemodal').modal('toggle');
+                        $("#global-loader").hide();
+                    }
+                    // Display Modal
+                    $('#largemodal').modal('show');
+                }
+            });
+        });
+    });
+
+
+    $(document).ready(function () {
+        $('.editClockin').click(function () {
+            // AJAX request
+            $("#global-loader").show();
+            var attendance_id = $(this).attr("data-attendance_id"); //Start or end
+            var clock_type = $(this).attr("data-clock_type"); //Start or end
+
+            $.ajax({
+                url: '/getClockindetails',
+                type: 'get',
+                data: {
+                    attendance_id: attendance_id
+                },
+                success: function (response) {
+                    if (response.details) {
+
+                        if (response.details[0].employee_check_in_at && clock_type ==
+                            "clockin") {
+                            $('.clock_in_details').removeClass('d-none')
+                            $('.clock_out_details').addClass('d-none')
+                            $('.current_clock_in').val(response.details[0]
+                                .employee_check_in_at)
+                            $('.attendance_id').val(response.details[0]
+                            .attendance_id)    
+                            $('.clock_in_note').val(response.details[0].clock_in_note)
+                        } else if (clock_type == "clockout") {
+                            $('.clock_out_details').removeClass('d-none')
+                            $('.clock_in_details').addClass('d-none')
+                            $('.current_clock_out').val(response.details[0]
+                                .employee_check_out_at)
+                            $('.attendance_id').val(response.details[0]
+                            .attendance_id)    
+                            $('.clock_out_note').val(response.details[0].clock_out_note)
+
+                        }
+                        //$('#editmodal.modal_body').html(clock_in_out_field);
+                        $("#global-loader").hide();
+                    } else {
+                        $('ul.notification').html(
+                            '<span class="px-3">Break History Not Found! </span>');
+                        //$('#largemodal').modal('toggle');
+                        $("#global-loader").hide();
+                    }
+                    // Display Modal
+                    $('#largemodal').modal('show');
+                }
+            });
+        });
+    });
+
+    // Ajax Edit Clock In
+    $(document).on("click", '#btnEditClockIn', function (e) {
+        e.preventDefault();
+        var cs = "{{ csrf_token() }}";
+
+        swal({
+            title: "Are you sure?",
+            text: "You want to edit clock in time?",
+            icon: "warning",
+            buttons: true,
+            dangerMode: true,
+        }).then((willDelete) => {
+            if (willDelete) {
+                $.ajax({
+                        headers: {
+                            'X-CSRF-TOKEN': cs
+                        },
+                        url: '/edit/clockin/',
+                        data: $('#edit_clockin_form').serialize(),
+                        type: 'POST',
+                    })
+                    .done(function (data) {
+                        //$('#offices-table tbody').empty();
+                        $('#editmodal').modal('toggle');
+                        swal({
+                            title: "Success",
+                            text: "Successfully Updated Clock in(s)!",
+                            icon: "success",
+                        }).then(function(){ 
+                            $("#global-loader").show();
+                            location.reload();
+                            });
+                    })
+                    .fail(function (err) {
+                        console.log(err);
+                        $('#message').html(err);
+                    })
+            }
+        });
+    });
+    //EnD Ajax Edit Clock In
+
+    // Ajax Edit Clock In
+    $(document).on("click", '#btnEditClockOut', function (e) {
+        e.preventDefault();
+        var cs = "{{ csrf_token() }}";
+
+        swal({
+            title: "Are you sure?",
+            text: "You want to edit clock out time?",
+            icon: "warning",
+            buttons: true,
+            dangerMode: true,
+        }).then((willDelete) => {
+            if (willDelete) {
+                $.ajax({
+                        headers: {
+                            'X-CSRF-TOKEN': cs
+                        },
+                        url: '/edit/clockout/',
+                        data: $('#edit_clockout_form').serialize(),
+                        type: 'POST',
+                    })
+                    .done(function (data) {
+                        //$('#offices-table tbody').empty();
+                        $('#editmodal').modal('toggle');
+                        swal({
+                            title: "Success",
+                            text: "Successfully Updated Clock in(s)!",
+                            icon: "success",
+                        }).then(function(){ 
+                            $("#global-loader").show();
+                            location.reload();
+                            });
+                    })
+                    .fail(function (err) {
+                        console.log(err);
+                        $('#message').html(err);
+                    })
+            }
+        });
+    });
+    //EnD Ajax Edit Clock In
+
+     // Ajax Mark Attendance
+     $(document).on("click", '#btnMarkAttendance', function (e) {
+        e.preventDefault();
+        var cs = "{{ csrf_token() }}";
+        var swal_text = "";
+        selected_status = $('.attendance_status :selected').val();
+        if(selected_status === "present"){
+            swal_text = "You want to mark Present attendance for selected user?"
+        }
+        else{
+            swal_text = "You want to mark Absent attendance for selected user? This will act as an Unpaid leave on Payroll."
+        }
+        swal({
+            title: "Are you sure?",
+            text: swal_text,
+            icon: "warning",
+            buttons: true,
+            dangerMode: true,
+        }).then((willDelete) => {
+            if (willDelete) {
+                $.ajax({
+                        headers: {
+                            'X-CSRF-TOKEN': cs
+                        },
+                        url: '/markattendance/',
+                        data: $('#mark_attendance_form').serialize(),
+                        type: 'POST',
+                    })
+                    .done(function (data) {
+                        $('#markattendancemodal').modal('toggle');
+                        swal({
+                            title: "Success",
+                            text: "Successfully Marked Attendance!",
+                            icon: "success",
+                        }).then(function(){ 
+                            $("#global-loader").show();
+                            location.reload();
+                            });
+                    })
+                    .fail(function (err) {
+                        console.log(err);
+                        $('#message').html(err);
+                    })
+            }
+        });
+    });
+    //EnD Ajax Mark Attendance
+
+    $(document).on("click", '#btnMarkHalfAttendance', function (e) {
+        e.preventDefault();
+        var cs = "{{ csrf_token() }}";
+        var attendance_id = $(this).attr("data-attendance_id");
+        swal({
+            title: "Are you sure?",
+            text: "You want to mark half day attendance for selected user? This will create an half day unpaid adjustment on Payroll.",
+            icon: "warning",
+            buttons: true,
+            dangerMode: true,
+        }).then((willDelete) => {
+            if (willDelete) {
+                $.ajax({
+                        headers: {
+                            'X-CSRF-TOKEN': cs
+                        },
+                        url: '/markhalfattendance/',
+                        data: {attendance_id:attendance_id},
+                        type: 'POST',
+                    })
+                    .done(function (data) {
+                        swal({
+                            title: "Success",
+                            text: "Successfully Marked Half Day Attendance!",
+                            icon: "success",
+                        }).then(function(){ 
+                            $("#global-loader").show();
+                            location.reload();
+                            });
+                    })
+                    .fail(function (err) {
+                        console.log(err);
+                        $('#message').html(err);
+                    })
+            }
+        });
+    });
+    //EnD Ajax Mark Attendance
+
+</script>
+<script>
+    //Timepicker
+    $('.timepicker').timepicker({
+        showInputs: false,
+        minuteStep: 1,
+    });
+
+    $('.timepicker').timepicker({
+        zindex: 9999999
+    });
+
+    // Datepicker
+	$('[data-bs-toggle="modaldatepicker"]').datepicker({
+		autoHide: true,
+		zIndex: 999998,
+        format:'dd/mm/yyyy'
+        //startDate: new Date(),
+	});
+
+    $('.markattendanceBtn').click(function (e) {
+		$('input[name=attendance_date]').val(moment(new Date()).format('DD/MM/YYYY'));
+    });
+    // Toggle Mark Attendance Clock Out
+    $('.has_clocked_out').change(function() {
+        if(this.checked) {
+            $('.has_clocked_out_div').show();
+        }
+        else{
+            $('.has_clocked_out_div').hide();
+        }
+    });
+    //End Toggle
+    $(document).ready(function() {
+
+        $("#select2insidemodal").select2({
+          dropdownParent: $("#markattendancemodal")
+        });
+    });
+
+    // Toggle Mark Attendance Clock Out
+    $('.attendance_status').change(function() {
+        selected_status = $('#attendance_status :selected').val()
+        if(selected_status== "present") {
+            $('.present_div').show();
+        }
+        else{
+            $('.present_div').hide();
+        }
+    });
+</script>
+
+<!-- custom js -->
+{% endblock %}

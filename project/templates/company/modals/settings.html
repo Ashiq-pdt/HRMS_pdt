@@ -1,0 +1,1664 @@
+<!--Add Work Timing Modal -->
+<div class="modal fade" id="addworktimingmodal">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <form class="card-body pt-3" id="work_timing_form">
+
+                <div class="modal-header">
+                    <h5 class="modal-title">Add Work Timing</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">×</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div id="message"></div>
+                    <input type="hidden" name="csrf_token" id="csrf" value="{{ csrf_token() }}" />
+                    <div class="form-group">
+                        <label class="form-label">Name</label>
+                        <input type="text" class="form-control" placeholder="Name" name="work_timing_name" value=""
+                            required>
+                    </div>
+                    <div class="form-group">
+                        <div class="row">
+                            <div class="col-md-9">
+                                <label class="custom-switch">
+                                    <input type="checkbox" class="custom-switch-input is_day_off" name="is_day_off" id="is_day_off">
+                                    <span class="custom-switch-indicator"></span>
+                                    <span class="custom-switch-description">Is Day Off?</span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Toggle Day off Div -->
+                    <div class="day_off_div">
+                        <div class="switch-toggle">
+                            <!-- <span class="me-auto mt-2">Schedule Color</span> -->
+                            <label class="form-label">Schedule Color</label>
+                            <div class="">
+                                <input class="input-color-picker color-primary-light" value="#0d6efd" id="colorID"
+                                    oninput="changePrimaryColor()" type="color" data-id="bg-color" data-id1="bg-hover"
+                                    data-id2="bg-border" data-id7="transparentcolor" name="schedule_color">
+                            </div>
+                        </div>
+    
+                        <div class="form-group">
+                            <label class="form-label">Office Starts At</label>
+                            <div class="input-group">
+                                <input class="form-control timepicker" placeholder="HH:MM AM/PM" name="office_start_at"
+                                    type="text">
+                                <div class="input-group-append">
+                                    <div class="input-group-text">
+                                        <i class="feather feather-clock"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Office Ends At</label>
+                            <div class="input-group">
+                                <input class="form-control timepicker" placeholder="HH:MM AM/PM" name="office_end_at"
+                                    type="text">
+                                <div class="input-group-append">
+                                    <div class="input-group-text">
+                                        <i class="feather feather-clock"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- <div class="form-group">
+                            <div class="row">
+                                <div class="col-md-9">
+                                    <label class="custom-switch">
+                                        <input type="checkbox" class="custom-switch-input" name="is_half_day">
+                                        <span class="custom-switch-indicator"></span>
+                                        <span class="custom-switch-description">This is a half-day timing</span>
+                                    </label>
+                                </div>
+                            </div>
+                        </div> -->
+    
+                        <div class="form-group">
+                            <label class="form-label">Late Arrival</label>
+                            <div class="input-group">
+                                <div class="input-group-append bl-1">
+                                    <div class="input-group-text">
+                                        <span>Later Than</span>
+                                    </div>
+                                </div>
+                                <input class="form-control" placeholder="0" type="number" name="late_arrival__later_than">
+                                <div class="input-group-append">
+                                    <div class="input-group-text">
+                                        <span>Minutes</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Early Departure</label>
+                            <div class="input-group">
+                                <div class="input-group-append bl-1">
+                                    <div class="input-group-text">
+                                        <span>Earlier Than</span>
+                                    </div>
+                                </div>
+                                <input class="form-control" placeholder="0" type="number"
+                                    name="early_departure_earliar_than">
+                                <div class="input-group-append">
+                                    <div class="input-group-text">
+                                        <span>Minutes</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Consider Absent</label>
+                            <div class="input-group">
+                                <div class="input-group-append bl-1">
+                                    <div class="input-group-text">
+                                        <span>After</span>
+                                    </div>
+                                </div>
+                                <input class="form-control" placeholder="0" type="number" name="consider_absent_after">
+                                <div class="input-group-append">
+                                    <div class="input-group-text">
+                                        <span>Minutes</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Minimum Overtime</label>
+                            <div class="input-group">
+                                <div class="input-group-append bl-1">
+                                    <div class="input-group-text">
+                                        <span>After</span>
+                                    </div>
+                                </div>
+                                <input class="form-control" placeholder="0" type="number" name="minimum_ot" id="minimum_ot">
+                                <div class="input-group-append">
+                                    <div class="input-group-text">
+                                        <span>Minutes</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <div class="row">
+                                <div class="col-md-12">
+                                    <label class="form-label">Week Off Days</label>
+                                </div>
+                                <div class="col-md-12">
+                                    <div class="row">
+                                       <div class="col-md-4">
+                                            <label class="custom-switch">
+                                                <input type="checkbox" name="week_offs[]"
+                                                    class="custom-switch-input"value="0">
+                                                <span class="custom-switch-indicator"></span>
+                                                <span class="custom-switch-description">Monday</span>
+                                            </label>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label class="custom-switch">
+                                                <input type="checkbox" name="week_offs[]"
+                                                    class="custom-switch-input" value="1">
+                                                <span class="custom-switch-indicator"></span>
+                                                <span class="custom-switch-description">Tuesday</span>
+                                            </label>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label class="custom-switch">
+                                                <input type="checkbox" name="week_offs[]"
+                                                    class="custom-switch-input" value="2">
+                                                <span class="custom-switch-indicator"></span>
+                                                <span class="custom-switch-description">Wednesday</span>
+                                            </label>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label class="custom-switch">
+                                                <input type="checkbox" name="week_offs[]"
+                                                    class="custom-switch-input" value="3">
+                                                <span class="custom-switch-indicator"></span>
+                                                <span class="custom-switch-description">Thursday</span>
+                                            </label>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label class="custom-switch">
+                                                <input type="checkbox" name="week_offs[]"
+                                                    class="custom-switch-input" value="4">
+                                                <span class="custom-switch-indicator"></span>
+                                                <span class="custom-switch-description">Friday</span>
+                                            </label>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label class="custom-switch">
+                                                <input type="checkbox" name="week_offs[]"
+                                                    class="custom-switch-input" value="5">
+                                                <span class="custom-switch-indicator"></span>
+                                                <span class="custom-switch-description">Saturday</span>
+                                            </label>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label class="custom-switch">
+                                                <input type="checkbox" name="week_offs[]"
+                                                    class="custom-switch-input" value="6">
+                                                <span class="custom-switch-indicator"></span>
+                                                <span class="custom-switch-description">Sunday</span>
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <div class="row">
+                                <div class="col-md-9">
+                                    <label class="custom-switch">
+                                        <input type="checkbox" class="custom-switch-input is_default" name="wt_is_default" id="is_default">
+                                        <span class="custom-switch-indicator"></span>
+                                        <span class="custom-switch-description">Set this as Default?</span>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- <div class="form-group">
+                            <label class="form-label">Allow Breaks</label>
+                            <div class="input-group">
+                                <div class="input-group-append bl-1">
+                                    <div class="input-group-text">
+                                        <span>Total Duration</span>
+                                    </div>
+                                </div>
+                                <input class="form-control" placeholder="0" type="number" name="allow_breaks">
+                                <div class="input-group-append">
+                                    <div class="input-group-text">
+                                        <span>Minutes</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div> -->
+                        <!-- <div class="form-group">
+                            <div class="row">
+                                <div class="col-md-9">
+                                    <label class="custom-switch">
+                                        <input type="checkbox" class="custom-switch-input" name="out_of_office_check_in">
+                                        <span class="custom-switch-indicator"></span>
+                                        <span class="custom-switch-description">Allow out of office check-ins</span>
+                                    </label>
+                                </div>
+                            </div>
+                        </div> -->
+                    </div>
+                   
+                </div>
+                <div class="modal-footer">
+                    <a href="javascript:void(0);" class="btn btn-outline-primary" data-bs-dismiss="modal">Close</a>
+                    <button class="btn btn-primary" id="btnAddWorkTiming">Submit</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+<!-- End Add Work Timing Modal  -->
+
+<!--Edit Work Timing Modal -->
+<div class="modal fade" id="editworkmodal">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <form class="card-body pt-3" id="edit_work_timing_form">
+                <div class="modal-header">
+                    <h5 class="modal-title">Edit Department</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">×</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div id="message"></div>
+                    <input type="hidden" name="csrf_token" id="edit_csrf" value="{{ csrf_token() }}" />
+                    <input type="input" name="edit_work_timing_id" id="edit_work_timing_id" hidden/>
+                    <div class="form-group">
+                        <label class="form-label">Name</label>
+                        <input type="text" class="form-control" placeholder="Name" name="edit_work_timing_name" id="edit_work_timing_name" value=""
+                            required>
+                    </div>
+                    <div class="form-group">
+                        <div class="row">
+                            <div class="col-md-9">
+                                <label class="custom-switch">
+                                    <input type="checkbox" class="custom-switch-input edit_is_day_off" name="edit_is_day_off" id="edit_is_day_off">
+                                    <span class="custom-switch-indicator"></span>
+                                    <span class="custom-switch-description">Is Day Off?</span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Toggle Day off Div -->
+                    <div class="edit_day_off_div">
+                        <div class="switch-toggle">
+                            <label class="form-label">Schedule Color</label>
+                            <div class="">
+                                <input class="input-color-picker color-primary-light" value="#0d6efd" id="edit_schedule_color"
+                                    oninput="changePrimaryColor()" type="color" data-id="bg-color" data-id1="bg-hover"
+                                    data-id2="bg-border" data-id7="transparentcolor" name="edit_schedule_color">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Office Starts At</label>
+                            <div class="input-group">
+                                <input class="form-control timepicker" placeholder="HH:MM AM/PM" name="edit_office_start_at" id="edit_office_start_at"
+                                    type="text">
+                                <div class="input-group-append">
+                                    <div class="input-group-text">
+                                        <i class="feather feather-clock"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Office Ends At</label>
+                            <div class="input-group">
+                                <input class="form-control timepicker" placeholder="HH:MM AM/PM" name="edit_office_end_at" id="edit_office_end_at"
+                                    type="text">
+                                <div class="input-group-append">
+                                    <div class="input-group-text">
+                                        <i class="feather feather-clock"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Late Arrival</label>
+                            <div class="input-group">
+                                <div class="input-group-append bl-1">
+                                    <div class="input-group-text">
+                                        <span>Later Than</span>
+                                    </div>
+                                </div>
+                                <input class="form-control" placeholder="0" type="number" name="edit_late_arrival__later_than" id="edit_late_arrival__later_than">
+                                <div class="input-group-append">
+                                    <div class="input-group-text">
+                                        <span>Minutes</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Early Departure</label>
+                            <div class="input-group">
+                                <div class="input-group-append bl-1">
+                                    <div class="input-group-text">
+                                        <span>Earlier Than</span>
+                                    </div>
+                                </div>
+                                <input class="form-control" placeholder="0" type="number"
+                                    name="edit_early_departure_earliar_than" id="edit_early_departure_earliar_than">
+                                <div class="input-group-append">
+                                    <div class="input-group-text">
+                                        <span>Minutes</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Consider Absent</label>
+                            <div class="input-group">
+                                <div class="input-group-append bl-1">
+                                    <div class="input-group-text">
+                                        <span>After</span>
+                                    </div>
+                                </div>
+                                <input class="form-control" placeholder="0" type="number" name="edit_consider_absent_after" id="edit_consider_absent_after">
+                                <div class="input-group-append">
+                                    <div class="input-group-text">
+                                        <span>Minutes</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Minimum Overtime</label>
+                            <div class="input-group">
+                                <div class="input-group-append bl-1">
+                                    <div class="input-group-text">
+                                        <span>After</span>
+                                    </div>
+                                </div>
+                                <input class="form-control" placeholder="0" type="number" name="edit_minimum_ot" id="edit_minimum_ot">
+                                <div class="input-group-append">
+                                    <div class="input-group-text">
+                                        <span>Minutes</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <div class="row">
+                                <div class="col-md-12">
+                                    <label class="form-label">Week Off Days</label>
+                                </div>
+                                <div class="col-md-12">
+                                    <div class="row">
+                                    <div class="col-md-4">
+                                            <label class="custom-switch">
+                                                <input type="checkbox" name="edit_week_offs[]" id="edit_week_offs_0"
+                                                    class="custom-switch-input"value="0">
+                                                <span class="custom-switch-indicator"></span>
+                                                <span class="custom-switch-description">Monday</span>
+                                            </label>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label class="custom-switch">
+                                                <input type="checkbox" name="edit_week_offs[]" id="edit_week_offs_1"
+                                                    class="custom-switch-input" value="1">
+                                                <span class="custom-switch-indicator"></span>
+                                                <span class="custom-switch-description">Tuesday</span>
+                                            </label>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label class="custom-switch">
+                                                <input type="checkbox" name="edit_week_offs[]" id="edit_week_offs_2"
+                                                    class="custom-switch-input" value="2">
+                                                <span class="custom-switch-indicator"></span>
+                                                <span class="custom-switch-description">Wednesday</span>
+                                            </label>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label class="custom-switch">
+                                                <input type="checkbox" name="edit_week_offs[]" id="edit_week_offs_3"
+                                                    class="custom-switch-input" value="3">
+                                                <span class="custom-switch-indicator"></span>
+                                                <span class="custom-switch-description">Thursday</span>
+                                            </label>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label class="custom-switch">
+                                                <input type="checkbox" name="edit_week_offs[]" id="edit_week_offs_4"
+                                                    class="custom-switch-input" value="4">
+                                                <span class="custom-switch-indicator"></span>
+                                                <span class="custom-switch-description">Friday</span>
+                                            </label>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label class="custom-switch">
+                                                <input type="checkbox" name="edit_week_offs[]" id="edit_week_offs_5"
+                                                    class="custom-switch-input" value="5">
+                                                <span class="custom-switch-indicator"></span>
+                                                <span class="custom-switch-description">Saturday</span>
+                                            </label>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <label class="custom-switch">
+                                                <input type="checkbox" name="edit_week_offs[]" id="edit_week_offs_6"
+                                                    class="custom-switch-input" value="6">
+                                                <span class="custom-switch-indicator"></span>
+                                                <span class="custom-switch-description">Sunday</span>
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <div class="row">
+                                <div class="col-md-9">
+                                    <label class="custom-switch">
+                                        <input type="checkbox" class="custom-switch-input edit_is_default" name="edit_wt_is_default" id="edit_is_default">
+                                        <span class="custom-switch-indicator"></span>
+                                        <span class="custom-switch-description">Set this as Default?</span>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <a href="javascript:void(0);" class="btn btn-outline-primary" data-bs-dismiss="modal">Close</a>
+                    <button class="btn btn-primary" id="btnEditWorkTiming">Submit</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+<!-- End Edit Work Timing Modal  -->
+
+<!--Add Work Center Modal -->
+<!-- <div class="modal fade" id="addworkcentermodal">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Create a Work Center</h5>
+                <button class="btn-close" data-bs-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">×</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <form class="card-body pt-3" method="POST" action="/add/department">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+                    <div class="form-group">
+                        <label class="form-label">Center Name</label>
+                        <input type="text" class="form-control" placeholder="Center Name" name="center_name" value=""
+                            required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Work Timings</label>
+                        <div class="input-group">
+                            <label class="custom-control custom-checkbox" style="margin-right:10px">
+                                <input type="checkbox" class="custom-control-input" name="example-checkbox1"
+                                    value="option1" checked>
+                                <span class="custom-control-label">Option 1</span>
+                            </label>
+                            <label class="custom-control custom-checkbox" style="margin-right:10px">
+                                <input type="checkbox" class="custom-control-input" name="example-checkbox1"
+                                    value="option2" checked>
+                                <span class="custom-control-label">Option 2</span>
+                            </label>
+                            <label class="custom-control custom-checkbox" style="margin-right:10px">
+                                <input type="checkbox" class="custom-control-input" name="example-checkbox1"
+                                    value="option3" checked>
+                                <span class="custom-control-label">Option 3</span>
+                            </label>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Offices</label>
+                        <div class="input-group">
+                            <label class="custom-control custom-checkbox" style="margin-right:10px">
+                                <input type="checkbox" class="custom-control-input" name="example-checkbox1"
+                                    value="option1" checked>
+                                <span class="custom-control-label">Option 1</span>
+                            </label>
+                            <label class="custom-control custom-checkbox" style="margin-right:10px">
+                                <input type="checkbox" class="custom-control-input" name="example-checkbox1"
+                                    value="option2" checked>
+                                <span class="custom-control-label">Option 2</span>
+                            </label>
+                            <label class="custom-control custom-checkbox" style="margin-right:10px">
+                                <input type="checkbox" class="custom-control-input" name="example-checkbox1"
+                                    value="option3" checked>
+                                <span class="custom-control-label">Option 3</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header border-bottom-0">
+                            <div class="card-title">Assign Employees</div>
+                        </div>
+                        <div class="card-body ">
+                            <div class="row">
+                                <div class="col-md-12">
+                                    <div class="card shadow-none border">
+                                        <div class="card-body p-0">
+                                            <div class="transfer"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+            </div>
+            <div class="modal-footer">
+                <a href="javascript:void(0);" class="btn btn-outline-primary" data-bs-dismiss="modal">Close</a>
+                <button class="btn btn-primary">Submit</button>
+            </div>
+            </form>
+        </div>
+    </div>
+</div> -->
+<!-- End Add Work Timing Modal  -->
+
+
+<!--Add Overtime Policies Modal -->
+<div class="modal fade" id="addovertimemodal">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <form class="card-body pt-3" id="over_time_form">
+
+                <div class="modal-header">
+                    <h5 class="modal-title">Add Overtime Policy</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">×</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div id="message"></div>
+                    <input type="hidden" name="csrf_token" id="csrf_ot" value="{{ csrf_token() }}" />
+                    <div class="form-group">
+                        <div class="row">
+                            <div class="col-md-12">
+                                <label class="form-label"> Select Overtime Policy*</label>
+                                <select class="form-control" id="overtime_policy" name="ot_policy_name" required>
+                                        <option value="extended" >Extended Overtime</option>
+                                        <option value="dayoff" >Dayoff Overtime</option>
+                                        <option value="holiday" >Holiday Overtime</option>
+                                        <option value="shiftdayoff" >Shift Dayoff Overtime</option>
+
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Overtime Multiplier*</label>
+                        <input type="text" class="form-control" placeholder="Ex: 1.0,1.5" name="ot_policy_multiplier" value=""
+                            required>
+                    </div>
+                    <div class="form-group">
+                        <div class="row">
+                            <div class="col-md-12">
+                                <label class="form-label">Overtime On</label>
+                                <select class="form-control custom-select select2" name="ot_policy_on" data-placeholder="Select">
+                                    <option value="basic_salary">Basic Salary</option>
+                                    <option value="all" selected>Basic Salary + Allowances</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-group" style="display: none !important;">
+                        <div class="row">
+                            <div class="col-md-9">
+                                <label class="custom-switch">
+                                    <input type="checkbox" class="custom-switch-input is_working_day" name="is_default">
+                                    <span class="custom-switch-indicator"></span>
+                                    <span class="custom-switch-description">Set this as Default?</span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <a href="javascript:void(0);" class="btn btn-outline-primary" data-bs-dismiss="modal">Close</a>
+                    <button class="btn btn-primary" id="btnAddOverrtime">Submit</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+<!-- End Overtime Policies Modal  -->
+
+
+<!--Edit Overtime Policies Modal -->
+<div class="modal fade" id="editovertimemodal">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <form class="card-body pt-3" id="edit_over_time_form">
+
+                <div class="modal-header">
+                    <h5 class="modal-title">Add Overtime Policy</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">×</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div id="message"></div>
+                    <input type="hidden" name="csrf_token" id="csrf_ot_edit" value="{{ csrf_token() }}" />
+                    <div class="form-group">
+                        <label class="form-label">Policy Name</label>
+                        <input type="text" class="form-control" placeholder="Name" name="work_timing_name" value=""
+                            required>
+                    </div>
+                    <div class="form-group">
+                        <div class="row">
+                            <div class="col-md-12">
+                                <label class="form-label">Overtime On</label>
+                                <select class="form-control custom-select select2" name="ot_policy_on" data-placeholder="Select">
+                                    <option value="basic_salary">Basic Salary</option>
+                                    <option value="all">Basic Salary + Allowances</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <a href="javascript:void(0);" class="btn btn-outline-primary" data-bs-dismiss="modal">Close</a>
+                    <button class="btn btn-primary" id="btnEditOverrtime">Submit</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+<!-- Edit Overtime Policies Modal  -->
+
+
+<!--Add Offices Modal -->
+<div class="modal fade" id="addofficesmodal">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <form class="card-body pt-3" id="offices_form">
+
+                <div class="modal-header">
+                    <h5 class="modal-title">Add offices</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">×</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" name="csrf_token" id="csrf_off" value="{{ csrf_token() }}" />
+                    <div class="form-group">
+                        <label class="form-label">Name of the office</label>
+                        <input type="text" class="form-control" placeholder="Name of the office" id="office_name" name="office_name" />
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Location of the Office</label>
+                        <input type="text" class="form-control" placeholder="Location of the Office" id="location-input" name="location-input" />
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Radius (In meters)</label>
+                        <input type="text" class="form-control" placeholder="Radius (In meters)" id="location-radius" name="location-radius" value="100" />
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Latitude</label>
+                        <input type="text" class="form-control" placeholder="Radius (In meters)" id="location-latitude" name="location-latitude" value="" readonly/>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Longitude</label>
+                        <input type="text" class="form-control" placeholder="Radius (In meters)" id="location-longitude" name="location-longitude" value="" readonly/>
+                    </div>
+                    <div class="form-group">
+                        <div class="row">
+                            <div class="col-md-9">
+                                <label class="custom-switch">
+                                    <input type="checkbox" class="custom-switch-input" name="is_default" id="is_default_office">
+                                    <span class="custom-switch-indicator"></span>
+                                    <span class="custom-switch-description">Set this as Default Office</span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- <input type="text" class="" placeholder="Name of the office" id="office_name" />
+                    <input type="text" placeholder="Location of the Office" id="location-input" />
+                    <input type="text" placeholder="Radius (In meters)" id="location-radius" value="100" /> -->
+                    <div class="map" id="gmp-map"></div>
+                </div>
+                <div class="modal-footer">
+                    <a href="javascript:void(0);" class="btn btn-outline-primary" data-bs-dismiss="modal">Close</a>
+                    <button class="btn btn-primary" id="btnAddOffice">Submit</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+<!-- End Add Offices Modal  -->
+
+
+<!--Add Addition Modal -->
+<div class="modal fade" id="addadditionmodal">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <form class="card-body pt-3" id="addition_form">
+
+                <div class="modal-header">
+                    <h5 class="modal-title">Add Addition Reason</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">×</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div id="message"></div>
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+                    <input type="hidden" name="adjustment_type" value="addition" />
+                    <div class="form-group">
+                        <label class="form-label">Addition Reason*</label>
+                        <input type="text" class="form-control" placeholder="Addition Reason" name="adjustment_reason" value=""
+                            required>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <a href="javascript:void(0);" class="btn btn-outline-primary" data-bs-dismiss="modal">Close</a>
+                    <button class="btn btn-primary" id="btnAddAddition">Submit</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+<!-- End Additions Modal  -->
+
+<!--Add Deducution Modal -->
+<div class="modal fade" id="adddeductionmodal">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <form class="card-body pt-3" id="deduction_form">
+
+                <div class="modal-header">
+                    <h5 class="modal-title">Add Deducution Reason</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">×</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div id="message"></div>
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+                    <input type="hidden" name="adjustment_type" value="deduction" />
+
+                    <div class="form-group">
+                        <label class="form-label">Deduction Reason*</label>
+                        <input type="text" class="form-control" placeholder="Deduction Reason" name="adjustment_reason" value=""
+                            required>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <a href="javascript:void(0);" class="btn btn-outline-primary" data-bs-dismiss="modal">Close</a>
+                    <button class="btn btn-primary" id="btnAddDeduction">Submit</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+<!-- End Deducution Modal  -->
+
+<!--Add Clockin Options Modal -->
+<div class="modal fade" id="addclockinoptionsmodal">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <form class="card-body pt-3" id="ci_options_form">
+
+                <div class="modal-header">
+                    <h5 class="modal-title">Clock-in Option</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">×</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div id="message"></div>
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+
+                    <div class="form-group">
+                        <label class="form-label">Add Clock-in From*</label>
+                        <input type="text" class="form-control" placeholder="Clock In From" name="ci_option_from" value=""
+                            required>
+                    </div>
+                    <div class="form-group">
+                        <div class="row">
+                            <div class="col-md-9">
+                                <label class="custom-switch">
+                                    <input type="checkbox" class="custom-switch-input is_default" name="outside_office" id="outside_office">
+                                    <span class="custom-switch-indicator"></span>
+                                    <span class="custom-switch-description">Outside Office?</span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <a href="javascript:void(0);" class="btn btn-outline-primary" data-bs-dismiss="modal">Close</a>
+                    <button class="btn btn-primary" id="btnClockInOption">Submit</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+<!-- End Clockin Options Modal  -->
+
+<!--Add Leave Policy Modal -->
+<div class="modal fade" id="addleavepolicymodal">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <form class="card-body pt-3" id="leave_policy_form">
+
+                <div class="modal-header">
+                    <h5 class="modal-title">Add Leave Policy</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">×</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div id="message"></div>
+                    <input type="hidden" name="csrf_token" id="csrf_lp" value="{{ csrf_token() }}" />
+                    <div class="form-group">
+                        <label class="form-label">Policy Name*</label>
+                        <input type="text" class="form-control" placeholder="Policy Name" name="leave_policy_name" value=""
+                            required>
+                    </div>
+                    <div class="form-group">
+                        <div class="row">
+                            <div class="col-md-12">
+                                <label class="form-label"> Select Allowance Type*</label>
+                                <select class="form-control" id="allowance_type" name="allowance_type" required>
+                                        <option value="annual" >Annual</option>
+                                        <option value="onetime" >Monthly</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-group d-none" id="monthly_allowance_type">
+                        <div class="row">
+                            <div class="form-group">
+                                <label class="form-label">Montly Accural For Non Probation Employee*</label>
+                                <input type="text" class="form-control" placeholder="Montly Accural For Non Probation Employee" name="non_probabtion_allowance_days" value=""
+                                    required>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Montly Accural For Probation Employee*</label>
+                                <input type="text" class="form-control" placeholder="Montly Accural For Probation Employee" name="probabtion_allowance_days" value=""
+                                    required>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-group" id="allowance_days">
+                        <label class="form-label">Allowance Days*</label>
+                        <input type="text" class="form-control" placeholder="Annual allowance per Employee" name="allowance_days" value=""
+                            required>
+                    </div>
+                    <div class="form-group">
+                        <div class="row">
+                            <div class="col-md-12">
+                                <label class="form-label"> Select Leave Type*</label>
+                                <select class="form-control" id="leave_type" name="leave_type" required>
+                                        <option value="paid" >Paid</option>
+                                        <option value="unpaid" >Unpaid</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <div class="row">
+                            <div class="col-md-12">
+                                <label class="form-label">Allow On Probation*</label>
+                                <select class="form-control" id="allow_on_probation" name="allow_on_probation" required>
+                                        <option value="no" >No</option>
+                                        <option value="yes" >Yes</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-group d-none">
+                        <div class="row">
+                            <div class="col-md-9">
+                                <label class="custom-switch">
+                                    <input type="checkbox" class="custom-switch-input" name="carry_over">
+                                    <span class="custom-switch-indicator"></span>
+                                    <span class="custom-switch-description">Can be Carry Forwarded?</span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <a href="javascript:void(0);" class="btn btn-outline-primary" data-bs-dismiss="modal">Close</a>
+                    <button class="btn btn-primary" id="btnAddLeavePolicy">Submit</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+<!-- End Add Leave Policy Modal  -->
+
+<!--Add Leave Approver Modal -->
+<div class="modal fade" id="addleaveapprovermodal">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <form class="card-body pt-3" id="leave_approver_form">
+
+                <div class="modal-header">
+                    <h5 class="modal-title">Add Leave Approvers</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">×</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div id="message"></div>
+                    <input type="hidden" name="csrf_token" id="csrf_alp" value="{{ csrf_token() }}" />
+                    <!-- <div class="form-group">
+                        <label class="form-label">Allowance Days* </label>
+                        <input type="text" class="form-control" placeholder="Annual allowance per Employee" name="allowance_days" value=""
+                            required>
+                    </div> -->
+                    <div class="form-group">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <label class="form-label"> Approval Level*</label>
+                                <select class="form-control" id="approval_level" name="approval_level" required>
+                                        <option>Select Approval Level</option>
+                                        <option value="1" data-approval-level="1">One Level</option>
+                                        <option value="2" data-approval-level="2">Two Level</option>
+                                        <option value="3" data-approval-level="3">Three Level</option>
+                                        <option value="4" data-approval-level="4">Four Level</option>
+                                        <option value="5" data-approval-level="5">Five Level</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label"> Department*</label>
+                                <select class="form-control" id="approval_department" name="approval_department" required>
+                                    <option value="all" >All</option>
+                                    {% for item in departments.departments%}
+                                        <option value="{{item.department_name}}" >{{item.department_name}}</option>
+                                    {%endfor%}
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="approvers d-none">
+                        <!-- <div class="form-group">
+                            <div class="row">
+                                <div class="col-md-12">
+                                    <label class="form-label"> Select First Level Approver*</label>
+                                    <select class="form-control select2-show-search custom-select" id="select2insidemodal" name="leave_approver" required>
+                                            <option value="paid" >Paid</option>
+                                            <option value="unpaid" >Unpaid</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div> -->
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <a href="javascript:void(0);" class="btn btn-outline-primary" data-bs-dismiss="modal">Close</a>
+                    <button class="btn btn-primary" id="btnAddLeaveApprovers">Submit</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+<!-- End Add Leave Approver Modal  -->
+
+
+<!--Add Edit Approver Modal -->
+<div class="modal fade" id="editleaveapprovermodal">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <form class="card-body pt-3" id="edit_leave_approver_form">
+
+                <div class="modal-header">
+                    <h5 class="modal-title">Edit Leave Approvers</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">×</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div id="message"></div>
+                    <input type="hidden" name="csrf_token" id="edit_csrf_alp" value="{{ csrf_token() }}" />
+                    <input type="hidden" name="edit_leave_app_id" id="edit_leave_app_id"/>
+                    <input type="hidden" name="edit_department_name" id="edit_department_name"/>
+
+
+                    <!-- <div class="form-group">
+                        <label class="form-label">Allowance Days* </label>
+                        <input type="text" class="form-control" placeholder="Annual allowance per Employee" name="allowance_days" value=""
+                            required>
+                    </div> -->
+                    <div class="form-group">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <label class="form-label"> Approval Level*</label>
+                                <select class="form-control" id="edit_approval_level" name="edit_approval_level" required>
+                                        <option>Select Approval Level</option>
+                                        <option value="1" data-approval-level="1">One Level</option>
+                                        <option value="2" data-approval-level="2">Two Level</option>
+                                        <option value="3" data-approval-level="3">Three Level</option>
+                                        <option value="4" data-approval-level="4">Four Level</option>
+                                        <option value="5" data-approval-level="5">Five Level</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Select Department*</label>
+                                <select class="form-control" id="edit_approval_department" name="edit_approval_department" readonly="readonly">
+                                    <option value="all" disabled>All</option>
+                                    {% for item in departments.departments%}
+                                        <option value="{{item.department_name}}" disabled>{{item.department_name}}</option>
+                                    {%endfor%}
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="edit_approvers">
+                        <!-- <div class="form-group">
+                            <div class="row">
+                                <div class="col-md-12">
+                                    <label class="form-label"> Select First Level Approver*</label>
+                                    <select class="form-control select2-show-search custom-select" id="select2insidemodal" name="leave_approver" required>
+                                            <option value="paid" >Paid</option>
+                                            <option value="unpaid" >Unpaid</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div> -->
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <a href="javascript:void(0);" class="btn btn-outline-primary" data-bs-dismiss="modal">Close</a>
+                    <button class="btn btn-primary" id="btnEditLeaveApprovers">Submit</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+<!-- End Edit Leave Approver Modal  -->
+
+<!--Add Leave Approver Modal -->
+<div class="modal fade" id="addtimeapprovermodal">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <form class="card-body pt-3" id="time_approver_form">
+
+                <div class="modal-header">
+                    <h5 class="modal-title">Add Time Approver</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">×</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div id="message"></div>
+                    <input type="hidden" name="csrf_token" id="csrf_ta" value="{{ csrf_token() }}" />
+                    <!-- <div class="form-group">
+                        <label class="form-label">Allowance Days* </label>
+                        <input type="text" class="form-control" placeholder="Annual allowance per Employee" name="allowance_days" value=""
+                            required>
+                    </div> -->
+                    <div class="form-group">
+                        <div class="row">
+                            <div class="col-md-12">
+                                <label class="form-label"> Department*</label>
+                                <select class="form-control" id="time_approval_department" name="time_approval_department" required>
+                                    <option value="all" >All</option>
+                                    {% for item in departments.departments%}
+                                        <option value="{{item.department_name}}" >{{item.department_name}}</option>
+                                    {%endfor%}
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="time_approvers">
+                        <div class="form-group">
+                            <div class="row">
+                                <div class="col-md-12">
+                                    <label class="form-label"> Select Time Approver*</label>
+                                    <select class="form-control select2-show-search custom-select" id="select2insidemodal_ta" name="time_approver" required>
+                                        <optgroup label="ALL EMPLOYEES">
+
+                                        {% for item in company_details.employees%}
+                                            <option value="{{item._id}}" >{{item.first_name + ' ' +item.last_name}}</option>
+                                         {%endfor%}
+                                        </optgroup>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <a href="javascript:void(0);" class="btn btn-outline-primary" data-bs-dismiss="modal">Close</a>
+                    <button class="btn btn-primary" id="btnAddTimeApprover">Submit</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+<!-- End Add Leave Approver Modal  -->
+
+<!--Assign Roles Modal -->
+<div class="modal fade" id="assignrolesmodal">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <form class="card-body pt-3" id="assign_role_form">
+
+                <div class="modal-header">
+                    <h5 class="modal-title">Assign Roles to Employee</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">×</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div id="message"></div>
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+                    <input type="hidden" name="adjustment_type" value="addition" />
+                    <div class="time_approvers">
+                        <div class="form-group">
+                            <div class="row">
+                                <div class="col-md-12">
+                                    <div class="form-group">
+                                        <label class="form-label"> Select Employee you would like to assign roles they shoud have*</label>
+                                        <select class="form-control select2-show-search custom-select" name="employees[]" placeholder="Choose one or more employees" multiple required>
+                                            {% for item in company_details.employees%}
+                                                <option value="{{item._id}}" class="p-2">{{item.first_name + ' ' +item.last_name}}</option>
+                                            {%endfor%}
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row pt-2 form-group ">
+                                <label class="form-label"> Roles to Select*</label>
+                                <div class="row">
+                                    <div class="col-md-6 mt-3">
+                                        <label class="custom-control custom-checkbox">
+                                            <input type="checkbox" class="custom-control-input" name="roles[]" value="supervisor">
+                                            <span class="custom-control-label">Supervisor/Line Manager</span>
+                                        </label>
+                                    </div>
+                                    <div class="col-md-6 text-end">
+                                        <a type="" data-placement="left" data-toggle="popover" data-pop="popper-content1" title="Supervisor/Line Manager Roles"><span class="feather feather-info p-2" data-bs-toggle="tooltip" data-bs-placement="top" title=""></span></a>
+                                        <div class="popper-content1 d-none">
+                                            <div class="card">
+                                                <div class="card-body">
+                                                    <ul class="inline-list">
+                                                        <li><i class="fe fe-layers text-muted me-1"></i> Manage check-in and check-out on behalf of employees.</li>
+                                                        <li><i class="fe fe-layers text-muted me-1"></i> Manage employee work timings, attendance, leaves, timesheets, and edit work expenses for employees in their team.</li>
+                                                    </ul>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-4 mt-3">
+                                        <label class="custom-control custom-checkbox">
+                                            <input type="checkbox" class="custom-control-input" name="roles[]" value="shiftscheduler">
+                                            <span class="custom-control-label">Shift Scheduler</span>
+                                        </label>
+                                    </div>
+                                    <div class="col-md-8 text-end">
+                                        <a type="" data-placement="left" data-toggle="popover" data-pop="popper-content2" title="Shift Scheduler Roles"  data-content="And here's some amazing content. It's very engaging. Right?"><span class="feather feather-info p-2" data-bs-toggle="tooltip"
+                                            data-bs-placement="top"
+                                            title=""></span></a>
+                                        <div class="popper-content2 d-none">
+                                            <div class="card">
+                                                <div class="card-body">
+                                                    <ul class="inline-list">
+                                                        <li><i class="fe fe-layers text-muted me-1"></i>Manages / Schedules shifts for employees on weekly or monthly basis.</li>
+                                                    </ul>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-4 mt-3">
+                                        <label class="custom-control custom-checkbox">
+                                            <input type="checkbox" class="custom-control-input" name="roles[]" value="peoplemanager">
+                                            <span class="custom-control-label">People's Manager</span>
+                                        </label>
+                                    </div>
+                                    <div class="col-md-8 text-end">
+                                        <a type="" data-placement="left" data-toggle="popover" title="People's Manager Roles"  data-pop="popper-content3" data-content="And here's some amazing content. It's very engaging. Right?"><span class="feather feather-info p-2" data-bs-toggle="tooltip"
+                                            data-bs-placement="top"
+                                            title=""></span></a>
+                                        <div class="popper-content3 d-none">
+                                            <div class="card">
+                                                <div class="card-body">
+                                                    <ul class="inline-list">
+                                                        <li><i class="fe fe-layers text-muted me-1"></i>Manage all employee records and company documents, without access to payroll or time off data.</li>
+                                                        <li><i class="fe fe-layers text-muted me-1"></i>Configure general company settings.</li>
+                                                        <li><i class="fe fe-layers text-muted me-1"></i>Manage configuration for employees Public Holidays and Company Events.</li>
+                                                    
+                                                    </ul>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-4 mt-3">
+                                        <label class="custom-control custom-checkbox">
+                                            <input type="checkbox" class="custom-control-input" name="roles[]" value="expensemanager">
+                                            <span class="custom-control-label">Expense Manager</span>
+                                        </label>
+                                    </div>
+                                    <div class="col-md-8 text-end">
+                                        <a type="" data-placement="left" data-toggle="popover" title="Expense Manager Roles"  data-pop="popper-content4" data-content="And here's some amazing content. It's very engaging. Right?"><span class="feather feather-info p-2" data-bs-toggle="tooltip"
+                                            data-bs-placement="top"
+                                            title=""></span></a>
+                                        <div class="popper-content4 d-none">
+                                            <div class="card">
+                                                <div class="card-body">
+                                                    <ul class="inline-list">
+                                                        <li><i class="fe fe-layers text-muted me-1"></i>Manage all employee expenses(Adjustments) which will be added to employee's payroll, without access to payroll information.</li>
+                                                    </ul>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <!-- <div class="row">
+                                    <div class="col-md-4 mt-3">
+                                        <label class="custom-control custom-checkbox">
+                                            <input type="checkbox" class="custom-control-input" name="roles[]" value="attendancemanager">
+                                            <span class="custom-control-label">Attendance Manager</span>
+                                        </label>
+                                    </div>
+                                    <div class="col-md-8 text-end">
+                                        <a type="" data-placement="left" data-toggle="popover" title="Expense Manager Roles"  data-pop="popper-content5" data-content="And here's some amazing content. It's very engaging. Right?"><span class="feather feather-info p-2" data-bs-toggle="tooltip"
+                                            data-bs-placement="top"
+                                            title=""></span></a>
+                                        <div class="popper-content5 d-none">
+                                            <div class="card">
+                                                <div class="card-body">
+                                                    <ul class="inline-list">
+                                                        <li><i class="fe fe-layers text-muted me-1"></i>Manage company attendance policy, timesheets, employee work timings, and attendance biometric data.</li>
+                                                    </ul>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div> -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <a href="javascript:void(0);" class="btn btn-outline-primary" data-bs-dismiss="modal">Close</a>
+                    <button class="btn btn-primary" id="btnAAssignRoles">Submit</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+<!-- End Additions Modal  -->
+
+<!--Add Deducution Modal -->
+<div class="modal fade" id="addexchangemodal">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <form class="card-body pt-3" id="exchange_form">
+
+                <div class="modal-header">
+                    <h5 class="modal-title">Add Company Exchange/Bank Details</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">×</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div id="message"></div>
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+                    <div class="form-group">
+                        <label class="form-label">Exchange/Bank Name*</label>
+                        <input type="text" class="form-control" placeholder="Exchange/Bank Name" name="exchange_name" value=""
+                            required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Exchange/Bank Routing Code*</label>
+                        <input type="text" class="form-control" placeholder="Exchange/Bank Routing Code" name="company_routing_code" value=""
+                            required>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <a href="javascript:void(0);" class="btn btn-outline-primary" data-bs-dismiss="modal">Close</a>
+                    <button class="btn btn-primary" id="btnAddExchange">Submit</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+<!-- End Deducution Modal  -->
+
+<!--Add Deducution Modal -->
+<div class="modal fade" id="addcompanyprofilemodal">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <form class="card-body pt-3" id="sub_company_form">
+
+                <div class="modal-header">
+                    <h5 class="modal-title">Add Company Profile</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">×</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div id="message"></div>
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+                    <div class="form-group">
+                        <label class="form-label">Company Name*</label>
+                        <input type="text" class="form-control" placeholder="Company Name" name="company_name" value=""
+                            required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Company Unique ID*</label>
+                        <input type="text" class="form-control" placeholder="Company Unique ID" name="company_unique_id" value=""
+                            required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Company Account Number</label>
+                        <input type="text" class="form-control" placeholder="Company Account Number" name="company_account_number" value=""
+                            required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Company Routing Code</label>
+                        <input type="text" class="form-control" placeholder="Company Routing Code" name="company_routing_code" value=""
+                            required>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <a href="javascript:void(0);" class="btn btn-outline-primary" data-bs-dismiss="modal">Close</a>
+                    <button class="btn btn-primary" id="btnAddCompanyProfile">Submit</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+<!-- End Deducution Modal  -->
+
+
+<!--Assign Roles Modal -->
+<div class="modal fade" id="assignsuperapprovermodal">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <form class="card-body pt-3" id="assign_super_approver_role_form">
+
+                <div class="modal-header">
+                    <h5 class="modal-title">Assign Super Leave Approver</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">×</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div id="message"></div>
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+                    <div class="time_approvers">
+                        <div class="form-group">
+                            <div class="row">
+                                <div class="col-md-12">
+                                    <div class="form-group">
+                                        <label class="form-label"> Select Employee you would like to assign super approver*</label>
+                                        <select class="form-control select2-show-search custom-select" name="employees[]" placeholder="Choose one or more employees" multiple required>
+                                            {% for item in company_details.employees%}
+                                                <option value="{{item._id}}" class="p-2">{{item.first_name + ' ' +item.last_name}}</option>
+                                            {%endfor%}
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <a href="javascript:void(0);" class="btn btn-outline-primary" data-bs-dismiss="modal">Close</a>
+                    <button class="btn btn-primary" id="btnAAssignSuperApproverRole">Submit</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+<!-- End Additions Modal  -->
+
+
+<!--Add Air Ticket Policy Modal -->
+<!-- <div class="modal fade" id="addairticketpolicymodal">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <form class="card-body pt-3" id="ticket_policy_form">
+
+                <div class="modal-header">
+                    <h5 class="modal-title">Create Air Ticket Policy</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">×</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    
+                    <div class="card p-1">
+                        <div class="card-body">
+                            <h5 class="card-title">Basic Policy Details</h5>
+                            <input type="hidden" name="csrf_token" id="csrf_tpf" value="{{ csrf_token() }}" />
+                            <div class="form-group">
+                                <label class="form-label">Policy Name*</label>
+                                <input type="text" class="form-control" placeholder="Policy Name" name="ticket_policy_name" value=""
+                                    required>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Allowance Amount* </label>
+                                <input type="text" class="form-control" placeholder="Allowance Amount*" name="allowance_amount" value="0" required>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card p-1">
+                        <div class="card-body">
+                            <h5 class="card-title">Eligibility Details</h5>
+                            <h6 class="card-subtitle mb-2 text-muted">Who is eligible for air tickets?</h6>
+                            <div class="form-group">
+                                <label class="form-label">Employee</label>
+                                <input type="text" class="form-control" placeholder="Upto Limit" name="ticket_policy_name" value="1" disabled>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Spouse</label>
+                                <input type="text" class="form-control" placeholder="Upto Limit" name="spouse_policy_limit" value="0">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Child</label>
+                                <input type="text" class="form-control" placeholder="Upto Limit" name="child_policy_limit" value="0">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Parent</label>
+                                <input type="text" class="form-control" placeholder="Upto Limit" name="parent_policy_limit" value="0">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card p-1">
+                        <div class="card-body">
+                            <h5 class="card-title">Policy Behaviour</h5>
+                            <h6 class="card-subtitle mb-2 text-muted">Employees can request an air ticket after</h6>
+                            <div class="form-group">
+                                <label class="form-label">No of Months </label>
+                                <input type="text" class="form-control" placeholder="No of months" name="ticket_policy_name" value="" >
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">From</label>
+                                <select class="form-control" id="allowance_type" name="allowance_type" required>
+                                        <option value="annual" >Joining Date</option>
+                                        <option value="onetime" >Probation End Date</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <h6 class="card-subtitle mb-2 text-muted">Air Ticket policy renewal occurs in</h6>
+                                <label class="form-label">No of Months</label>
+                                <input type="text" class="form-control" placeholder="Upto Limit" name="child_policy_limit" value="0">
+                            </div>
+
+                            <div class="form-group">
+                                <h6 class="card-subtitle mb-2 text-muted">No of request employees can make every cycle</h6>
+                                <label class="form-label">Quantity</label>
+                                <input type="text" class="form-control" placeholder="Upto Limit" name="parent_policy_limit" value="0">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card p-1">
+                        <div class="card-body">
+                            <h5 class="card-title">Redeem Options</h5>
+                            <div class="col-md-12 pb-2">
+
+                                <label class="custom-switch">
+                                    <input type="checkbox" name="week_offs[]"
+                                        class="custom-switch-input" value="6">
+                                    <span class="custom-switch-indicator"></span>
+                                    <span class="custom-switch-description">Reimbrursement</span>
+                                </label>
+                                <h6 class="card-subtitle m-1 text-muted">Employees can request for reimbursement of an ticket they purchase.</h6>
+                            </div>
+                            <div class="col-md-12 pb-2">
+                                <label class="custom-switch">
+                                    <input type="checkbox" name="week_offs[]"
+                                        class="custom-switch-input" value="6">
+                                    <span class="custom-switch-indicator"></span>
+                                    <span class="custom-switch-description">Encashment</span>
+    
+                                </label>
+                                <h6 class="card-subtitle m-1 text-muted">Employees can request for encashment of their allowed ticket amount.</h6>
+                            </div>
+                            <div class="col-md-12 pb-2">
+                                <label class="custom-switch">
+                                    <input type="checkbox" name="week_offs[]"
+                                        class="custom-switch-input" value="6">
+                                    <span class="custom-switch-indicator"></span>
+                                    <span class="custom-switch-description">Air Ticket Booking</span>
+                                </label>
+                                <h6 class="card-subtitle m-1 text-muted">Employees can request can request the company to book an air ticket for them.</h6>
+                            </div>
+                        </div>
+                    </div>
+                    
+                </div>
+                <div class="modal-footer">
+                    <a href="javascript:void(0);" class="btn btn-outline-primary" data-bs-dismiss="modal">Close</a>
+                    <button class="btn btn-primary" id="btnAddLeavePolicy">Submit</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div> -->
+<!-- End Add Leave Policy Modal  -->
+
+<!--Add Biometric Modal -->
+<div class="modal fade" id="addbiometricmodal">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <form class="card-body pt-3" id="biometric_form">
+
+                <div class="modal-header">
+                    <h5 class="modal-title">Add Biometric Device</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">×</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div id="message"></div>
+                    <input type="hidden" name="biometric_csrf_token" value="{{ csrf_token() }}" />
+                    <input type="hidden" name="adjustment_type" value="addition" />
+                    <div class="form-group">
+                        <label class="form-label">Device Name*</label>
+                        <input type="text" class="form-control" placeholder="Device Name" name="device_name" value=""
+                            required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">IP Address*</label>
+                        <input type="text" class="form-control" placeholder="IP Address" name="device_ip_address" value=""
+                            required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Port*</label>
+                        <input type="text" class="form-control" placeholder="Port" name="device_port" value=""
+                            required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Username*</label>
+                        <input type="text" class="form-control" placeholder="Username" name="device_username" value=""
+                            required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Password*</label>
+                        <input type="password" class="form-control" placeholder="Password" name="device_password" value=""
+                            required>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <a href="javascript:void(0);" class="btn btn-outline-primary" data-bs-dismiss="modal">Close</a>
+                    <button class="btn btn-primary" id="btnAddBiometric">Submit</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- End Additions Modal  -->
+
+
+
+
+<!-- Edit Company Modal -->
+<div class="modal fade" id="editCompanyModal">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <form class="card-body pt-3" id="sub_company_form" method="POST" action="/update/company">
+
+                <div class="modal-header">
+                    <h5 class="modal-title">Add Company Profile</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">×</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div id="message"></div>
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}" />
+                    <input type="text" class="form-control" placeholder="Company" name="sub_company_id" id="edit_sub_company_id"
+                    hidden>
+                    <input type="text" class="form-control" placeholder="Company" name="company_id" id="edit_company_id"
+                    hidden>
+                    <div class="form-group">
+                        <label class="form-label">Company Name*</label>
+                        <input type="text" class="form-control" placeholder="Company Name" name="company_name" id="edit_company_name"
+                            required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Company Unique ID*</label>
+                        <input type="text" class="form-control" placeholder="Company Unique ID" name="company_unique_id" id="edit_company_unique_id"
+                            required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Company Account Number</label>
+                        <input type="text" class="form-control" placeholder="Company Account Number" name="company_account_number" id="edit_company_account_number"
+                            required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Company Routing Code</label>
+                        <input type="text" class="form-control" placeholder="Company Routing Code" name="company_routing_code" id="edit_company_routing_code"
+                            required>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <a href="javascript:void(0);" class="btn btn-outline-primary" data-bs-dismiss="modal">Close</a>
+                    <button class="btn btn-primary" id="btnEditCompanyProfile">Submit</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+<!-- End Edit Company Modal -->

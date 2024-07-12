@@ -1,0 +1,133 @@
+<ul class="side-menu py-0">
+    <li class="slide">
+        <a class="side-menu__item" data-bs-toggle="slide" href="">
+            <i class="feather feather-home  sidemenu_icon"></i>
+            <span class="side-menu__label"> HR Dashboard</span><i class="angle fa fa-angle-right"></i></a>
+        <ul class="slide-menu">
+            <li><a href="{{url_for('main.index')}}" class="slide-item"><i
+                        class="fe fe-home  sidemenu_icon"></i>Dashboard</a></li>
+            <li class="sub-slide">
+                <a class="sub-side-menu__item" data-bs-toggle="sub-slide" href="">
+                    <span class="sub-side-menu__label"><i class="fe fe-users  sidemenu_icon"></i>Employees</span><i
+                        class="sub-angle fa fa-angle-right"></i>
+                </a>
+                <ul class="sub-slide-menu">
+                    <li><a class="sub-slide-item" href="{{url_for('company.employees_list')}}"><i
+                                class="fe fe-layers  sidemenu_icon"></i>Employees List</a></li>
+                    <li><a class="sub-slide-item" href="{{url_for('company.add_employee_details')}}"><i
+                                class="fe fe-plus-circle  sidemenu_icon"></i>Add Employee</a></li>
+                </ul>
+            </li>
+
+            <li><a href="{{url_for('company.document_dashboard')}}" class="slide-item"><i
+                        class="fe fe-folder  sidemenu_icon"></i>Expiry Document</a></li>
+            <!-- <li><a href="{{url_for('company.schedule_shift')}}" class="slide-item">Shift Scheduler</a></li> -->
+            <!-- <li><a href="{{url_for('company.payroll')}}" class="slide-item"><i
+                        class="fe fe-log-in  sidemenu_icon"></i>Attendance</a></li>
+            <li><a href="{{url_for('company.attendance_report')}}" class="slide-item"><i
+                        class="fe fe-pie-chart  sidemenu_icon"></i>Attendance Report</a></li>
+            <li><a href="{{url_for('company.adjustments')}}" class="slide-item"><i
+                        class="fe fe-dollar-sign  sidemenu_icon"></i>Adjustments</a></li> -->
+        </ul>
+    </li>
+</ul>
+
+<ul class="side-menu py-0">
+    <li class="slide">
+        <a class="side-menu__item" data-bs-toggle="slide" href="">
+            <i class="feather feather-layers  sidemenu_icon"></i>
+            <span class="side-menu__label">Attendance & Leaves</span><i class="angle fa fa-angle-right"></i></a>
+        <ul class="slide-menu">
+            <li><a href="{{url_for('company.attendance_summary')}}" class="slide-item"><i
+                class="fe fe-pie-chart  sidemenu_icon"></i>Attendance Summary</a></li>
+            <li><a href="{{url_for('company.attendance_report')}}" class="slide-item"><i
+                        class="fe fe-pie-chart  sidemenu_icon"></i>Attendance Report</a></li>
+            <li><a href="{{url_for('company.monthly_attendance_report')}}" class="slide-item"><i
+                            class="fe fe-pie-chart  sidemenu_icon"></i>Monthly Attendance Report</a></li>
+            <li><a href="{{url_for('company.leaves_applications')}}" class="slide-item"><i
+                        class="fe fe-pocket  sidemenu_icon"></i>Leave Applications</a></li>
+            <li><a href="{{url_for('company.leaves_list')}}" class="slide-item"><i
+                        class="fe fe-repeat  sidemenu_icon"></i>Pending Leave List</a></li>   
+            <li><a href="{{url_for('employee.leaves_calender')}}" class="slide-item"><i
+                            class="fe fe-calendar sidemenu_icon"></i>Leave Calendar</a></li>         
+            <!-- <li><a href="{{url_for('company.adjustments')}}" class="slide-item"><i
+                        class="fe fe-dollar-sign  sidemenu_icon"></i>Adjustments</a></li> -->
+            <!-- <li><a href="{{url_for('company.adjustments')}}" class="slide-item"><i
+                class="fe fe-filter  sidemenu_icon"></i>Approvals</a></li> -->
+        </ul>
+    </li>
+</ul>
+
+<ul class="side-menu py-0">
+    <li class="slide">
+        <a class="side-menu__item" data-bs-toggle="slide" href="">
+            <i class="feather feather-command  sidemenu_icon"></i>
+            <span class="side-menu__label">Payroll & Adjustments</span><i class="angle fa fa-angle-right"></i></a>
+        <ul class="slide-menu">
+            <li><a href="{{url_for('company.payroll_view')}}" class="slide-item"><i
+                class="fe fe-dollar-sign  sidemenu_icon"></i>Payroll Details</a></li>
+            <li><a href="{{url_for('company.payroll_wps_view')}}" class="slide-item"><i
+                class="fe fe-globe  sidemenu_icon"></i>WPS</a></li>
+            <li><a href="{{url_for('company.adjustments')}}" class="slide-item"><i
+                        class="fe fe-scissors  sidemenu_icon"></i>Payroll Adjustments</a></li>
+            <li><a href="{{url_for('company.reimbursement')}}" class="slide-item"><i
+                        class="fe fe-sliders  sidemenu_icon"></i>Reimbursement</a></li>
+            <li><a href="{{url_for('company.leave_adjustments')}}" class="slide-item"><i
+                class="fe fe-filter  sidemenu_icon"></i>Leave Adjustments</a></li>
+            <li><a href="{{url_for('company.timeoff_adjustments')}}" class="slide-item"><i
+                class="fe fe-watch  sidemenu_icon"></i>Timeoff Adjustments</a></li>
+            <li><a href="{{url_for('company.end_of_service')}}" class="slide-item"><i
+                class="fe fe-shield-off  sidemenu_icon"></i>End of Service</a></li>
+            <li><a href="{{url_for('company.leave_encashment')}}" class="slide-item"><i
+                class="fe fe-wind  sidemenu_icon"></i>Leave Encashment</a></li>
+        </ul>
+    </li>
+</ul>
+
+<ul class="side-menu py-0">
+    <li class="slide">
+        <a class="side-menu__item" data-bs-toggle="slide" href="">
+            <i class="fe fe-target  sidemenu_icon"></i>
+            <span class="side-menu__label">Schedule & Uploads</span><i class="angle fa fa-angle-right"></i></a>
+        <ul class="slide-menu">
+            <li><a href="{{url_for('company.mass_schedule_shift')}}" class="slide-item"><i
+                        class="fe fe-grid  sidemenu_icon"></i>Shift Scheduler</a></li>
+            <li><a href="{{url_for('company.mass_upload')}}" class="slide-item"><i
+                        class="fe fe-upload-cloud  sidemenu_icon"></i>Mass Upload</a></li>
+        </ul>
+    </li>
+</ul>
+
+<ul class="side-menu py-0">
+    <li class="slide">
+        <a class="side-menu__item" data-bs-toggle="slide" href="">
+            <i class="fe fe-calendar  sidemenu_icon"></i>
+            <span class="side-menu__label">Memos & Events</span><i class="angle fa fa-angle-right"></i></a>
+        <ul class="slide-menu">
+            <li><a href="{{url_for('company.memos')}}" class="slide-item"><i
+                class="fe fe-hard-drive  sidemenu_icon"></i>Company Memos</a></li>
+            <li><a href="{{url_for('company.holidays')}}" class="slide-item"><i
+                class="fe fe-calendar  sidemenu_icon"></i>Company Calendar</a></li>
+        </ul>
+    </li>
+</ul>
+
+<ul class="side-menu py-0">
+    <li class="slide">
+        <a class="side-menu__item" data-bs-toggle="slide" href="">
+            <i class="fe fe-briefcase  sidemenu_icon"></i>
+            <span class="side-menu__label"> HR Settings</span><i class="angle fa fa-angle-right"></i></a>
+        <ul class="slide-menu">
+            <li><a href="{{url_for('company.departments')}}" class="slide-item"><i
+                        class="fe fe-target  sidemenu_icon"></i>Department</a></li>
+            <li><a href="{{url_for('company.designations')}}" class="slide-item"><i
+                        class="fe fe-award  sidemenu_icon"></i>Designation</a></li>
+            
+            <li><a href="{{url_for('company.company_settings')}}" class="slide-item"><i
+                class="feather feather-settings  sidemenu_icon"></i>General Settings</a></li>
+            <li><a href="{{url_for('company.activity_log')}}" class="slide-item"><i
+                class="fe fe-hard-drive  sidemenu_icon"></i>Activity Log</a></li>
+            
+        </ul>
+    </li>
+</ul>

@@ -1,0 +1,371 @@
+<!-- templates/admin/index.html -->
+{% extends "layout/base.html" %}
+{% block head %}
+{{ super() }}
+<!-- INTERNAL Daterangepicker css-->
+<link rel="stylesheet" href="{{ url_for('static', filename='assets/plugins/daterangepicker/daterangepicker.css') }}">
+<link href="https://cdn.datatables.net/buttons/2.2.3/css/buttons.dataTables.min.css"></link>
+<style>
+    table.dataTable tbody th,
+    table.dataTable tbody td,
+    table.dataTable thead th,
+    table.dataTable thead td {
+        padding: 5px 10px !important;
+    }
+    .note-editable, .note-code{
+    height: 842px; /* custom size */
+    min-height: 842px !important; /* custom size */
+    max-height: 842px !important; /* custom size */
+}
+</style>
+
+{% endblock %}
+
+{% block content %}
+{% autoescape off %}
+
+<!--Page header-->
+<div class="page-header d-xl-flex d-block">
+    <div class="page-leftheader">
+        <div class="page-title">End of Service</div>
+    </div>
+    <div class="page-rightheader ms-md-auto">
+        <div class="d-flex align-items-end flex-wrap my-auto end-content breadcrumb-end">
+            <div class="btn-list">
+                <button  class="btn btn-light" data-bs-toggle="tooltip" data-bs-placement="top" title="E-mail"> <i class="feather feather-mail"></i> </button>
+                <button  class="btn btn-light" data-bs-placement="top" data-bs-toggle="tooltip" title="Contact"> <i class="feather feather-phone-call"></i> </button>
+                <button  class="btn btn-primary" data-bs-placement="top" data-bs-toggle="tooltip" title="Info"> <i class="feather feather-info"></i> </button>
+            </div>
+        </div>
+    </div>
+</div>
+<!--End Page header-->
+
+<!-- Row -->
+<div class="row">
+    <div class="col-xl-3 col-md-12">
+        <form class="card-body pt-3" id="">
+            <div class="card">
+                <div class="card-header  border-0">
+                    <h4 class="card-title">Commonly Used Variables</h4>
+                </div>
+                <div class="card-body pb-0 pt-3">
+                    <div class="tags">
+                        <div class="tag">
+                            @first-name
+                            <a href="javascript:void(0);" data-copy_data="@first-name" class="tag-addon copy_text"><i class="fa fa-files-o"></i></a>
+                        </div>
+                        <div class="tag">
+                            @last-name
+                            <a href="javascript:void(0);" data-copy_data="@last-name" class="tag-addon copy_text"><i class="fa fa-files-o"></i></a>
+                        </div>
+                        <div class="tag">
+                            @e-mail
+                            <a href="javascript:void(0);"data-copy_data="@e-mail" class="tag-addon copy_text"><i class="fa fa-files-o"></i></a>
+                        </div>
+                        <div class="tag">
+                            @passport-no
+                            <a href="javascript:void(0);"data-copy_data="@passport-no" class="tag-addon copy_text"><i class="fa fa-files-o"></i></a>
+                        </div>
+                        <div class="tag">
+                            @current-date
+                            <a href="javascript:void(0);"data-copy_data="@current-date" class="tag-addon copy_text"><i class="fa fa-files-o"></i></a>
+                        </div>
+                        <div class="tag">
+                            @date-of-joining
+                            <a href="javascript:void(0);"data-copy_data="@date-of-joining" class="tag-addon copy_text"><i class="fa fa-files-o"></i></a>
+                        </div>
+                        <div class="tag">
+                            @basic-pay
+                            <a href="javascript:void(0);"data-copy_data="@basic-pay" class="tag-addon copy_text"><i class="fa fa-files-o"></i></a>
+                        </div>
+                        <div class="tag">
+                            @housing-allowance
+                            <a href="javascript:void(0);"data-copy_data="@housing-allowance" class="tag-addon copy_text"><i class="fa fa-files-o"></i></a>
+                        </div>
+                        <div class="tag">
+                            @travelling-allowance
+                            <a href="javascript:void(0);"data-copy_data="@travelling-allowance" class="tag-addon copy_text"><i class="fa fa-files-o"></i></a>
+                        </div>
+                        <div class="tag">
+                            @other-allowance
+                            <a href="javascript:void(0);"data-copy_data="@other-allowance" class="tag-addon copy_text"><i class="fa fa-files-o"></i></a>
+                        </div>
+                        <div class="tag">
+                            @total-pay
+                            <a href="javascript:void(0);"data-copy_data="@total-pay" class="tag-addon copy_text"><i class="fa fa-files-o"></i></a>
+                        </div>
+                    </div>
+                </div>
+                <!-- <div class="card-footer border-top-0">
+                    <div class="btn-list">
+                        <button class="btn btn-primary btnCalculateEOSB">Calculate EOSB</button>
+                    </div>
+                </div> -->
+            </div>
+            <div class="card">
+                <div class="card-header  border-0">
+                    <h4 class="card-title">Authorised Signatories</h4>
+                </div>
+                <div class="card-body pb-0 pt-3">
+                    <div class="tags">
+                        <div class="tag">
+                            @first-name
+                            <a href="javascript:void(0);" data-copy_data="@first-name" class="tag-addon copy_text"><i class="fa fa-files-o"></i></a>
+                        </div>
+                        <div class="tag">
+                            @last-name
+                            <a href="javascript:void(0);" data-copy_data="@last-name" class="tag-addon copy_text"><i class="fa fa-files-o"></i></a>
+                        </div>
+                        <div class="tag">
+                            @e-mail
+                            <a href="javascript:void(0);"data-copy_data="@e-mail" class="tag-addon copy_text"><i class="fa fa-files-o"></i></a>
+                        </div>
+                        <div class="tag">
+                            @passport-no
+                            <a href="javascript:void(0);"data-copy_data="@passport-no" class="tag-addon copy_text"><i class="fa fa-files-o"></i></a>
+                        </div>
+                        <div class="tag">
+                            @current-date
+                            <a href="javascript:void(0);"data-copy_data="@current-date" class="tag-addon copy_text"><i class="fa fa-files-o"></i></a>
+                        </div>
+                        <div class="tag">
+                            @date-of-joining
+                            <a href="javascript:void(0);"data-copy_data="@date-of-joining" class="tag-addon copy_text"><i class="fa fa-files-o"></i></a>
+                        </div>
+                        <div class="tag">
+                            @basic-pay
+                            <a href="javascript:void(0);"data-copy_data="@basic-pay" class="tag-addon copy_text"><i class="fa fa-files-o"></i></a>
+                        </div>
+                        <div class="tag">
+                            @housing-allowance
+                            <a href="javascript:void(0);"data-copy_data="@housing-allowance" class="tag-addon copy_text"><i class="fa fa-files-o"></i></a>
+                        </div>
+                        <div class="tag">
+                            @travelling-allowance
+                            <a href="javascript:void(0);"data-copy_data="@travelling-allowance" class="tag-addon copy_text"><i class="fa fa-files-o"></i></a>
+                        </div>
+                        <div class="tag">
+                            @other-allowance
+                            <a href="javascript:void(0);"data-copy_data="@other-allowance" class="tag-addon copy_text"><i class="fa fa-files-o"></i></a>
+                        </div>
+                        <div class="tag">
+                            @total-pay
+                            <a href="javascript:void(0);"data-copy_data="@total-pay" class="tag-addon copy_text"><i class="fa fa-files-o"></i></a>
+                        </div>
+                    </div>
+                </div>
+                <!-- <div class="card-footer border-top-0">
+                    <div class="btn-list">
+                        <button class="btn btn-primary btnCalculateEOSB">Calculate EOSB</button>
+                    </div>
+                </div> -->
+            </div>
+        </form>
+    </div>
+    <div class="col-xl-9 col-md-12">
+        <div class="card">
+            <form id="EOSB_form">
+
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-12">
+                            <div class="card">
+                                <!-- <div class="card-header border-bottom-0">
+                                <h3 class="card-title">Template Editor</h3>
+                                </div> -->
+                                <div class="card-body">
+                                        <textarea class="summernote" name="editor_values"></textarea>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="icons">
+                        <a class="btn btn-success icons mt-2 mb-2 btnSaveTransanction"><i class="si si-check me-1"></i>Save Transaction</a>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+<!-- End Row -->
+
+{% endautoescape %}
+{% endblock %}
+{% block script %}
+{{ super() }}
+
+<!-- Datepicker js -->
+<!-- INTERNAL Bootstrap-Datepicker js-->
+<!--Othercharts js-->
+<!-- INTERNAL Pg-calendar-master js -->
+<script src="{{ url_for('static', filename='assets/plugins/pg-calendar-master/pignose.calendar.full.min.js') }}">
+</script>
+<script src="{{ url_for('static', filename='assets/plugins/daterangepicker/moment.min.js') }}"></script>
+<script src="{{ url_for('static', filename='assets/plugins/select2/select2.full.min.js') }}"></script>
+<script src="{{ url_for('static', filename='assets/js/select2.js') }}"></script>
+<!-- INTERNAL summernote js -->
+<script src="{{ url_for('static', filename='assets/plugins/summer-note/summernote1.js') }}"></script>
+
+<!-- INTERNAL summernote js -->
+<!-- <script src="{{ url_for('static', filename='assets/js/summernote.js') }}"></script> -->
+<!-- INTERNAl Bootstrap-timepicker js-->
+<script>
+    $('.copy_text').click(function (e) {
+      // Get the text field
+      var copyText = $(this).attr('data-copy_data');
+      // Copy the text inside the text field
+      navigator.clipboard.writeText(copyText);
+    });
+</script>
+<script>
+    fpm = $(".fc-datepicker").datepicker({
+        dateFormat: "dd/mm/yy"
+    });
+
+    jQuery(function(e){
+        'use strict';
+        
+        $(document).ready(function() {
+            $('.summernote').summernote();
+        });
+        $('.summernote').summernote({
+            placeholder: '',
+            tabsize: 1,
+            height: 200,
+            toolbar: [['style', ['style']], ['font', ['bold', 'underline', 'clear']], // ['font', ['bold', 'italic', 'underline', 'strikethrough', 'superscript', 'subscript', 'clear']],
+            ['fontname', ['fontname']], ['fontsize', ['fontsize']], ['color', ['color']], ['para', ['ul', 'ol', 'paragraph']], // ['height', ['height']],
+            ['table', ['table']], ['insert', ['picture', 'hr']], ['view', ['fullscreen','undo','redo']]],
+            callbacks: {
+                onImageUpload: function(files) {
+                    sendFile(files[0]);
+                }  
+            },
+            disableResizeEditor: true
+          });
+          function sendFile(file) {
+            var data = new FormData();
+            data.append("file", file);
+            var cs = "{{csrf_token()}}";
+            $.ajax({
+                headers: {
+                    'X-CSRF-TOKEN': cs
+                },
+                url: "/uploadlogos",
+                data: data,
+                cache: false,
+                contentType: false,
+                processData: false,
+                type: 'POST',
+                success: function(data){
+                $('.summernote').summernote("insertImage", data, 'filename');
+            },
+             error: function(jqXHR, textStatus, errorThrown) {
+             console.log(textStatus+" "+errorThrown);
+            }
+          });
+         }
+      });
+</script>
+<script>
+// Ajax Add Gen Settings
+$('.btnSaveTransanction').click(function (e) {
+    e.preventDefault();
+    var selected_employee = $('#employee_details_id :selected').val()
+    var selected_dod = $('#date_of_departure').val()
+    if(true){
+        swal({
+            title: "Are you sure?",
+            text: "You want to calculate the End of Service Benefit/ Graduity to pay? ",
+            icon: "info",
+            buttons: true,
+            dangerMode: true,
+        }).then((willDelete) => {
+            if (willDelete) {
+                $("#global-loader").show();
+                cs = "{{csrf_token()}}"
+                $.ajax({
+                        headers: {
+                            'X-CSRF-TOKEN': cs
+                        },
+                        url: '/createletter',
+                        data: $('#EOSB_form').serialize(),
+                        type: 'POST',
+                    }).done(function (data) {
+                        if (data.status == "success") {
+                            $('.daily_pay').html(data.details.per_day_basic_pay.toFixed(2))
+                            $('.served_years').html(data.details.served_years +' Years, ' + data.details.days + ' Days')
+                            $('.graduity').html(parseFloat(data.details.graduity_amount).toFixed(2))
+                            $("#global-loader").hide();
+                            $(".btnSaveTransanction").removeClass("d-none");
+                            //swal({
+                                //title: "Success",
+                                //text: "Successfully Saved Setting(s)!",
+                              //  icon: "success",
+                            //});
+                        }
+                        else{
+                             $("#global-loader").hide();
+                             $('.daily_pay').html('0.00')
+                            $('.served_years').html('--')
+                            $('.graduity').html('0.00')
+                            $(".btnSaveTransanction").addClass("d-none");
+                        }
+                    })
+                    .fail(function (err) {
+                        console.log(err);
+                        $("#global-loader").hide();
+                        $('#message').html(err);
+                    })
+            }
+        });
+    }
+});
+//EnD Ajax Gen Settings
+// Ajax Time Approvers Policy
+$(document).on("change", '#employee_details_id', function (e) {
+    e.preventDefault();
+    cs = "{{csrf_token()}}"
+    var selected_employee = $('#employee_details_id :selected').val()
+    $("#global-loader").show();
+    if(selected_employee !=''){
+        $.ajax({
+            headers: {
+                'X-CSRF-TOKEN': cs
+            },
+            url: '/getemployeesdetails',
+            data: {selected_employee:selected_employee},
+            type: 'GET',
+        })
+        .done(function (data) {
+            response = JSON.parse(data)
+            if (response.status==="success"){
+                var employee_data = '';
+                var manager_data = '';
+                details = JSON.parse(response.details)
+                $('.name').html(details.first_name + ' '+details.last_name)
+                $('.designation').html(details.employee_company_details.designation)
+                $('.department').html(details.employee_company_details.department)
+
+                $('.total_salary').html(parseFloat(details.employee_company_details.total_salary).toFixed(2))
+                $('.basic_salary').html(parseFloat(details.employee_company_details.basic_salary).toFixed(2))
+                $('.joining_date').html(details.employee_company_details.date_of_joining)
+                $("#global-loader").hide();
+            }
+            else{
+                $("#global-loader").hide();
+            }
+        })
+        .fail(function (err) {
+            console.log(err);
+            $('#message').html(err);
+        })
+    }
+});
+//EnD Leave Policy
+</script>
+
+<!-- custom js -->
+{% endblock %}

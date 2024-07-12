@@ -1,0 +1,166 @@
+<!-- templates/admin/index.html -->
+
+{% extends "layout/base.html" %}
+
+{% block content %}
+<!--Page header-->
+<div class="page-header d-xl-flex d-block">
+    <div class="page-leftheader">
+        <div class="page-title">Employees</div>
+    </div>
+    <div class="page-rightheader ms-md-auto">
+        <div class="align-items-end flex-wrap my-auto right-content breadcrumb-right">
+            <div class="btn-list">
+                <a href="add/employee" class="btn btn-primary me-3">Add New Employee</a>
+                <button  class="btn btn-light" data-bs-toggle="tooltip" data-bs-placement="top" title="E-mail"> <i class="feather feather-mail"></i> </button>
+                <button  class="btn btn-light" data-bs-placement="top" data-bs-toggle="tooltip" title="Contact"> <i class="feather feather-phone-call"></i> </button>
+                <button  class="btn btn-primary" data-bs-placement="top" data-bs-toggle="tooltip" title="Info"> <i class="feather feather-info"></i> </button>
+            </div>
+        </div>
+    </div>
+</div>
+<!--End Page header-->
+
+<!-- Row-->
+<div class="row">
+    <div class="col-xl-4 col-lg-6 col-md-6">
+        <div class="card">
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-7">
+                        <div class="mt-0 text-start"> <span class="font-weight-semibold">Total Active Employees</span>
+                            <h3 class="mb-0 mt-1 text-success">{{employees.employees|selectattr('employee_company_details.status', 'equalto', true)|list|length}}</h3>
+                        </div>
+                    </div>
+                    <div class="col-5">
+                        <div class="icon1 bg-success-transparent my-auto  float-end"> <i class="las la-users"></i> </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-4 col-lg-6 col-md-6">
+        <div class="card">
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-7">
+                        <div class="mt-0 text-start"> <span class="font-weight-semibold">Total Active Male Employees</span>
+                            <h3 class="mb-0 mt-1 text-primary">{{employees.employees|selectattr('gender', 'equalto', 'male')|selectattr('employee_company_details.status', 'equalto', true)|list|length }}</h3>
+                        </div>
+                    </div>
+                    <div class="col-5">
+                        <div class="icon1 bg-primary-transparent my-auto  float-end"> <i class="las la-male"></i> </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-4 col-lg-6 col-md-6">
+        <div class="card">
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-7">
+                        <div class="mt-0 text-start"> <span class="font-weight-semibold">Total Active Female Employees</span>
+                        <h3 class="mb-0 mt-1 text-secondary">{{employees.employees|selectattr('gender', 'equalto', 'female')|selectattr('employee_company_details.status', 'equalto', true)|list|length }}</h3> </div>
+                    </div>
+                    <div class="col-5">
+                        <div class="icon1 bg-secondary-transparent my-auto  float-end"> <i class="las la-female"></i> </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- <div class="col-xl-3 col-lg-6 col-md-6">
+        <div class="card">
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-7">
+                        <div class="mt-0 text-start"> <span class="font-weight-semibold">Total New Employees</span>
+                        <h3 class="mb-0 mt-1 text-danger">398</h3> </div>
+                    </div>
+                    <div class="col-5">
+                        <div class="icon1 bg-danger-transparent my-auto  float-end"> <i class="las la-user-friends"></i> </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div> -->
+</div>
+<!-- End Row -->
+
+<!-- Row -->
+<div class="row">
+    <div class="col-xl-12 col-md-12 col-lg-12">
+        <div class="card">
+            <div class="card-header  border-0">
+                <h4 class="card-title">Employees List</h4>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table  table-vcenter text-nowrap table-bordered border-bottom table-striped" id="hr-table">
+                        <thead>
+                            <tr>
+                                <th class="border-bottom-0 w-5">No</th>
+                                <th class="border-bottom-0 w-10">Actions</th>
+                                <th class="border-bottom-0">Emp Name</th>
+                                <th class="border-bottom-0">Clock In Outside Radius</th>
+                                <th class="border-bottom-0 w-2">#Emp ID</th>
+                                <th class="border-bottom-0">Department</th>
+                                <!-- <th class="border-bottom-0">Designation</th> -->
+                                <th class="border-bottom-0">Phone Number</th>
+                                <th class="border-bottom-0">Join Date</th>
+                                <th class="border-bottom-0">Email</th>
+                                <th class="border-bottom-0">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in employees.employees %}
+                            <tr>
+                                <td>{{loop.index}}</td>
+                                <td>
+                                    <a class="btn-md pr-2"  href="{{ url_for('company.edit_employee_details',emp_id=item._id) }}">
+                                        <i class="feather feather-edit text-info" data-bs-toggle="tooltip" data-original-title="View/Edit"></i>
+                                    </a>
+                                    <a class="btn-md"  href="{{ url_for('company.resend_password',emp_id=item._id) }}">
+                                        <i class="feather feather-send text-info" data-bs-toggle="tooltip" data-original-title="Send Activation Link/Password"></i>
+                                    </a>
+                                </td>
+                                <td>
+                                    <div class="d-flex">
+                                        <div class="me-3 mt-0 mt-sm-1 d-block">
+                                            <h6 class="mb-1 fs-14">{{item.first_name + ' ' + item.last_name}}</h6>
+                                            <p class="text-muted mb-0 fs-12">{{item.employee_company_details.designation}}</p>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>{{item.employee_company_details.allow_outside_checkin}}</td>
+                                <td>{{item.employee_company_details.employee_id}}</td>
+                                <td>{{item.employee_company_details.department}}</td>
+                                <!-- <td>{{item.employee_company_details.designation}}</td> -->
+                                <td>{{item.contact_no}}</td>
+                                <td>{{item.employee_company_details.date_of_joining}}</td>
+                                <td>{{item.user_id.email}}</td>
+                                <td>
+                                    {% if item.employee_company_details.status == true %}
+                                        <span class="badge badge-success">Active</span>
+                                    {% else %}
+                                    <span class="badge badge-danger">Inactive</span>
+                                    {% endif %}
+                                    
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- End Row-->
+{% endblock %}
+{% block script %}
+    {{ super() }}
+<!-- INTERNAL Index js-->
+<script src="{{ url_for('static', filename='assets/js/hr/hr-emp.js') }}"></script>
+{% endblock %}

@@ -1,0 +1,67 @@
+<!-- templates/profile.html -->
+
+{% extends "base.html" %}
+
+{% block content %}
+<h1 class="">
+</h1>
+<div class="column is-4">
+        <button class="button is-block is-info  is-fullwidth"><a href="{{ url_for('main.add_employee') }}">
+            Add Employee
+        </a></button>
+</div>
+<div class="column">
+  <div class="box">
+      {% with messages = get_flashed_messages() %}
+      {% if messages %}
+          <div class="notification is-danger">
+            <button class="delete"></button>
+              {{ messages[0] }}
+          </div>
+      {% endif %}
+      {% endwith %}
+      <div class="notification">
+        <h1>List of Employees!</h1>
+      </div>
+      
+      <table id="employees" class="display" style="width:100%">
+        <thead>
+            <tr>
+                <th>Employee ID</th>
+                <th>Name</th>
+                <th>Email</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for e in current_user.employee %}
+            <tr>
+                <td>{{e._id}}</td>
+                <td>{{e.employee_name}}</td>
+                <td>{{e.user_id.email}}</td>
+                <td>
+                <a href="{{ url_for('main.edit_employee_details',emp_id=e._id) }}">
+                    <i class="fa fa-pencil-square-o" aria-hidden="true"></i>
+                </a>
+                <a href="{{ url_for('main.delete_employee',emp_id=e._id) }}">
+                    <i class="fa fa-trash-o" aria-hidden="true"></i>
+                </a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+  </div>
+</div>
+
+{% endblock %}
+{% block script %}
+    {{ super() }}
+    <script src="https://code.jquery.com/jquery-3.5.1.js"></script>
+    <script src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
+    <script>
+        $('#employees').dataTable( {
+            "searching": true
+          } );
+    </script>
+{% endblock %}
