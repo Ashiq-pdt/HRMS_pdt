@@ -33,6 +33,19 @@
                     <input type="hidden" name="csrf_token" id="csrf_gen" value="{{ csrf_token() }}" />
 
                     <div class="row">
+                        <div class="col-md-4 col-lg-4">
+                            <div class="form-group">
+                                <label class="form-label">Select Employee</label>
+                                <select class="form-control select2-show-search custom-select" name="employee_id"
+                                    data-placeholder="Select Employee">
+                                    <option label="Select Employee"></option>
+                                    {% for item in employees_details.employees %}
+                                    <option id="selectedEmpName" value="{{item._id}}" {% if item._id==selected_emp %}selected{% endif %}>
+                                        {{item.first_name + ' ' + item.last_name}}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
                         
                         <div class="col-md-4 col-lg-4">
                             <div class="leave-content active" id="multiple">
@@ -53,7 +66,7 @@
                         </div>
                         <div class="col-md-4 col-lg-2 ">
                             <div class="form-group mt-5">
-                                <button class="btn btn-primary btn-block">Search</button>
+                                <button class="btn btn-primary btn-block" type="submit">Search</button>
                             </div>
                         </div>
                         <div class="col-md-4 col-lg-2 ">
@@ -196,6 +209,13 @@ $(document).ready(function () {
         [0, "desc"]
         ],
         "paging": false,
+        // "paging": true,
+        // "lengthMenu": [10, 25, 50, 100],  // Customize the number of rows per page
+        // "pageLength": 10,  // Default number of rows per page
+        // "searching": true,  // Enable searching
+        // "ordering": true,  // Enable column ordering
+        // "info": true,  // Show information about the table
+        // "autoWidth": false,  // Disable automatic column width calculation
         language: {
             searchPlaceholder: 'Search...',
             sSearch: '',
@@ -206,30 +226,8 @@ $(document).ready(function () {
             extend: 'excelHtml5',
             title: 'Attendance Report '+$('#dt_range').val()
         },
-        ],
-        initComplete: function () {
-            this.api()
-                .columns([1])
-                .every(function () {
-                    var column = this;
-                    var select = $('<select class="form-control-sm select2 sm mx-2"><option value="">All</option></select>')
-                        .appendTo($(column.header()))
-                        .on('change', function () {
-                            var val = $.fn.dataTable.util.escapeRegex($(this).val());
-                            column.search(val ? '^' + val + '$' : '', true, false).draw();
-                        });
-                        $( select ).click( function(e) {
-                            e.stopPropagation();
-                        });
-                    column
-                        .data()
-                        .unique()
-                        .sort()
-                        .each(function (d, j) {
-                            select.append('<option value="' + d + '">' + d + '</option>');
-                        });
-                });
-        },
+        ]
+        
     });
 });
 

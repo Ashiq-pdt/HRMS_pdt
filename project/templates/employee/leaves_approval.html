@@ -1067,57 +1067,161 @@
 </script>
 <script>
     // Ajax Approve Leave 
-    $(document).on("click", '#btnAcceptLeaveRequest', function (e) {
-        e.preventDefault();
-        var cs = "{{ csrf_token() }}";
+    // $(document).on("click", '#btnAcceptLeaveRequest', function (e) {
+    //     e.preventDefault();
+    //     var cs = "{{ csrf_token() }}";
+    //     swal({
+    //         title: "Are you sure?",
+    //         text: "You want to approve this employee leave request?",
+    //         icon: "warning",
+    //         buttons: true,
+    //         dangerMode: true,
+    //     }).then((willDelete) => {
+    //         if (willDelete) {
+    //             $("#global-loader").show();
+    //             $.ajax({
+    //                     headers: {
+    //                         'X-CSRF-TOKEN': cs
+    //                     },
+    //                     url: '/approveleaverequest',
+    //                     data: $('#preview_approve_form').serialize(),
+    //                     type: 'POST',
+    //                 })
+    //                 .done(function (data) {
+    //                     //$('#markattendancemodal').modal('toggle');
+    //                     $("#global-loader").hide();
+    //                     if (data.status == 'failed') {
+    //                         swal({
+    //                         title: "Failed",
+    //                         text:  `Requested leaves exceed available leaves.\n\nCurrent Balance: ${data.current_balance}\nRequested Days: ${data.asking_leave_days}\nDifference: ${data.difference}`,
+    //                         icon: "error",
+    //                         buttons: {
+    //                             retry: {
+    //                                 text: "Retry",
+    //                                 value: "retry",
+    //                                 className: "btn btn-primary",
+    //                             },
+    //                             cancel: {
+    //                                 text: "Cancel",
+    //                                 value: "cancel",
+    //                                 className: "btn btn-secondary",
+    //                             },
+    //                     }).then(function () {
+    //                         $("#global-loader").show();
+    //                         location.reload();
+    //                     });
+
+    //                     } else {
+    //                         swal({
+    //                             title: "Success",
+    //                             text: "Successfully Approved Leave!",
+    //                             icon: "success",
+    //                         }).then(function () {
+    //                             $("#global-loader").show();
+    //                             location.reload();
+    //                         });
+    //                     }
+    //                 })
+    //                 .fail(function (err) {
+    //                     console.log(err);
+    //                     $('#message').html(err);
+    //                 })
+    //         }
+    //     });
+    // });
+
+    $(document).on("click", "#btnAcceptLeaveRequest", function (e) {
+        e.preventDefault(); // Prevent the default action
+
+        var csrfToken = "{{ csrf_token() }}"; // CSRF token for security
+
         swal({
             title: "Are you sure?",
             text: "You want to approve this employee leave request?",
             icon: "warning",
             buttons: true,
             dangerMode: true,
-        }).then((willDelete) => {
-            if (willDelete) {
+        }).then((willApprove) => {
+            if (willApprove) {
+                // Show the global loader while processing
                 $("#global-loader").show();
-                $.ajax({
-                        headers: {
-                            'X-CSRF-TOKEN': cs
-                        },
-                        url: '/approveleaverequest',
-                        data: $('#preview_approve_form').serialize(),
-                        type: 'POST',
-                    })
-                    .done(function (data) {
-                        //$('#markattendancemodal').modal('toggle');
-                        $("#global-loader").hide();
-                        if (data.status == 'failed') {
-                            swal({
-                            title: "Failed",
-                            text: "Requested leaves excede available leaves.",
-                            icon: "error",
-                        }).then(function () {
-                            $("#global-loader").show();
-                            location.reload();
-                        });
 
-                        } else {
-                            swal({
-                                title: "Success",
-                                text: "Successfully Approved Leave!",
-                                icon: "success",
-                            }).then(function () {
+                // AJAX request to approve the leave
+                $.ajax({
+                    headers: { 'X-CSRF-TOKEN': csrfToken },
+                    url: '/approveleaverequest',
+                    data: $('#preview_approve_form').serialize(), // Serialize form data
+                    type: 'POST',
+                })
+                .done(function (response) {
+                    $("#global-loader").hide(); // Hide the loader after the request completes
+
+                    if (response.status === 'failed') {
+                        // Failed case: show retry, approve, and cancel buttons
+                        swal({
+                            title: "Failed",
+                            text: `Requested leaves exceed available leaves.\n\nCurrent Balance: ${response.current_balance}\nRequested Days: ${response.asking_leave_days}\nDifference: ${response.difference}`,
+                            icon: "error",
+                            buttons: {
+                                approve: {
+                                    text: "Approve",
+                                    value: "approve",
+                                    className: "btn btn-success", // Green button for approval
+                                },
+                                retry: {
+                                    text: "Retry",
+                                    value: "retry",
+                                    className: "btn btn-primary", // Blue button for retry
+                                },
+                                cancel: {
+                                    text: "Cancel",
+                                    value: "cancel",
+                                    className: "btn btn-secondary", // Grey button for cancel
+                                },
+                            },
+                        }).then((action) => {
+                            if (action === "approve") {
+                                // Handle the approval action
+                                swal({
+                                    title: "Approved",
+                                    text: "Leave request has been approved!",
+                                    icon: "success",
+                                }).then(() => {
+                                    $("#global-loader").show();
+                                    location.reload(); // Reload the page after approval
+                                });
+                            } else if (action === "retry") {
+                                // Retry logic: reload the page
                                 $("#global-loader").show();
-                                location.reload();
-                            });
-                        }
-                    })
-                    .fail(function (err) {
-                        console.log(err);
-                        $('#message').html(err);
-                    })
+                                location.reload(); // Reload the page for retry
+                            }
+                            // "Cancel" does nothing and dismisses the alert
+                        });
+                    } else {
+                        // Success case: show approval success message
+                        swal({
+                            title: "Success",
+                            text: "Successfully Approved Leave!",
+                            icon: "success",
+                        }).then(() => {
+                            $("#global-loader").show();
+                            location.reload(); // Reload the page after success
+                        });
+                    }
+                })
+                .fail(function (error) {
+                    $("#global-loader").hide(); // Hide the loader in case of error
+                    console.error("Error:", error); // Log any error to the console
+                    swal({
+                        title: "Error",
+                        text: "An error occurred while processing the request. Please try again.",
+                        icon: "error",
+                    });
+                });
             }
         });
     });
+
     //EnD Ajax Approve Leave
 
     // Ajax Reject Leave 

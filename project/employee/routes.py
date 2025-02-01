@@ -1,11 +1,10 @@
-
 import calendar
 from flask import Blueprint, jsonify, render_template,request,flash,redirect,url_for,json,session
 from flask_login import login_required,logout_user
 from flask_security import roles_accepted,current_user
 from project.employee.model import EmployeeBreakHistory
 from ..company.model  import EmployeeDetails,EmployeeAttendance,EmployeeLeaveApplication, EmployeeLeaveApprover, EmployeeLeavePolicies,EmployeeLeaveRequest,EmployeeTimeRequest,EmployeeLeaveAdjustment,EmployeeReimbursement, EmployeeCompanyDetails
-from ..models  import User,CompanyLeaveApprovers, WorkTimings,CompanyDetails,CompanyEmployeeSchedule,CompanyHolidays,CompanyOvertimePolicies,CompanyTimeApprovers,CompanyAdjustmentReasons,CompanyPayrollAdjustment,CompanyTimeOffAdjustment,SuperLeaveApprovers
+from ..models  import User,CompanyLeaveApprovers,CompanyOffices, WorkTimings,CompanyDetails,CompanyEmployeeSchedule,CompanyHolidays,CompanyOvertimePolicies,CompanyTimeApprovers,CompanyAdjustmentReasons,CompanyPayrollAdjustment,CompanyTimeOffAdjustment,SuperLeaveApprovers
 from werkzeug.utils import secure_filename
 import os
 from flask import current_app
@@ -18,9 +17,13 @@ from bson.json_util import loads,dumps
 from .. import create_app,create_celery_app, mail
 employee = Blueprint('employee', __name__)
 from flask_mail import Message
-
+from datetime import datetime
+from datetime import datetime, timedelta
+from pytz import timezone, UTC
+import math
 celery = create_celery_app()
-
+# from geopy.distance import geodesic 
+from zoneinfo import ZoneInfo 
 def chop_microseconds(delta):
     return delta - timedelta(microseconds=0,milliseconds=0)
 
@@ -125,9 +128,17 @@ def update_password():
 @employee.route('/employee/clockin/', methods=['POST'])
 def clock_in():
     if request.method == 'POST':
-        company_id = request.form.get('company_id')
+        company_id = request.form.get('company_id')    
+        company = CompanyDetails.objects(user_id=ObjectId(company_id)).first()  # Replace 'Company' with your model
+        timezone_name = company.Timezone if company and company.Timezone else 'UTC'  # Default to UTC if not set
+        try:
+            timezone = pytz.timezone(timezone_name)
+        except pytz.UnknownTimeZoneError:
+            return jsonify({"status": "failed", "message": f"Invalid timezone '{timezone_name}'"}), 400
+        employee_check_in_at = datetime.now(timezone)
+        employee_check_in_at = employee_check_in_at.replace(tzinfo=None)
+
         employee_details_id = request.form.get('employee_details_id')
-        employee_check_in_at = datetime.now()
         attendance_date = datetime.today().replace(minute=0, hour=0, second=0,microsecond=0)
         current_latitude = request.form.get('current_latitude')
         current_longitude = request.form.get('current_longitude')
@@ -182,12 +193,54 @@ def clock_in():
     else:
         return redirect(url_for('employee.profile'))
 
+
+
+
+
+def haversine(lat1, lon1, lat2, lon2):
+    """
+    Calculate the great-circle distance between two points on the Earth.
+    :param lat1: Latitude of the first point in decimal degrees.
+    :param lon1: Longitude of the first point in decimal degrees.
+    :param lat2: Latitude of the second point in decimal degrees.
+    :param lon2: Longitude of the second point in decimal degrees.
+    :return: Distance between the two points in meters.
+    """
+    # Radius of the Earth in meters
+    R = 6371000  
+
+    # Convert latitude and longitude from degrees to radians
+    lat1_rad = math.radians(lat1)
+    lon1_rad = math.radians(lon1)
+    lat2_rad = math.radians(lat2)
+    lon2_rad = math.radians(lon2)
+
+    # Difference in coordinates
+    delta_lat = lat2_rad - lat1_rad
+    delta_lon = lon2_rad - lon1_rad
+
+    # Haversine formula
+    a = math.sin(delta_lat / 2)**2 + math.cos(lat1_rad) * math.cos(lat2_rad) * math.sin(delta_lon / 2)**2
+    c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
+    distance = R * c
+
+    return distance
+
 @employee.route('/employee/clockout/', methods=['POST'])
 def clock_out():
     if request.method == 'POST':
         company_id = request.form.get('company_id')
+
+        company_id = request.form.get('company_id')    
+        company = CompanyDetails.objects(user_id=ObjectId(company_id)).first()  # Replace 'Company' with your model
+        timezone_name = company.Timezone if company and company.Timezone else 'UTC'  # Default to UTC if not set
+        try:
+            timezone = pytz.timezone(timezone_name)
+        except pytz.UnknownTimeZoneError:
+            return jsonify({"status": "failed", "message": f"Invalid timezone '{timezone_name}'"}), 400
+        employee_check_out_at = datetime.now(timezone)
+        employee_check_out_at = employee_check_out_at.replace(tzinfo=None)
         employee_details_id = request.form.get('employee_details_id')
-        employee_check_out_at = datetime.now()
         attendance_date = datetime.today().replace(minute=0, hour=0, second=0,microsecond=0) if not session["has_next_day_clockout"] else (datetime.today() - timedelta(days=1)).replace(minute=0, hour=0, second=0, microsecond=0)
         current_latitude = request.form.get('current_latitude')
         current_longitude = request.form.get('current_longitude')
@@ -255,11 +308,21 @@ def employee_break():
         attendance_date = datetime.today().replace(minute=0, hour=0, second=0,microsecond=0)
         break_id = request.form.get('break_id')
         
+        company = CompanyDetails.objects(user_id=ObjectId(company_id)).first()  # Replace 'Company' with your model
+        timezone_name = company.Timezone if company and company.Timezone else 'UTC'  # Default to UTC if not set
+        try:
+            timezone = pytz.timezone(timezone_name)
+        except pytz.UnknownTimeZoneError:
+            return jsonify({"status": "failed", "message": f"Invalid timezone '{timezone_name}'"}), 400
+        time_zone= datetime.now(timezone)
+        time_zone = time_zone.replace(tzinfo=None)
+
+        
         break_type = request.form.get('break_type')
         break_history = EmployeeBreakHistory.objects(already_ended=False,attendance_date=attendance_date,employee_details_id=ObjectId(employee_details_id),company_id=ObjectId(company_id)).first()
         if break_type == 'start' and not break_history:
             break_history = EmployeeBreakHistory()
-            break_history.start_at = datetime.now()
+            break_history.start_at = time_zone
             break_history.company_id = ObjectId(company_id)
             break_history.employee_details_id = ObjectId(employee_details_id)
             break_history.attendance_date = attendance_date
@@ -271,7 +334,7 @@ def employee_break():
             break_history = EmployeeBreakHistory.objects(_id=ObjectId(break_id)).first()
             if break_history:
                 already_ended = True
-                end_at = datetime.now()
+                end_at = time_zone
                 diff = end_at - break_history.start_at#in minutes
                 break_difference = diff.total_seconds()/60
                 status = break_history.update(already_ended = already_ended,end_at=end_at,break_difference=break_difference)
@@ -287,7 +350,12 @@ def employee_break():
             return msghtml
     else:
         return redirect(url_for('employee.profile'))
-    
+
+
+
+
+
+
 @employee.route('/breakhistory', methods=['GET'])
 def break_history():
     attendance_id = request.args.get('attendance_id')
@@ -709,6 +777,8 @@ def approve_leave_request():
                 leave_request_details.update(comment=comment)
                 leave_application_details.update(push__approver_comments=leave_request_details._id)
             # if edited the leave dates update those
+
+
             if has_edited:
                 leave_application_details.update(leave_from=new_leave_from,leave_till=new_leave_till,no_of_days=new_no_of_days)
             
@@ -722,7 +792,20 @@ def approve_leave_request():
                 current_leave_balance = leave_application_details.employee_leave_policy.balance
                 asking_leave_days = int(leave_application_details.no_of_days)
                 # if  (current_leave_balance >= asking_leave_days): #Todo: This condition need to be checked 
+                if leave_application_details:
+                    asked_leave_from = leave_application_details.asked_leave_from
+                    asked_leave_till = leave_application_details.asked_leave_till
 
+                    print(f"Asked leave from: {asked_leave_from}")
+                    print(f"Asked leave till: {asked_leave_till}")
+
+                    # Check if asked_leave_till is in the next year compared to asked_leave_from
+                    if asked_leave_till.year > asked_leave_from.year:
+                        print("The 'asked_leave_till' date is in the next year.")
+                    else:
+                        print("The 'asked_leave_till' date is not in the next year.")
+                else:
+                    print("No leave application details found.")
                 if (current_leave_balance >= asking_leave_days):
                     # Todo: Change the leave status of both the application and request
                         # leave_request_details.request_status = "approved"
@@ -795,21 +878,21 @@ def approve_leave_request():
                     # .................send an email to the leave applicant about approval ...........
                     approver = leave_application_details.current_aprrover.approver_id.employee_details_id.first_name
 
-                    email_template = 'email/leave_approved.html'
-                    data = {}
+                    # email_template = 'email/leave_approved.html'
+                    # data = {}
 
-                    data['employee_details_id'] = leave_policy_details.employee_details_id
-                    data['type'] = leave_application_details.employee_leave_policy.leave_policy_id.leave_type
-                    data['start_date'] = start_date.strftime('%Y-%m-%d')
-                    data['end_date'] = end_date.strftime('%Y-%m-%d')
-                    data['no_of_days'] = adj_days
-                    data['is_modified'] = 'Yes' if has_edited else 'No'
-                    data['aprover_remarks'] = comment
-                    data['approver_name'] = approver
-                    data['status'] = 'accepted'
-                    data['receiver_email'] = leave_application_details.employee_details_id.personal_email
+                    # data['employee_details_id'] = leave_policy_details.employee_details_id
+                    # data['type'] = leave_application_details.employee_leave_policy.leave_policy_id.leave_type
+                    # data['start_date'] = start_date.strftime('%Y-%m-%d')
+                    # data['end_date'] = end_date.strftime('%Y-%m-%d')
+                    # data['no_of_days'] = adj_days
+                    # data['is_modified'] = 'Yes' if has_edited else 'No'
+                    # data['aprover_remarks'] = comment
+                    # data['approver_name'] = approver
+                    # data['status'] = 'accepted'
+                    # data['receiver_email'] = leave_application_details.employee_details_id.personal_email
 
-                    send_email(email_template, data)
+                    # send_email(email_template, data)
 
                     #.................end of sending email.............................................
                     
@@ -884,17 +967,355 @@ def approve_leave_request():
                             new_data.save()
                         start_date = start_date + timedelta(days=1)
                 else:
-                    msg =  json.dumps({"status":"failed"})
+                    try:
+                       
+                        # Calculate difference between requested leave days and current balance
+                        difference = asking_leave_days - current_leave_balance
+
+                        # Approve the leave request
+                        leave_request_details.update(
+                            request_status="approved",
+                            approved_on=datetime.now(),
+                            comment=comment
+                        )
+
+                        # Deduct leave balance and update leave policy details
+                        leave_policy_details = EmployeeLeavePolicies.objects(
+                            _id=leave_application_details.employee_leave_policy._id
+                        ).first()
+
+                        if leave_policy_details:
+                            leave_policy_details.update(balance=0)  # Set balance to 0 after deduction
+
+                        # Safely extract employee_id and company_id
+                        employee_id = leave_application_details.employee_details_id._id
+                        company_id = leave_application_details.company_id.id
+
+                        # Ensure ObjectId type for IDs
+                        company_id = ObjectId(company_id) if not isinstance(company_id, ObjectId) else company_id
+                        employee_id = ObjectId(employee_id) if not isinstance(employee_id, ObjectId) else employee_id
+
+                        # Query for leave policies
+                        leave_policies = EmployeeLeavePolicies.objects(
+                            company_id=company_id,
+                            employee_details_id=employee_id
+                        )
+
+                        # Find the policy ID for "Unpaid Leaves"
+                        emp_leave_policy_id = None
+                        policies_array = []  # Initialize an empty list to store all policy details
+
+                        policy_balance = 0
+                        emp_leave_policy_id = None  # Initialize emp_leave_policy_id
+
+                        # if leave_policies:
+                        #     for policy in leave_policies:
+                        #         # Store policy details in the array
+                        #         policies_array.append({
+                        #             "policy_id": str(policy._id),
+                        #             "policy_name": policy.leave_policy_id.leave_policy_name,
+                        #             "balance": policy.balance
+                        #         })
+
+                        #         # Check if this is the "Unpaid Leaves" policy
+                        #         if policy.leave_policy_id.leave_policy_name == "Unpaid Leaves":
+                        #             emp_leave_policy_id = str(policy._id)
+                        #             policy_balance = policy.balance
+
+                        #     if not emp_leave_policy_id:
+                        #         print("No policy found with the name 'Unpaid Leaves'.")
+                        # else:
+                        #     print("No leave policies found for this employee.")
+
+                        # # Example output of policies_array
+                        # print(policies_array
+
+                        if leave_policies:
+                            for policy in leave_policies:
+                                
+                                policies_array.append({
+                                    "policy_id": str(policy._id),
+                                    "policy_name": policy.leave_policy_id.leave_policy_name,
+                                    "balance": policy.balance,
+                                    "leave_policy_id": policy.leave_policy_id, 
+                                    "allowance_day": getattr(policy, "allowance_day", 30),                                
+                                })
+
+                                # Check if this is the "Unpaid Leaves" policy
+                                if policy.leave_policy_id.leave_policy_name == "Unpaid Leaves":
+                                    emp_leave_policy_id = str(policy._id)
+                                    policy_balance = policy.balance
+
+                            if not emp_leave_policy_id:
+                                print("No policy found with the name 'Unpaid Leaves'.")
+                        else:
+                            print("No leave policies found for this employee.")
+
+                        # Example output of policies_array
+                        print(policies_array)
+
+
+
+                        # Update leave application details
+                        leave_application_details.update(
+                            current_approval_level="",
+                            leave_status="approved",
+                            balance_before_approval=current_leave_balance,
+                            balance_after_approval=0,
+                            approved_on=datetime.now()
+                        )
+
+                        # Calculate adjustment days
+                        adj_days = asking_leave_days if not has_edited else new_no_of_days
+                        after_adj = current_leave_balance - float(adj_days)
+
+
+                        
+
+                        if asked_leave_till.year > asked_leave_from.year:
+                            # Calculate how many days are in the next year
+                            first_day_next_year = datetime(asked_leave_till.year, 1, 1)
+                            days_in_next_year = (asked_leave_till - first_day_next_year).days + 1  # Include `asked_leave_till` itself
+
+                            print(f"Days in next year: {days_in_next_year}")
+
+                            if current_leave_balance != 0:
+                                # First adjustment (deduct full current balance)
+                                new_data = EmployeeLeaveAdjustment(
+                                    company_id=leave_policy_details.company_id,
+                                    employee_details_id=leave_policy_details.employee_details_id,
+                                    employee_leave_pol_id=leave_application_details.employee_leave_policy._id,
+                                    adjustment_type='decrement',
+                                    adjustment_days=str(current_leave_balance),
+                                    adjustment_comment=str(comment),
+                                    before_adjustment=str(current_leave_balance),
+                                    after_adjustment="0"  # Balance after full deduction
+                                )
+                                status = new_data.save()
+                                leave_application_details.update(leave_adjustment=new_data._id)
+                                EmployeeLeavePolicies.objects(
+                                    company_id=company_id,
+                                    _id=ObjectId(leave_application_details.employee_leave_policy._id)
+                                ).update(push__employee_leave_adjustments=new_data._id, balance=0)
+
+                                # Second adjustment for new leave balance with `created_at` as the first day of next year
+                                created_at = first_day_next_year.strftime("%d %B %Y %H:%M:%S")  # Format: 01 January 2023 00:00:00
+
+                                leave_allow = 30  # Default allowance
+                                for policy in policies_array:
+                                    if policy["policy_id"] == str(leave_application_details.employee_leave_policy._id):
+                                        leave_allow = policy["allowance_day"]
+                                        break
+
+                                # Example of applying the adjustment logic using the leave allowance
+                                print(f"Leave allowance for policy {leave_application_details.employee_leave_policy._id}: {leave_allow}")
+
+                                leave_allow_balance=leave_allow-days_in_next_year
+                                # Save second adjustment (if applicable)
+                                new_data = EmployeeLeaveAdjustment(
+                                    company_id=leave_policy_details.company_id,
+                                    employee_details_id=leave_policy_details.employee_details_id,
+                                    employee_leave_pol_id=leave_application_details.employee_leave_policy._id,
+                                    adjustment_type="decrement",
+                                    adjustment_days=str(days_in_next_year),
+                                    adjustment_comment="Adjustment for new year",
+                                    before_adjustment=str(leave_allow),  # Assuming fully deducted
+                                    after_adjustment=str(leave_allow_balance),  # New allowance for the year
+                                    created_at=created_at
+                                )
+                                status = new_data.save()
+                                EmployeeLeavePolicies.objects(
+                                    company_id=company_id,
+                                    _id=ObjectId(leave_application_details.employee_leave_policy._id)
+                                ).update(push__employee_leave_adjustments=new_data._id, balance=leave_allow_balance)
+
+                                print(f"Adjustment saved with created_at: {created_at}")
+
+                        else:
+                               # Create leave adjustments
+                            if current_leave_balance != 0:
+                                # First adjustment (deduct full current balance)
+                                new_data = EmployeeLeaveAdjustment(
+                                    company_id=leave_policy_details.company_id,
+                                    employee_details_id=leave_policy_details.employee_details_id,
+                                    employee_leave_pol_id=leave_application_details.employee_leave_policy._id,
+                                    adjustment_type='decrement',
+                                    adjustment_days=str(current_leave_balance),
+                                    adjustment_comment=str(comment),
+                                    before_adjustment=str(current_leave_balance),
+                                    after_adjustment="0"  # Balance after full deduction
+                                )
+                                status = new_data.save()
+                                leave_application_details.update(leave_adjustment=new_data._id)
+                                EmployeeLeavePolicies.objects(
+                                    company_id=company_id,
+                                    _id=ObjectId(leave_application_details.employee_leave_policy._id)
+                                ).update(push__employee_leave_adjustments=new_data._id, balance=0)
+                            
+                           
+                            if emp_leave_policy_id:
+                                new_policy_balance = policy_balance + difference
+                                new_data = EmployeeLeaveAdjustment(
+                                    company_id=leave_policy_details.company_id,
+                                    employee_details_id=leave_policy_details.employee_details_id,
+                                    employee_leave_pol_id=ObjectId(emp_leave_policy_id),
+                                    adjustment_type='decrement',
+                                    adjustment_days=str(difference),  # Always store positive adjustment days
+                                    adjustment_comment=str(comment),
+                                    before_adjustment=str(policy_balance),
+                                    after_adjustment=str(-new_policy_balance)
+                                )
+                                status = new_data.save()
+                                leave_application_details.update(leave_adjustment=new_data._id)
+                                
+                                EmployeeLeavePolicies.objects(
+                                    company_id=company_id,
+                                    _id=ObjectId(emp_leave_policy_id)
+                                ).update(push__employee_leave_adjustments=new_data._id, balance=float(-new_policy_balance))
+
+                     
+                            print("Leave adjustment saved successfully.", status)
+
+                    except Exception as e:
+                        print(f"Error saving leave adjustment: {e}")
+
+                   
+                    work_timings = WorkTimings.objects(is_day_off=True,company_id=leave_application_details.company_id.id).first()
+                    if not work_timings:
+                      
+                        work_timings =  WorkTimings(name="Day Off",
+                                    schedule_color='#808080',
+                                    is_day_off=True,
+                                    office_start_at='',
+                                    office_end_at='',
+                                    late_arrival__later_than='',
+                                    early_departure_earliar_than='',
+                                    consider_absent_after='',
+                                    week_offs = '',
+                                    company_id = leave_application_details.company_id.id
+                                    )
+                        work_timings.save()
+                        update_details = CompanyDetails.objects(user_id=leave_application_details.company_id.id).update(push__worktimings=work_timings._id)
+
+                    start_date = leave_application_details.leave_from if not has_edited else new_leave_from
+                    end_date = leave_application_details.leave_till if not has_edited else new_leave_till
+
+
+                    # .................send an email to the leave applicant about approval ...........
+                    approver = leave_application_details.current_aprrover.approver_id.employee_details_id.first_name
+
+                    # email_template = 'email/leave_approved.html'
+                    # data = {}
+
+                    # data['employee_details_id'] = leave_policy_details.employee_details_id
+                    # data['type'] = leave_application_details.employee_leave_policy.leave_policy_id.leave_type
+                    # data['start_date'] = start_date.strftime('%Y-%m-%d')
+                    # data['end_date'] = end_date.strftime('%Y-%m-%d')
+                    # data['no_of_days'] = adj_days
+                    # data['is_modified'] = 'Yes' if has_edited else 'No'
+                    # data['aprover_remarks'] = comment
+                    # data['approver_name'] = approver
+                    # data['status'] = 'accepted'
+                    # data['receiver_email'] = leave_application_details.employee_details_id.personal_email
+
+                    # send_email(email_template, data)
+
+                    #.................end of sending email.............................................
+                    
+                    while start_date <= end_date:
+                        is_already_scheduled = CompanyEmployeeSchedule.objects(work_timings=work_timings._id,employee_id=leave_application_details.employee_details_id._id,schedule_from=start_date,schedule_till=start_date).first()
+                        if not is_already_scheduled:
+                            employee_schedule = CompanyEmployeeSchedule(company_id=leave_application_details.company_id.id,
+                                                            work_timings=work_timings._id,
+                                                            employee_id=leave_application_details.employee_details_id._id,
+                                                            schedule_from=start_date,
+                                                            schedule_till=start_date,
+                                                            allow_outside_checkin = False,
+                                                            is_leave = True,
+                                                            leave_name = leave_application_details.employee_leave_policy.leave_policy_id.leave_policy_name
+                                )
+                            employee_schedule.save()                        
+                            update_details = CompanyDetails.objects(user_id=leave_application_details.company_id.id).update(push__employee_schedules=employee_schedule._id)
+                            # Add attendance Data as well
+                            employee_attendance = EmployeeAttendance()    
+                            employee_attendance.employee_id = leave_application_details.employee_details_id.employee_company_details.employee_id
+                            employee_attendance.employee_details_id = leave_application_details.employee_details_id._id
+                            employee_attendance.attendance_date = start_date
+                            employee_attendance.company_id = leave_application_details.company_id.id
+                            employee_attendance.leave_name = leave_application_details.employee_leave_policy.leave_policy_id.leave_policy_name
+                            employee_attendance.attendance_status = "absent"
+                            employee_attendance.save()
+                        # start_date = start_date + timedelta(days=1)
+                        # todo: Create an adjustment record if the leave policy type is unpaid
+                        if leave_application_details.employee_leave_policy.leave_policy_id.leave_type == "unpaid":
+                            start_of_month = start_date.replace(day=1)
+                            nxt_mnth = start_date.replace(day=28) + timedelta(days=4)
+                            # subtracting the days from next month date to
+                            # get last date of current Month
+                            end_of_the_month  = nxt_mnth - timedelta(days=nxt_mnth.day)
+                             # Todo: Create a adjustment record by deducting the off day amount
+                            # Check if the adjustment reason is defined if not create a adjustment reason for Unpaid Leaves
+                            adjustment_reason = CompanyAdjustmentReasons.objects(company_id=leave_application_details.company_id.id,adjustment_reason="Unpaid Leaves").first()
+                            if not adjustment_reason:
+                                adjustment_reason = create_adjustment_reason(leave_application_details.company_id.id,"Unpaid Leaves","deduction")
+                            
+                            # Todo: Calculate the daily wage of employee based on no of days in config or by default no of days on payroll month;
+                            total_salary = leave_application_details.employee_details_id.employee_company_details.total_salary
+                            
+                            current_month = start_date.strftime('%B')
+
+                            calendar_working_days = CompanyDetails.objects(user_id=leave_application_details.company_id.id).only('working_days').first()
+                          
+                            working_days = list(filter(lambda x:x['month']==current_month.lower(),calendar_working_days.working_days))
+
+                            no_of_working_days = int(working_days[0]['days']) if working_days else end_of_the_month.days() # By Default Set to 30 Days
+                                                
+                            adjustment_amount = round(int(total_salary)/no_of_working_days,0)
+                            
+                            adjustment_exists = CompanyPayrollAdjustment.objects(company_id=leave_application_details.company_id.id,
+                                                                    employee_details_id=leave_application_details.employee_details_id._id,
+                                                                    adjustment_reason_id=adjustment_reason._id,
+                                                                    attendance_date=start_date).first()
+                            if adjustment_exists:
+                                adjustment_exists.delete()
+                                
+                            new_data = CompanyPayrollAdjustment(
+                                    company_id = leave_application_details.company_id.id,
+                                    employee_details_id = leave_application_details.employee_details_id._id,
+                                    adjustment_reason_id = adjustment_reason._id,
+                                    adjustment_type = adjustment_reason.adjustment_type,
+                                    adjustment_amount = str(adjustment_amount),
+                                    adjustment_on = start_of_month,
+                                    adjustment_month_on_payroll = start_of_month.strftime('%B'),
+                                    adjustment_year_on_payroll =  start_of_month.year,
+                                    attendance_date =  start_date,                   
+                            )   
+                            new_data.save()
+                        start_date = start_date + timedelta(days=1)
+                  
+                
+                    # msg = json.dumps({
+                    #     "status": "failed",
+                    #     "message": "Insufficient leave balance",
+                    #     "current_balance": current_leave_balance,
+                    #     "asking_leave_days": asking_leave_days,
+                    #     "difference": difference
+                    # })
+                    # msghtml = json.loads(msg)
+                    # return msghtml
+                    msg =  json.dumps({'status':'success'})
                     msghtml = json.loads(msg)
-                    return msghtml 
+                    return msghtml
+
+
             # Pass the approval proocess to next approver
             else:
-                # Request the approver for the approval Create a record for EmployeeLeaveRequest
+             
                 request_approver = EmployeeLeaveRequest()
                 request_approver.employee_leave_app_id = leave_application_details._id
                 request_approver.company_id = leave_application_details.company_id.id
                 next_approval_level = int(current_approval_level)+1
-                # Get Approver Details Based on Level(Current Level=1,department=current department,company ID)
+               
                 department = leave_application_details.company_approver.department_name
                 approver = EmployeeLeaveApprover.objects(employee_approval_level=str(next_approval_level),department_name=department,company_id=leave_application_details.company_id.id).first()
                
@@ -902,15 +1323,11 @@ def approve_leave_request():
                     request_approver.approver_id = approver._id
 
                 request_approver.save() 
-                # Change the status of LeaveRequest by the previous/Current approver
+                
                 leave_request_details.update(request_status="approved",approved_on=datetime.now())
-                # Change the current_approval_level of LeaveApplication and Current approver
+               
                 leave_application_details.update(current_approval_level=str(next_approval_level),current_aprrover=request_approver._id,add_to_set__approver_list=request_approver._id)
-                
-                # send email to next approver 
-                # send_leave_approval_email.delay(str(leave_application_details._id))
-                
-                
+
             msg =  json.dumps({'status':'success'})
             msghtml = json.loads(msg)
             return msghtml
@@ -918,6 +1335,105 @@ def approve_leave_request():
         msg =  json.dumps({"status":"failed"})
         msghtml = json.loads(msg)
         return msghtml    
+
+
+def process_single_employee(company_id, employee_id, leave_policies=None):
+    # Fetch the specific company details
+    company_detail = CompanyDetails.objects(user_id=company_id).first()
+    if not company_detail:
+        print("Company not found!")
+        return None  # Return None if company is not found
+
+    # Fetch the specific employee details
+    employee = EmployeeDetails.objects(_id=employee_id).first()
+    if not employee:
+        print("Employee not found!")
+        return None  # Return None if employee is not found
+
+    # Use the provided leave policies or fetch them from the company
+    if leave_policies is None:
+        leave_policies = [
+            leave_policy for leave_policy in company_detail.leave_policies
+            if leave_policy.allowance_type == 'annual'
+        ]
+
+    updated_balances = []
+
+    # Fetch the employee's leave policies from the database
+    employee_leave_policies = EmployeeLeavePolicies.objects(
+        company_id=company_id,
+        employee_details_id=employee_id
+    )
+    emp_leave_policy_id = None
+    policy_balance = 0
+    for policy in employee_leave_policies:
+        if policy._id == objects(leave_policies):
+            emp_leave_policy_id = str(policy._id)
+            policy_balance = policy.balance
+            break
+
+    # Process leave policies for the employee
+    for leave_policy in leave_policies:
+        new_leave_balance = 30
+        before_adjustment = 0
+
+        # Convert leave_policy to ObjectId if necessary (only if it's not already an ObjectId)
+        if isinstance(leave_policy, str):
+            leave_policy = ObjectId(leave_policy)
+
+        # Find matching policy in employee's leave policies
+        emp_leave_policy_id = None
+        policy_balance = 0
+        for policy in employee_leave_policies:
+            if policy.leave_policy_id._id == leave_policies:
+                emp_leave_policy_id = str(policy._id)
+                policy_balance = policy.balance
+                break
+
+        # If policy is found, process it
+        if emp_leave_policy_id:
+            before_adjustment = policy_balance
+            new_leave_balance = float(new_leave_balance)
+            print(f"Leave Policy: {leave_policy.leave_policy_name}")
+            print("New leave balance:", new_leave_balance)
+
+            # Calculate the adjustment comment for yearly reset
+            previous_year = (datetime.now() - timedelta(days=30)).strftime("%Y")
+            adjustment_comment = f'Yearly Reset of the Leave for Year {previous_year}'
+
+            # Create a new leave adjustment record
+            new_data = EmployeeLeaveAdjustment(
+                company_id=company_id,
+                employee_details_id=employee._id,
+                employee_leave_pol_id=emp_leave_policy_id,
+                adjustment_type='increment',
+                adjustment_days=str(new_leave_balance),
+                adjustment_comment=adjustment_comment,
+                before_adjustment=str(before_adjustment),
+                after_adjustment=str(new_leave_balance)
+            )
+            status = new_data.save()
+
+            # Update the employee leave policy
+            employee_leave_policy = EmployeeLeavePolicies.objects(id=emp_leave_policy_id).first()
+            if employee_leave_policy:
+                employee_leave_policy.update(
+                    push__employee_leave_adjustments=new_data._id,
+                    balance=new_leave_balance
+                )
+
+                # Store the updated leave balance for this policy
+                updated_balances.append({
+                    "leave_policy_id": leave_policy._id,
+                    "leave_policy_name": leave_policy.leave_policy_name,
+                    "new_balance": new_leave_balance
+                })
+
+        else:
+            print(f"No matching leave policy found for {leave_policy.leave_policy_name}.")
+
+    # Return all updated balances for the employee
+    return updated_balances
 
 @employee.route('/rejectleaverequest', methods=['POST'])
 def reject_leave_request():
@@ -936,22 +1452,22 @@ def reject_leave_request():
             # .................send an email to the leave applicant about approval ...........
             approver = leave_application_details.current_aprrover.approver_id.employee_details_id.first_name
 
-            email_template = 'email/leave_approved.html'
-            data = {}
+            # email_template = 'email/leave_approved.html'
+            # data = {}
 
-            data['employee_details_id'] = leave_application_details.employee_details_id
-            data['type'] = leave_application_details.employee_leave_policy.leave_policy_id.leave_type
-            data['start_date'] = leave_application_details.leave_from.strftime('%Y-%m-%d')
-            data['end_date'] = leave_application_details.leave_till.strftime('%Y-%m-%d')
-            data['no_of_days'] = leave_application_details.no_of_days
-            data['is_modified'] = 'No'
-            data['aprover_remarks'] = leave_reject_reason
-            data['approver_name'] = approver
-            data['status'] = 'rejected'
-            data['receiver_email'] = leave_application_details.employee_details_id.personal_email
+            # data['employee_details_id'] = leave_application_details.employee_details_id
+            # data['type'] = leave_application_details.employee_leave_policy.leave_policy_id.leave_type
+            # data['start_date'] = leave_application_details.leave_from.strftime('%Y-%m-%d')
+            # data['end_date'] = leave_application_details.leave_till.strftime('%Y-%m-%d')
+            # data['no_of_days'] = leave_application_details.no_of_days
+            # data['is_modified'] = 'No'
+            # data['aprover_remarks'] = leave_reject_reason
+            # data['approver_name'] = approver
+            # data['status'] = 'rejected'
+            # data['receiver_email'] = leave_application_details.employee_details_id.personal_email
 
 
-            send_email(email_template, data)
+            # send_email(email_template, data)
 
             #.................end of sending email.............................................
                 
@@ -1022,6 +1538,8 @@ def calculate_late_details(employee_check_in_time,employee_details,attendance_da
         late_by_minutes = late_by_time.total_seconds()/60
         
     return (int(late_by_minutes),final_datetime)
+
+
 
 def calculate_early_departure_details(employee_check_out_time,employee_details,attendance_date):
     
@@ -1663,23 +2181,23 @@ def super_approve_leave_request():
 
 
                 # .................send an email to the leave applicant about approval ...........
-                approver = leave_application_details.current_aprrover.approver_id.employee_details_id.first_name
+                # approver = leave_application_details.current_aprrover.approver_id.employee_details_id.first_name
 
-                email_template = 'email/leave_approved.html'
-                data = {}
+                # email_template = 'email/leave_approved.html'
+                # data = {}
 
-                data['employee_details_id'] = leave_policy_details.employee_details_id
-                data['type'] = leave_application_details.employee_leave_policy.leave_policy_id.leave_type
-                data['start_date'] = new_leave_from if new_leave_from else leave_application_details.asked_leave_from.strftime('%Y-%m-%d')
-                data['end_date'] = new_leave_till if new_leave_till else leave_application_details.asked_leave_till.strftime('%Y-%m-%d')
-                data['no_of_days'] = adj_days
-                data['is_modified'] = 'Yes' if has_edited else 'No'
-                data['aprover_remarks'] = comment
-                data['approver_name'] = approver
-                data['status'] = 'accepted'
-                data['receiver_email'] = leave_application_details.employee_details_id.personal_email
+                # data['employee_details_id'] = leave_policy_details.employee_details_id
+                # data['type'] = leave_application_details.employee_leave_policy.leave_policy_id.leave_type
+                # data['start_date'] = new_leave_from if new_leave_from else leave_application_details.asked_leave_from.strftime('%Y-%m-%d')
+                # data['end_date'] = new_leave_till if new_leave_till else leave_application_details.asked_leave_till.strftime('%Y-%m-%d')
+                # data['no_of_days'] = adj_days
+                # data['is_modified'] = 'Yes' if has_edited else 'No'
+                # data['aprover_remarks'] = comment
+                # data['approver_name'] = approver
+                # data['status'] = 'accepted'
+                # data['receiver_email'] = leave_application_details.employee_details_id.personal_email
 
-                send_email(email_template, data)
+                # send_email(email_template, data)
 
                 #.................end of sending email.............................................
 

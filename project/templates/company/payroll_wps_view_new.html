@@ -10,11 +10,15 @@
         padding: 5px 10px !important;
     }
 </style>
+<!-- Bootstrap CSS -->
+<link href="https://stackpath.bootstrapcdn.com/bootstrap/5.3.3/css/bootstrap.min.css" rel="stylesheet">
+<!-- Bootstrap JS Bundle with Popper -->
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/5.3.3/js/bootstrap.bundle.min.js"></script>
 
 {% endblock %}
 
 {% block content %}
-<!--Page header-->
+<!-- Page header -->
 <div class="page-header d-xl-flex d-block">
     <div class="page-leftheader">
         <div class="page-title">Monthly Payroll</div>
@@ -22,20 +26,21 @@
     <div class="page-rightheader ms-md-auto">
         <div class="d-flex align-items-end flex-wrap my-auto end-content breadcrumb-end">
             <div class="btn-list">
-                <!-- <button class="btn btn-primary" data-bs-placement="top" data-bs-toggle="modal"
-                    data-bs-target="#largemodal" id="queue-status"> <i class="feather fe fe-upload-cloud"> </i> Queue
-                    Status </button> -->
-                <button class="btn btn-light" data-bs-toggle="tooltip" data-bs-placement="top" title="E-mail"> <i
-                        class="feather feather-mail"></i> </button>
-                <button class="btn btn-light" data-bs-placement="top" data-bs-toggle="tooltip" title="Contact"> <i
-                        class="feather feather-phone-call"></i> </button>
-                <button class="btn btn-primary" data-bs-placement="top" data-bs-toggle="tooltip" title="Info"> <i
-                        class="feather feather-info"></i> </button>
+                <button class="btn btn-light" data-bs-toggle="tooltip" data-bs-placement="top" title="E-mail"> 
+                    <i class="feather feather-mail"></i> 
+                </button>
+                <button class="btn btn-light" data-bs-placement="top" data-bs-toggle="tooltip" title="Contact"> 
+                    <i class="feather feather-phone-call"></i> 
+                </button>
+                <button class="btn btn-primary" data-bs-placement="top" data-bs-toggle="tooltip" title="Info"> 
+                    <i class="feather feather-info"></i> 
+                </button>
             </div>
         </div>
     </div>
 </div>
-<!--End Page header-->
+<!-- End Page header -->
+
 <!-- Row -->
 <div class="row">
     <div class="col-md-12">
@@ -54,7 +59,6 @@
                                         <span class="feather feather-clock"></span>
                                     </div>
                                 </div>
-
                                 <input class="form-control" id="filter-datepicker-month" placeholder="Month Range"
                                     type="text" name="month_range_input" value="{{start_of_month.strftime('%B')}}">
                             </div>
@@ -98,268 +102,199 @@
                     <div class="panel-body tabs-menu-body">
                         <div class="tab-content">
                             {% for bank, edr_records in edr_data.items() %}
-                            <div class="tab-pane {% if loop.first %}active{% endif %}" id="tab-{{ loop.index }}">
-                                <div class="card-body">
-                                    <div class="table-responsive">
+                                <div class="tab-pane {% if loop.first %}active{% endif %}" id="tab-{{ loop.index }}">
+                                    <div class="card-body">
+                                        <div class="table-responsive">
 
-                                        <div class="d-flex justify-content-end mb-2">
-                                            <button class="btn btn-primary me-2" onclick="exportTableToCSV('table-{{ loop.index }}.csv', 'tab-{{ loop.index }}')">CSV</button>
-                                            <button class="btn btn-primary" onclick="exportTableToExcel('table-{{ loop.index }}', 'table-{{ loop.index }}.xlsx')">Excel</button>
+                                        <table class="table table-vcenter text-nowrap table-bordered border-bottom table-striped fs-12 sif-report" 
+                                            id="table-{{ loop.index }}" 
+                                            data-table-id="table-{{ loop.index }}"
+                                            data-bank-name="{{ bank }}"
+                                            >
+                                            <input type="hidden" class="bank-name" value="{{ bank }}">
+
+                                            
+                                                {% if bank == 'CBD' or bank == 'Commercia Bank International (CBI)' %}
+                                                    <thead>
+                                                        <tr>
+                                                            {% for field in table_head[bank] %}
+                                                            <th class="border-bottom-0 fs-12">{{ field }}</th>
+                                                            {% endfor %}
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        {% if scr_data[bank] %}
+                                                        <tr>
+                                                            <td>Company Name: </td>
+                                                            <td>{{ scrs_values[bank][0] }}</td>
+                                                            <td>EST ID</td>
+                                                            <td>{{ scrs_values[bank][1] }}</td>
+                                                            <td></td>
+                                                            <td></td>
+                                                            <td></td>
+                                                            <td></td>
+                                                        </tr>
+                                                        {% endif %}
+                                                        {% for record in edrs_valus[bank] %}
+                                                        <tr>
+                                                            {% for value in record %}
+                                                            <td>{{ value }}</td>
+                                                            {% endfor %}
+                                                        </tr>
+                                                        {% endfor %}
+                                                    </tbody>
+
+                                        
+                                                {% else %}
+                                                    <thead>
+                                                        <tr>
+                                                            {% for field in table_head[bank] %}
+                                                            <th class="border-bottom-0 fs-12">{{ field }}</th>
+                                                            {% endfor %}
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        {% if scr_data[bank] %}
+                                                        <tr>
+                                                            {% for value in scrs_values[bank] %}
+                                                            <td>{{ value }}</td>
+                                                            {% endfor %}
+                                                        </tr>
+                                                        {% endif %}
+                                                        {% for record in edrs_valus[bank] %}
+                                                        <tr>
+                                                            {% for value in record %}
+                                                            <td>{{ value }}</td>
+                                                            {% endfor %}
+                                                        </tr>
+                                                        {% endfor %}
+                                                    </tbody>
+                                                {% endif %}
+                                            </table>
                                         </div>
-
-                                        <table class="table table-vcenter text-nowrap table-bordered border-bottom table-striped fs-12" id="sif-report">
-                                            {% if bank == 'JOYALUKKAS EXCHANGE' %}
-
-                                                <thead>
-                                                    <tr>
-                                                        {% for field in table_head[bank] %}
-                                                        <th class="border-bottom-0 fs-12">{{ field }}</th>
-                                                        {% endfor %}
-                                                    </tr>
-                                                </thead>
-                                                <tbody>
-
-                                                    {% for record in edrs_valus[bank] %}
-                                                    <tr>
-                                                        {% for value in record %}
-                                                        <td>{{ value }}</td>
-                                                        {% endfor %}
-                                                    </tr>
-                                                    {% endfor %}
-
-                                                    {% if scr_data[bank] %}
-                                                    <tr>
-                                                        <td class="border-bottom-0 fs-12"></td>
-                                                        <td class="border-bottom-0 fs-12"></td>
-                                                        <td class="border-bottom-0 fs-12">Total Salary</td>
-                                                        {% for value in scrs_values[bank] %}
-                                                        <td>{{ value }}</td>
-                                                        {% endfor %}
-                                                        <td></td>
-                                                        <td></td>
-                                                        <td></td>
-                                                        <td></td>
-                                                        <td></td>
-                                                        <td></td>
-                                                    </tr>
-                                                    {% endif %}
-
-                                                </tbody>
-
-                                            {% elif bank == 'CBD' %}
-
-                                                <thead>
-                                                    <tr>
-                                                        {% for field in table_head[bank] %}
-                                                        <th class="border-bottom-0 fs-12">{{ field }}</th>
-                                                        {% endfor %}
-                                                    </tr>
-                                                </thead>
-                                                <tbody>
-
-                                                    {% if scr_data[bank] %}
-                                                    <tr>
-                                                        <td>Company Name: </td>
-                                                        <td>{{ scrs_values[bank][0] }}</td>
-                                                        <td>EST ID</td>
-                                                        <td>{{ scrs_values[bank][1] }}</td>
-                                                        <td></td>
-                                                        <td></td>
-                                                        <td></td>
-                                                        <td></td>
-                                                    </tr>
-                                                    {% endif %}
-
-                                                    {% for record in edrs_valus[bank] %}
-                                                    <tr>
-                                                        {% for value in record %}
-                                                        <td>{{ value }}</td>
-                                                        {% endfor %}
-                                                    </tr>
-                                                    {% endfor %}
-
-                                                </tbody>
-
-                                            {% elif bank == 'RAK Bank' %}
-
-                                                <thead>
-                                                    <tr>
-                                                        {% for field in table_head[bank] %}
-                                                        <th class="border-bottom-0 fs-12">{{ field }}</th>
-                                                        {% endfor %}
-                                                    </tr>
-                                                </thead>
-                                                <tbody>
-
-                                                    {% for record in edrs_valus[bank] %}
-                                                    <tr>
-                                                        {% for value in record %}
-                                                        <td>{{ value }}</td>
-                                                        {% endfor %}
-                                                    </tr>
-                                                    {% endfor %}
-
-                                                    {% if scr_data[bank] %}
-                                                    <tr>
-                                                        {% for value in scrs_values[bank] %}
-                                                        <td>{{ value }}</td>
-                                                        {% endfor %}
-                                                    </tr>
-                                                    {% endif %}
-
-                                                </tbody>
-
-                                            {% else %}
-
-                                                <thead>
-                                                    <tr>
-                                                        {% for field in table_head[bank] %}
-                                                        <th class="border-bottom-0 fs-12">{{ field }}</th>
-                                                        {% endfor %}
-                                                    </tr>
-                                                </thead>
-                                                <tbody>
-                                                    {% if scr_data[bank] %}
-                                                    <tr>
-                                                        {% for value in scrs_values[bank] %}
-                                                        <td>{{ value }}</td>
-                                                        {% endfor %}
-                                                    </tr>
-                                                    {% endif %}
-
-                                                    {% for record in edrs_valus[bank] %}
-                                                    <tr>
-                                                        {% for value in record %}
-                                                        <td>{{ value }}</td>
-                                                        {% endfor %}
-                                                    </tr>
-                                                    {% endfor %}
-                                                </tbody>
-
-                                            {% endif %}
-                                        </table>
                                     </div>
                                 </div>
-                            </div>
                             {% endfor %}
                         </div>
                     </div>
                 </div>
             </div>
-
-
-           
         </div>
     </div>
 </div>
-<!-- End Row -->
 
+<!-- End Row -->
 {% endblock %}
 {% block script %}
 {{ super() }}
 
-<!-- Datepicker js -->
-<!-- <script src="{{ url_for('static', filename='assets/plugins/date-picker/jquery-ui.js') }}"></script> -->
-<!-- INTERNAL Bootstrap-Datepicker js-->
-<script src="{{ url_for('static', filename='assets/plugins/bootstrap-datepicker/bootstrap-datepicker.js') }}"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.1.3/jszip.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/pdfmake.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/vfs_fonts.js"></script>
-<script src="https://cdn.datatables.net/buttons/2.2.3/js/buttons.html5.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.16.9/xlsx.full.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.16.9/xlsx.full.min.js"></script>
+<!-- Bootstrap Datepicker JS -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.9.0/js/bootstrap-datepicker.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment.min.js"></script>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+<!-- DataTables CSS -->
+<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.10.25/css/jquery.dataTables.css">
+
+<!-- DataTables JS -->
+<script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/1.10.25/js/jquery.dataTables.js"></script>
+
+<!-- DataTables Buttons extension -->
+<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/buttons/1.7.1/css/buttons.dataTables.min.css">
+<script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/buttons/1.7.1/js/dataTables.buttons.min.js"></script>
+<script type="text/javascript" charset="utf8" src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.1.3/jszip.min.js"></script>
+<script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/buttons/1.7.1/js/buttons.html5.min.js"></script>
+<script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/buttons/1.7.1/js/buttons.print.min.js"></script>
 
 <script>
-    // payslip
-    // Year picker
-    fpy = $('#datepicker-year').bootstrapdatepicker({
-        format: "yyyy",
-        viewMode: "year",
-        minViewMode: "years",
-        orientation: 'bottom',
-        multidate: false,
-        multidateSeparator: "-",
-    })
-    fpm = $('#filter-datepicker-month').bootstrapdatepicker({
-        format: "MM",
-        endDate: '+0m',
-        viewMode: "months",
-        minViewMode: "months",
-        orientation: 'bottom',
-        multidate: false,
-        multidateSeparator: "-",
-        autoclose: true
-    })
-    //fpy.on('changeDate', function (e) {
-    //  $('.action-btns').attr("data-selected_year", e.dates)
-    //});
-    fpm.on('changeDate', function (e) {
-        $('.action-btns').attr("data-selected_month", e.dates)
-        $('#selected_month').val(moment(new Date(e.dates)).format('YYYY-MM-DD'))
+$(document).ready(function() {
+    $('.sif-report').each(function() {
+        var table = $(this).DataTable({
+            "order": [
+                [0, "desc"]
+            ],
+            "paging": false,
+            language: {
+                searchPlaceholder: 'Search...',
+                sSearch: '',
+            },
+            dom: 'Bfrtip',
+            buttons: [
+                {
+                    extend: 'csvHtml5',
+                    fieldBoundary: '',
+                    footer: false,
+                    header: true,
+                    exportOptions: {
+                        columns: ':visible'
+                    },
+                    title: function() {
+                        // Get the bank name from a hidden element or fallback
+                        var bankName = $(this).closest('table').attr('data-bank-name');
+                        if (!bankName) {
+                            bankName = "Your Bank";
+                        }
+                        // Return the title with bank name
+                        return `${bankName} - CSV Report`;
+                    },
+                    customize: function (xlsx) {
+                        // Inject custom styles into the button
+                        $(xlsx).find('.buttons-csv').css({
+                            'background-color': '#007bff', // Primary color
+                            'color': '#fff', // White text
+                            'border': '1px solid #007bff', // Border color
+                            'padding': '0.375rem 0.75rem', // Padding
+                            'border-radius': '0.25rem', // Border radius
+                            'font-size': '0.875rem', // Font size
+                            'font-weight': '400', // Font weight
+                            'line-height': '1.5', // Line height
+                            'text-align': 'center', // Text alignment
+                            'text-decoration': 'none', // Text decoration
+                            'display': 'inline-block', // Display
+                            'cursor': 'pointer' // Cursor
+                        });
+                    }
+                },
+                {
+                    extend: 'excelHtml5',
+                    fieldBoundary: '',
+                    footer: false,
+                    header: true,
+                    exportOptions: {
+                        columns: ':visible'
+                    },
+                    title: function() {
+                        // Get the bank name from a hidden element or fallback
+                        var bankName = $(this).closest('table').attr('data-bank-name');
+                        if (!bankName) {
+                            bankName = "Your Bank";
+                        }
+                        // Return the title with bank name
+                        return `${bankName} - Excel Report`;
+                    },
+                    customize: function (xlsx) {
+                    // Inject custom styles into the button
+                    $(xlsx).find('.buttons-excel').css({
+                        'background-color': '#007bff', // Primary color
+                        'color': '#fff', // White text
+                        'border': '1px solid #007bff', // Border color
+                        'padding': '0.375rem 0.75rem', // Padding
+                        'border-radius': '0.25rem', // Border radius
+                        'font-size': '0.875rem', // Font size
+                        'font-weight': '400', // Font weight
+                        'line-height': '1.5', // Line height
+                        'text-align': 'center', // Text alignment
+                        'text-decoration': 'none', // Text decoration
+                        'display': 'inline-block', // Display
+                        'cursor': 'pointer' // Cursor
+                    });
+                }
+                }
+            ]
+        });
     });
+});
 
-    // Data Table
-	$('#hr-payroll').DataTable({
-		"order": [[ 0, "desc" ]],
-		order: [],
-		columnDefs: [ { orderable: false} ],
-		language: {
-			searchPlaceholder: 'Search...',
-			sSearch: '',
-			
-		}
-	});
-</script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.16.9/xlsx.full.min.js"></script>
-<script>
-
-function downloadCSV(csv, filename) {
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-    const downloadLink = document.createElement("a");
-
-    const url = URL.createObjectURL(blob);
-    downloadLink.href = url;
-    downloadLink.download = filename;
-    document.body.appendChild(downloadLink);
-    downloadLink.click();
-    document.body.removeChild(downloadLink);
-}
-
-function exportTableToCSV(filename, tabId) {
-    let csv = [];
-    const rows = document.querySelector("#" + tabId + " table").querySelectorAll("tr");
-
-    for (let i = 0; i < rows.length; i++) {
-        let row = [], cols = rows[i].querySelectorAll("td, th");
-        for (let j = 0; j < cols.length; j++) {
-            let cellText = "'" + cols[j].innerText;
-            cellText = cellText.replace(/"/g, '""'); // Escape double quotes
-            row.push(`"${cellText}"`); // Enclose each value in double quotes
-        }
-        csv.push(row.join(","));
-    }
-
-    downloadCSV(csv.join("\n"), filename);
-}
-
-function exportTableToExcel(tableID, filename = 'excel_data.xlsx') {
-    var table = document.getElementById(tableID);
-    var wb = XLSX.utils.table_to_book(table, { sheet: "Sheet1" });
-
-    var ws = wb.Sheets["Sheet1"];
-    var range = XLSX.utils.decode_range(ws['!ref']);
-    for (var R = range.s.r; R <= range.e.r; ++R) {
-        for (var C = range.s.c; C <= range.e.c; ++C) {
-            var cell_address = { c: C, r: R };
-            var cell_ref = XLSX.utils.encode_cell(cell_address);
-            var cell = ws[cell_ref];
-            if (cell) {
-                cell.t = 's'; // Treat all cells as strings
-            }
-        }
-    }
-
-    XLSX.writeFile(wb, filename);
-}
-</script>
+    </script>
+    
 {% endblock %}

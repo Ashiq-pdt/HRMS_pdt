@@ -67,7 +67,7 @@
                             <div class="form-group">
                                 <label class="form-label">Select Sub Company:</label>
                                 <div class="input-group">
-                                    <select class="w-100 form-control form-select" name="sub_company" id="sub_company">
+                                    <!-- <select class="w-100 form-control form-select" name="sub_company" id="sub_company">
                                         <option value="" selected disabled>Select Sub Company</option>
                                         {% if company_details.sub_companies|length > 0 %}
                                         {% for item in company_details.sub_companies %}
@@ -75,13 +75,27 @@
                                         {% endfor %} 
                                         {% endif %}
                                         <option value="">All Company</option>
+                                    </select> -->
+
+                                    <select class="w-100 form-control form-select" name="sub_company" id="sub_company">
+                                        <option value="" selected disabled>Select Sub Company</option>
+                                        {% if company_details.sub_companies|length > 0 %}
+                                    
+                                            {% for item in company_details.sub_companies %}
+                                                <option value="{{ item.id }}" {% if item.id|string == selected_sub_company|string %}selected{% endif %}>
+                                                    {{ item.company_name }}
+                                                </option>
+                                            {% endfor %}
+                                        {% endif %}
+                                        
+                                        <option value="all company" {% if selected_sub_company == 'all company' %}selected{% endif %}>All Company</option>
                                     </select>
                                 </div>
                             </div>
                         </div>
                         <div class="col-md-6 col-lg-2">
                             <div class="form-group mt-5">
-                                <button href="javascript:void(0);" class="btn btn-primary btn-block">Search</button>
+                                <button  type="submit"  href="javascript:void(0);" class="btn btn-primary btn-block">Search</button>
                             </div>
                         </div>
                     </div>
@@ -116,7 +130,9 @@
                                                         <th class="border-bottom-0">Emp Name</th>
                                                         <th class="border-bottom-0">Month-Year</th>
                                                         <th class="border-bottom-0">Designation</th>
-                                                        <th class="border-bottom-0">(AED) Salary</th>
+                                                       
+                                                        <th class="border-bottom-0">({{ company_details.Currency}}) Salary</th>
+                                                       
                                                         <th class="border-bottom-0">Generated Date</th>
                                                         <!-- <th class="border-bottom-0">Status</th> -->
                                                         <th class="border-bottom-0">Actions</th>
@@ -513,16 +529,19 @@
                                     '<tr><td class="border-start">&nbsp;</td><td class="border-start">&nbsp;</td></tr>';
                             }
                         }
+                        var currency = data.company_details || " AED ";
+                        console.log(data.company_details.Currency,'curenecey');
+                        console.log(data);
                         // Total of additiona and deduction 
                         actual_pay_details += '<tr class="border-top">\
                             <td class="font-weight-semibold">Total Pay (w/o deductions)</td>\
-                            <td class="font-weight-semibold border-start">AED ' + (data.payroll_data.total_salary +
-                                data.payroll_data.total_additions).toFixed(2) + '</td>\
+                            <td class="font-weight-semibold border-start">' + currency + ' '+
+                                (data.payroll_data.total_salary + data.payroll_data.total_additions).toFixed(2) + '</td>\
                         </tr>';
                         deduction_details +=
                             '<tr class="border-top">\
                             <td class="font-weight-semibold">Total Deduction</td>\
-                            <td class="font-weight-semibold border-start">AED ' + (data.payroll_data.total_deductions).toFixed(2) + '</td>\
+                            <td class="font-weight-semibold border-start"> '+ currency  + ' ' + (data.payroll_data.total_deductions).toFixed(2) + '</td>\
                         </tr>';
                         $('.paytable-actual-pay tbody').html(actual_pay_details);
                         $('.paytable-deduction-pay tbody').html(deduction_details);
@@ -530,7 +549,7 @@
                         net_salary_details = '<tr>\
                             <td class="font-weight-semibold w-20 fs-18 pb-0 pt-0">Net Salary</td>\
                             <td class="pb-0 pt-0">\
-                                <h4 class="font-weight-semibold mb-0 fs-24">AED: ' + (data.payroll_data.salary_to_be_paid).toFixed(2) + '</h4>\
+                                <h4 class="font-weight-semibold mb-0 fs-24">' + currency + ' ' + (data.payroll_data.salary_to_be_paid).toFixed(2) + '</h4>\
                             </td>\
                         </tr>\
                         <tr>\

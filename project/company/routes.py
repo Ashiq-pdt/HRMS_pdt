@@ -5,7 +5,7 @@ from flask import Blueprint, jsonify, render_template,request,flash,redirect,url
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_login import login_required,logout_user
 from flask_security import roles_accepted
-from ..models import BankDetails, CompanyDetails, CompanyExchange, CompanySif, CompanySignature, Role,User,Departments,user_datastore,WorkTimings,CompanyEmployeeSchedule,CompanyHolidays,CompanyOvertimePolicies,Designations\
+from ..models import BankDetails, CompanyDetails, MutipleAcces,MultipleAccessEntry,CompanyExchange, CompanySif, CompanySignature, Role,User,Departments,user_datastore,WorkTimings,CompanyEmployeeSchedule,CompanyHolidays,CompanyOvertimePolicies,Designations\
 ,CompanyOffices,CompanyAdjustmentReasons,CompanyPayrollAdjustment,CompanyPayroll,CompanyClockInOptions,CompanyLeavePolicies,CompanyLeaveApprovers,CompanyTimeApprovers,CompanyRole\
 ,ActivityLog,CompanyMemo,SubCompanies,CompanyTimeOffAdjustment,SuperLeaveApprovers,CompanyBiometricDevice,CompanyBiometricAttendance
 from bson.objectid import ObjectId
@@ -26,6 +26,7 @@ import csv
 import json
 import time
 import calendar
+from flask import session
 from os.path import join, getsize
 import shutil
 from flask_mail import Mail,Message
@@ -36,26 +37,34 @@ from ..helper import create_activity_log
 from .wps.WPS_Factory import WPS_Factory, WPS_Strategy
 from .utils.attendance_related_functions import remove_leave_schedules, add_leave_schedules, \
                                                 add_sundays_to_attendace, add_sundays_to_attendace_company_level, \
-                                                add_workingdays_to_attendace, count_sundays, get_late_days_aggregate
+                                                add_workingdays_to_attendace, count_sundays, get_late_days_aggregate,\
+                                                get_set_of_absent_days, get_late_and_absent, get_employee_schedule_statistics
 from .wps.SIF_Model import SIF
 from .wps.SCR_Models import SCR
 from .wps.EDR_Models import EDR
 from .wps.helper_functions import get_data_for_WPS_view, dereference_dbrefs
 import jinja2,pdfkit,math
 from prettytable import PrettyTable
-
+import logging
 import pandas as pd
 import openpyxl
 from openpyxl.utils import get_column_letter
 from openpyxl.worksheet.datavalidation import DataValidation
 import requests
+from random import choices
 import base64
 from requests.auth import HTTPDigestAuth
+from ..config.config_strategy import Config_Strategy
+from dateutil.relativedelta import relativedelta
+from datetime import date #Added By Ashiq Date : 19/sep/2024 Issues : Date formate 
 
 company = Blueprint('company', __name__)
 app=create_app()
 celery = create_celery_app()
 mail = Mail()
+
+dynamic_config_strategy = Config_Strategy()
+dynamic_config = dynamic_config_strategy.get_dynamic_config()
 #Departments Page
 @company.route('/departments')
 @login_required
@@ -154,10 +163,18 @@ def delete_designation(designation_id):
 #Employee List Page
 @company.route('/employees')
 @login_required
-@roles_accepted('admin','company','peoplemanager')
+# @roles_accepted('admin','company','peoplemanager')
 def employees_list():
 
-    employees = CompanyDetails.objects(user_id=current_user.id).only('employees','profile_pic').first()
+
+    multiple_access_company_id=session.get("multiple_access_company_id")
+    print(f"    Company Name2: {multiple_access_company_id}")
+    if multiple_access_company_id:
+        company_id=multiple_access_company_id
+    else :
+        company_id=current_user.id
+
+    employees = CompanyDetails.objects(user_id=company_id).only('employees','profile_pic').first()
 
     if not employees:
         employee_details = EmployeeDetails.objects(user_id=current_user.id).first()
@@ -169,8 +186,17 @@ def employees_list():
 @login_required
 @roles_accepted('admin','company','peoplemanager')
 def add_employee_details():
-    departments = CompanyDetails.objects(user_id=current_user.id).only('departments','offices','worktimings','sub_companies','passport_expiry_alert','emirates_expiry_alert','visa_expiry_alert','offer_expiry_alert','other_expiry_alert').first()
-    bank_details = BankDetails.objects()
+
+    multiple_access_company_id=session.get("multiple_access_company_id")
+    print(f"    Company Name2: {multiple_access_company_id}")
+    if multiple_access_company_id:
+        company_id=multiple_access_company_id
+    else :
+        company_id=current_user.id
+
+    departments = CompanyDetails.objects(user_id=company_id).only('departments','offices','worktimings','sub_companies','passport_expiry_alert','emirates_expiry_alert','visa_expiry_alert','offer_expiry_alert','other_expiry_alert').first()
+
+    bank_details = BankDetails.objects(company_id=company_id)
     if not departments: 
         employee_details = EmployeeDetails.objects(user_id=current_user.id).first()
         departments = CompanyDetails.objects(user_id=employee_details.company_id).only('departments','offices','worktimings','sub_companies','passport_expiry_alert','emirates_expiry_alert','visa_expiry_alert','offer_expiry_alert','other_expiry_alert').first()  
@@ -193,7 +219,7 @@ def add_employee():
         if user: # if a user is found, we want to redirect back to add employee so user can try again  
             flash('Email address already exists')
             departments = CompanyDetails.objects(user_id=current_user.id).only('departments','offices','worktimings','sub_companies','passport_expiry_alert','emirates_expiry_alert','visa_expiry_alert','offer_expiry_alert','other_expiry_alert').first()
-            bank_details = BankDetails.objects()
+            bank_details = BankDetails.objects(company_id=current_user.id)
             if not departments: 
                 employee_details = EmployeeDetails.objects(user_id=current_user.id).first()
                 departments = CompanyDetails.objects(user_id=employee_details.company_id).only('departments','offices','worktimings','sub_companies','passport_expiry_alert','emirates_expiry_alert','visa_expiry_alert','offer_expiry_alert','other_expiry_alert').first()  
@@ -382,6 +408,8 @@ def populate_employee_bank_details(request):
         }
     return employee_bank_details
 
+    
+
 def populate_employee_sif_details(request):
     company_exchange = request.form.get('company_exchange')
     employee_sif_details = {
@@ -446,6 +474,25 @@ def upload_adjustment_document(file,company_name):
         file.save(os.path.join(file_path, fname))
     return fname;
 
+def filter_active_employees(employees, start_date, sub_company):
+    if sub_company:
+        return [
+            employee for employee in employees 
+            if (employee.user_id.active_till is None or employee.user_id.active_till > start_date) 
+            and hasattr(employee.user_id, 'active') and employee.user_id.active == True  # old one -->employee.is_active == True ->replace  and hasattr(employee.user_id, 'active') and employee.user_id.active == True  by ashiq
+            and employee.employee_company_details is not None 
+            and employee.employee_company_details.working_sub_company is not None 
+            and employee.employee_company_details.working_sub_company.id == ObjectId(sub_company)
+        ]
+    else:
+        return [
+            employee for employee in employees 
+                if (hasattr(employee.user_id, 'active') and employee.user_id.active == True) 
+                # or
+                # (hasattr(employee.user_id, 'active_till') and employee.user_id.active_till and employee.user_id.active_till >= start_date)
+            ]
+
+
 #Edit Employee Details  
 @company.route('/edit/employee/<emp_id>', methods=['GET','POST'])
 @login_required
@@ -493,7 +540,8 @@ def edit_employee_details(emp_id):
                                                                   'passport_expiry_alert','emirates_expiry_alert','visa_expiry_alert',
                                                                   'offer_expiry_alert','other_expiry_alert').first()
     
-    bank_list = BankDetails.objects()
+    #bank_list = BankDetails.objects()
+    bank_list = BankDetails.objects(company_id=current_user.id)
 
     if request.method == 'POST':
         new_employee = EmployeeDetails.objects(_id=emp_id)
@@ -594,9 +642,10 @@ def delete_employee_document(doc_id,emp_id):
 @roles_accepted('admin','company')
 def company_settings():
     company_details = CompanyDetails.objects(user_id=current_user.id).first()
-    
+    Employee_Details=EmployeeDetails.objects(company_id=current_user.id).all()
     departments = CompanyDetails.objects(user_id=current_user.id).only('departments','company_exchanges','sub_companies','offices','email_config','super_leave_approvers').first()
     leave_applications = EmployeeLeaveApplication.objects(company_id=current_user.id,leave_status="pending").only('company_approver')
+    multiple_access_doc = MutipleAcces.objects(Main_company_id=current_user.id).all()
     banks_list = CompanyExchange.objects().all()
     for approver in company_details.leave_approvers:
         leave_applications = EmployeeLeaveApplication.objects(company_id=current_user.id,leave_status="pending",company_approver=approver._id).count()
@@ -607,7 +656,7 @@ def company_settings():
             approver.can_delete = True
     
     return render_template('company/settings.html',company_details=company_details,departments=departments,leave_applications=leave_applications,
-                           banks_list=banks_list)
+                           banks_list=banks_list,multiple_access_doc=multiple_access_doc,Employee_Details=Employee_Details)
 
 @company.route('/update/settings/', methods=['POST'])
 def update_settings():
@@ -620,6 +669,9 @@ def update_settings():
             company_details.company_address = request.form.get('company_address')
             company_details.company_contact_no = request.form.get('company_contact_no')
             company_details.company_website = request.form.get('company_website')
+            company_details.Currency = request.form.get('company_Currency')
+            company_details.Timezone = request.form.get('company_Timezone')
+            
             file = request.files['company_logo']
             if file:
                 company_details.company_logo = upload_company_logo(file)
@@ -896,12 +948,19 @@ def mass_schedule_shift():
     # Get the current month and year
     current_month = datetime.now().month
     current_year = datetime.now().year
+    multiple_access_company_id=session.get("multiple_access_company_id")
+    print(f"    Company Name2: {multiple_access_company_id}")
+    if multiple_access_company_id:
+        company_id=multiple_access_company_id
+    else :
+        company_id=current_user.id
 
-    company_details = CompanyDetails.objects(user_id=current_user.id).first()
+    company_details = CompanyDetails.objects(user_id=company_id).first()
 
     if not company_details: 
         employee_details = EmployeeDetails.objects(user_id=current_user.id).first()
-        company_details = CompanyDetails.objects(user_id=employee_details.company_id).first()   
+        #company_details = CompanyDetails.objects(user_id=employee_details.company_id).first()
+        company_details = CompanyDetails.objects(user_id=company_id).first()     
 
     list = []
     eventList = []    
@@ -1736,19 +1795,19 @@ def bulk_upload_employees():
             os.remove(document_path)
             
             if employee_data:
-               result = add_bulk_employees.delay(employee_data,str(current_user.id),file_path)
-            #    result = add_bulk_employees(employee_data,str(current_user.id),file_path)
-            
-            if result:
-               message = 'Bulk Employee Creation with uploaded file named ' + filename + ' has '
-               task_scheduled_details = ScheduledBackgroundTask(celery_task_id=result.id,company_id=current_user.id,task_type='employee_data',message=message,file_name=filename,uploaded_on=datetime.now())
-               task_scheduled_details.save()
-               return "True"
+               #result = add_bulk_employees.delay(employee_data,str(current_user.id),file_path)
+                result = add_bulk_employees(employee_data,str(current_user.id),file_path)
+                return "True"
+            # if result:
+            #    message = 'Bulk Employee Creation with uploaded file named ' + filename + ' has '
+            #    task_scheduled_details = ScheduledBackgroundTask(celery_task_id=result.id,company_id=current_user.id,task_type='employee_data',message=message,file_name=filename,uploaded_on=datetime.now())
+            #    task_scheduled_details.save()
+            #    return "True"
     else:
         return "False"
 
 #Create New Employees
-@celery.task(track_started = True,result_extended=True,name='Employee-Data')
+#@celery.task(track_started = True,result_extended=True,name='Employee-Data')
 def add_bulk_employees(employee_data,current_user,file_path):
     new_users = []
     for employee in employee_data:
@@ -1765,7 +1824,7 @@ def add_bulk_employees(employee_data,current_user,file_path):
                 # sending an activation email
                 email_flag = True #means need to send an email for this user since this is a new user
                 # Generate a random password
-                S = 10  # number of characters in the string.  
+                #S = 10  # number of characters in the string.  
                 # call random.choices() string module to find the string in Uppercase + numeric data.  
                 # random_password = ''.join(random.choices(string.ascii_uppercase + string.digits, k = S))  
                 random_password = "password"  
@@ -1867,17 +1926,17 @@ def populate_bulk_employee_company_details(employee_data,company_id):
         'designation' :  (employee_data['designation'].upper()).strip(),
         'date_of_joining' :  employee_data['date_of_joining'],
         'type' : '0' if employee_data['salary_type'] == 'Full-time' else '1',
-        'working_office':default_work_office._id if default_work_office else '',
-        # 'work_timing' : default_work_timing._id if default_work_timing else '',
+        #'working_office':default_work_office._id if default_work_office else '',
+        #'work_timing' : default_work_timing._id if default_work_timing else '',
         'status' :  True,
         }
-    if default_work_timing:
-        employee_company_details['working_sub_company'] = default_work_timing._id
-    if employee_data['working_sub_company']:
-        # Todo: Check if the sub company config is created; if not create a new config with the name
-        sub_company_exists = SubCompanies.objects(company_id=company_id,company_name=employee_data['working_sub_company']).first() or SubCompanies(company_id=company_id,company_name=employee_data['working_sub_company']).save()
-        CompanyDetails.objects(user_id=company_id).update(add_to_set__sub_companies=sub_company_exists._id)
-        employee_company_details['working_sub_company'] = sub_company_exists._id
+    # if default_work_timing:
+    #     employee_company_details['working_sub_company'] = default_work_timing._id
+    # if employee_data['working_sub_company']:
+    #     # Todo: Check if the sub company config is created; if not create a new config with the name
+    #     sub_company_exists = SubCompanies.objects(company_id=company_id,company_name=employee_data['working_sub_company']).first() or SubCompanies(company_id=company_id,company_name=employee_data['working_sub_company']).save()
+    #     CompanyDetails.objects(user_id=company_id).update(add_to_set__sub_companies=sub_company_exists._id)
+    #     employee_company_details['working_sub_company'] = sub_company_exists._id
     
     if employee_data['salary_type'] == 'Full-time': #type = full time
         basic_salary = 0 if employee_data['basic_salary'] == '' else int(employee_data['basic_salary'])
@@ -2058,13 +2117,20 @@ def send_resend_emails(email,company_id):
     # msg.html = html
     # mail.send(msg)
     # return True
-
 @company.route('/attendancereport',methods=["GET","POST"])
 @login_required
 @roles_accepted('admin','company','supervisor','attendancemanager')
 def attendance_report():
-    company_employees = CompanyDetails.objects(user_id=current_user.id).only('employees','clock_in_options').first()
-    company_id = current_user.id
+
+    multiple_access_company_id=session.get("multiple_access_company_id")
+    print(f"    Company Name2: {multiple_access_company_id}")
+    if multiple_access_company_id:
+        company_id=multiple_access_company_id
+    else :
+        company_id=current_user.id
+
+    company_employees = CompanyDetails.objects(user_id=company_id).only('employees','clock_in_options').first()
+    company_id = company_id
     start_date = datetime.today().replace(minute=0, hour=0, second=0,microsecond=0)
 
     if not company_employees: 
@@ -2073,18 +2139,21 @@ def attendance_report():
         company_id = employee_details.company_id
 
 
-    company_employees['employees'] = list(filter(lambda x: x['user_id']['active_till'] is None or x['user_id']['active_till'] > start_date, company_employees['employees']))
-    
-    if request.method=="POST":
-        company_employees = CompanyDetails.objects(user_id=current_user.id).only('employees','clock_in_options').first()
+    # company_employees['employees'] = list(filter(lambda x: x['user_id']['active_till'] is None or x['user_id']['active_till'] > start_date, company_employees['employees']))
+    company_employees['employees'] = list(filter(lambda x: x['user_id']['active'], company_employees['employees']))
 
-        attendance_from = request.form.get('attendance_date_from')
-        attendance_to = request.form.get('attendance_date_to')
+    if request.method=="POST":
+        company_employees = CompanyDetails.objects(user_id=company_id).only('employees','clock_in_options').first()
+
+        daterange = request.form.get('daterange')
+        attendance_from, attendance_to = [date.strip() for date in daterange.split('-')]
         employee_details_id = request.form.get('employee_id')
         start_date = datetime. strptime(attendance_from, '%d/%m/%Y')
         end_date = datetime. strptime(attendance_to, '%d/%m/%Y')
 
-        company_employees['employees'] = list(filter(lambda x: x['user_id']['active_till'] is None or x['user_id']['active_till'] > start_date, company_employees['employees']))
+        # company_employees['employees'] = list(filter(lambda x: x['user_id']['active_till'] is None or x['user_id']['active_till'] > start_date, company_employees['employees']))
+        company_employees['employees'] = list(filter(lambda x: x['user_id']['active'], company_employees['employees']))
+	
 
         total_hrs_worked = timedelta()
         data = []
@@ -2147,9 +2216,14 @@ def attendance_report():
                     
                 data.append(item)
             employee_details = EmployeeDetails.objects(_id=ObjectId(employee_details_id)).first()
-            updated_data = add_sundays_to_attendace(data, start_date, end_date, employee_details)
+            if dynamic_config.env not in ["hrm", "hrm-debug"]:
 
-            return render_template('company/attendance_report.html',employee_attendance=updated_data,employees_details=company_employees,selected_emp=ObjectId(employee_details_id),start=start_date,end=end_date,total_hrs_worked=chop_microseconds(total_hrs_worked))
+                data = add_sundays_to_attendace(data, start_date, end_date, employee_details)
+            
+                # Sorting the result list by 'attendance_date'
+            data.sort(key=lambda x: x['attendance_date'])
+
+            return render_template('company/attendance_report.html',employee_attendance=data,employees_details=company_employees,selected_emp=ObjectId(employee_details_id),start=start_date,end=end_date,total_hrs_worked=chop_microseconds(total_hrs_worked))
                     
         else:
             employee_attendance = EmployeeAttendance.objects(company_id=company_id,attendance_date__gte=start_date,attendance_date__lte=end_date)
@@ -2184,10 +2258,17 @@ def attendance_report():
                 #         item.total_hr_worked_excluding = d = timedelta(hours=int(h), minutes=int(m), seconds=float(s))-timedelta(minutes=int(sum_of_break))
                 #     else:
                 #         item.total_hr_worked_excluding = d = timedelta(hours=int(h), minutes=int(m), seconds=float(s))
-                    
                 data.append(item)
-            updated_data = add_sundays_to_attendace_company_level(data, start_date, end_date, company_employees['employees'][0])
-        return render_template('company/attendance_report.html',employee_attendance=updated_data,employees_details=company_employees,start=start_date,end=end_date)
+
+            if dynamic_config.env not in ['hrm', "hrm-debug"]:
+
+                data = add_sundays_to_attendace_company_level(data, start_date, end_date, company_employees['employees'])
+
+                        
+                # Sorting the result list by 'attendance_date'
+            data.sort(key=lambda x: x['attendance_date'])
+
+            return render_template('company/attendance_report.html',employee_attendance=data,employees_details=company_employees,start=start_date,end=end_date)
         # attendance_date = datetime. strptime(request.form.get('attendance_range[0]'), '%d/%m/%Y')  if request.form.get('attendance_date') else datetime.today().replace(minute=0, hour=0, second=0,microsecond=0)
     else:
         # company_employees = CompanyDetails.objects(user_id=company_id).only('employees','clock_in_options').first()
@@ -2236,20 +2317,7 @@ def get_company_employees(current_user):
 def parse_date(date_str, format='%d/%m/%Y'):
     return datetime.strptime(date_str, format)
 
-def filter_active_employees(employees, start_date, sub_company):
-    if sub_company:
-        return [
-            employee for employee in employees 
-            if (employee.user_id.active_till is None or employee.user_id.active_till > start_date) 
-            and employee.employee_company_details is not None 
-            and employee.employee_company_details.working_sub_company is not None 
-            and employee.employee_company_details.working_sub_company.id == ObjectId(sub_company)
-        ]
-    else:
-        return [
-            employee for employee in employees 
-            if employee.user_id.active_till is None or employee.user_id.active_till > start_date
-        ]
+
 
 def calculate_total_hours_worked(employee_attendance):
     total_hrs_worked = timedelta()
@@ -2294,86 +2362,39 @@ def attendance_summary():
     company_id = current_user.id
     company_employees = get_company_employees(current_user)
     company_details = CompanyDetails.objects(user_id=current_user.id).first()
-    end_date = datetime.today().replace(minute=0, hour=0, second=0,microsecond=0)
-    start_date = datetime.today().replace(minute=0, hour=0, second=0,microsecond=0)
+    end_date = datetime.today().replace(minute=0, hour=0, second=0, microsecond=0)
+    start_date = datetime.today().replace(minute=0, hour=0, second=0, microsecond=0)
     sub_company = None
+
     if request.method == 'POST':
-        attendance_from = request.form.get('attendance_date_from')
-        attendance_to = request.form.get('attendance_date_to')
-        start_date = datetime. strptime(attendance_from, '%d/%m/%Y')
-        end_date = datetime. strptime(attendance_to, '%d/%m/%Y')
+        daterange = request.form.get('daterange')
+        attendance_from, attendance_to = [date.strip() for date in daterange.split('-')]
+        start_date = datetime.strptime(attendance_from, '%d/%m/%Y')
+        end_date = datetime.strptime(attendance_to, '%d/%m/%Y')
         sub_company = request.form.get('sub_company')
 
-    all_holidays = CompanyHolidays.objects(occasion_date__gte=start_date, occasion_date__lte=end_date).all()
+    # Get holidays within the date range
+    holidays = CompanyHolidays.objects(occasion_date__gte=start_date, occasion_date__lte=end_date)
+    all_holidays = holidays.count()  # Get the number of holidays
+
+    # Calculate Sundays and total days
     no_day_offs, total_days = count_sundays(start_date, end_date)
 
     company_employees['employees'] = filter_active_employees(company_employees['employees'], start_date, sub_company)
     attendance_data = []
+    stats = get_employee_schedule_statistics(company_id, start_date, end_date, dynamic_config.env)
 
-    print(len(company_employees['employees']))
-    for i, employee in enumerate(company_employees['employees']):
-        employee_details_id = employee._id
-        if employee_details_id:
-            print(employee.first_name, i)
+    for record in stats:
+        absent = total_days - (record['absent_count'] + record['present_count'] + no_day_offs + all_holidays)
+        attendance_data.append({
+            'employee_details': EmployeeDetails.objects(_id=ObjectId(record['_id'])).first(),
+            'attendance': total_days - no_day_offs - all_holidays,
+            "late_count": record['late_count'],
+            'days_present': record['present_count'],
+            'days_absent': absent,
+            'days_on_leave': record['absent_count']
+        })
 
-            employee_attendance = EmployeeAttendance.objects(company_id=ObjectId(company_id),
-            attendance_date__gte=start_date,attendance_date__lte=end_date,
-
-            employee_details_id=ObjectId(employee_details_id)).all()
-            total_attendance = len(employee_attendance)
-
-            days_on_leave = CompanyEmployeeSchedule.objects(
-                                Q(employee_id=employee_details_id) &
-                                Q(schedule_from__gte=start_date) &
-                                Q(schedule_from__lte=end_date) &
-                                Q(is_leave=True)
-                            )
-
-            # if (employee_attendance):
-            #     print(employee_attendance[0].to_json())
-
-            employee_details = EmployeeDetails.objects(_id=ObjectId(employee_details_id)).first()
-            office_start_at = None
-
-            # ----------------------------------cal late days-------------------------------------
-            schedule =  CompanyEmployeeSchedule.objects(employee_id=employee_details_id, schedule_from=start_date).first()
-
-            if (schedule):
-                office_start_at = schedule.work_timings.office_start_at
-            else:
-                if not employee_details.employee_company_details.work_timing:
-                    office_start_at = (WorkTimings.objects(company_id=employee_details.company_id,is_default=True).first()).office_start_at
-                else:
-                    office_start_at = employee_details.employee_company_details.work_timing.office_start_at
-
-        
-            # default value
-            late_days = 0
-
-            # Check if office_start_at is not empty
-            if office_start_at:
-                office_start_time = datetime.strptime(office_start_at, '%I:%M %p').time()
-                grace_period = timedelta(minutes=15)
-                late_threshold_time = (datetime.combine(datetime.today(), office_start_time)).time()
-                late_threshold = datetime.combine(datetime.today(), late_threshold_time)
-
-                late_days = get_late_days_aggregate(employee_details.company_id, employee_details_id, start_date, end_date, late_threshold)
-            
-            #----------------------------------late days-------------------------------------------------------
-
-            # updated_data, late_count = add_workingdays_to_attendace(employee_attendance, start_date, end_date, employee_details)
-
-            days_absent = (total_days - (len(employee_attendance) + len(all_holidays) + no_day_offs)) - len(days_on_leave)
-
-            attendance_data.append({
-                'employee_details': employee_details,
-                'attendance': total_attendance + days_absent,
-                "late_count": late_days,
-                'days_present': total_attendance,
-                'days_absent': days_absent,
-                'days_on_leave': len(days_on_leave)
-            })
-    
     return render_template(
         'company/attendance_summary.html',
         attendance_data=attendance_data,
@@ -2384,144 +2405,41 @@ def attendance_summary():
         selected_sub_company=sub_company
     )
 
-def attendance_summary2():
 
-    company_employees = CompanyDetails.objects(user_id=current_user.id).only('employees','clock_in_options').first()
-    company_id = current_user.id
-    start_date = datetime.today().replace(minute=0, hour=0, second=0,microsecond=0)
-
-    if not company_employees: 
-        employee_details = EmployeeDetails.objects(user_id=current_user.id).first()
-        company_employees = CompanyDetails.objects(user_id=employee_details.company_id).only('employees','clock_in_options').first()   
-        company_id = employee_details.company_id
-
-
-    company_employees['employees'] = list(filter(lambda x: x['user_id']['active_till'] is None or x['user_id']['active_till'] > start_date, company_employees['employees']))
-
-    if request.method == 'POST':
-        company_employees = CompanyDetails.objects(user_id=current_user.id).only('employees', 'clock_in_options').first()
-        attendance_from = request.form.get('attendance_date_from')
-        attendance_to = request.form.get('attendance_date_to')
-        start_date = datetime.strptime(attendance_from, '%d/%m/%Y')
-        company_employees['employees'] = list(filter(lambda x: x['user_id']['active_till'] is None or x['user_id']['active_till'] > start_date, company_employees['employees']))
-        end_date = datetime.strptime(attendance_to, '%d/%m/%Y')
-        total_hrs_worked = timedelta()
-        data = []
-
-        for employee in company_employees['employees']:
-            employee_details_id = employee.employee_details_id
-
-            if employee_details_id:
-                employee_attendance = EmployeeAttendance.objects(company_id=company_id, attendance_date__gte=start_date, attendance_date__lte=end_date, employee_details_id=ObjectId(employee_details_id))
-                for i in employee_attendance:
-                    if "total_hrs_worked" in i:
-                        parts = i.total_hrs_worked.split(', ')
-                        if len(parts) == 2:
-                            days = int(parts[0].split()[0])
-                            time_str = parts[1]
-                        else:
-                            days = 0
-                            time_str = parts[0]
-                        (h, m, s) = time_str.split(':')
-                        d = timedelta(days=days, hours=int(h), minutes=int(m), seconds=float(s))
-                        total_hrs_worked += d
-
-                for item in employee_attendance:
-                    sum_of_break = 0
-                    if item.break_history:
-                        for bh in item.break_history:
-                            if bh.already_ended:
-                                sum_of_break += bh.break_difference
-                    if "total_hrs_worked" in item:
-                        parts = item.total_hrs_worked.split(', ')
-                        if len(parts) == 2:
-                            days = int(parts[0].split()[0])
-                            time_str = parts[1]
-                        else:
-                            days = 0
-                            time_str = parts[0]
-                        (h, m, s) = time_str.split(':')
-                        if sum_of_break > 0:
-                            item.total_hr_worked_excluding = timedelta(days=days, hours=int(h), minutes=int(m), seconds=float(s)) - timedelta(minutes=int(sum_of_break))
-                        else:
-                            item.total_hr_worked_excluding = timedelta(days=days, hours=int(h), minutes=int(m), seconds=float(s))
-                    data.append(item)
-
-                employee_details = EmployeeDetails.objects(_id=ObjectId(employee_details_id)).first()
-                updated_data = add_sundays_to_attendace(data, start_date, end_date, employee_details)
-
-            return render_template('company/attendance_report.html', employee_attendance=updated_data, employees_details=company_employees, selected_emp=ObjectId(employee_details_id), start=start_date, end=end_date, total_hrs_worked=chop_microseconds(total_hrs_worked))      
-    else:
-        # company_employees = CompanyDetails.objects(user_id=company_id).only('employees','clock_in_options').first()
-        end_date = datetime.today().replace(minute=0, hour=0, second=0,microsecond=0)
-        employee_attendance = EmployeeAttendance.objects(company_id=company_id,attendance_date__gte=start_date,attendance_date__lte=end_date)
-        data =[]
-        for item in employee_attendance:
-            sum_of_break = 0
-            if item.break_history:
-                for bh in item.break_history:
-                    if bh.already_ended:
-                        sum_of_break += bh.break_difference
-
-            if "total_hrs_worked" in item:
-                    # Splitting days and time components
-                    parts = item.total_hrs_worked.split(', ')
-                    if len(parts) == 2:  # If days component is present
-                        days = int(parts[0].split()[0])  # Extracting the number of days
-                        time_str = parts[1]  # Extracting the time component
-                    else:
-                        days = 0
-                        time_str = parts[0]
-
-                    # Parsing hours, minutes, and seconds
-                    (h, m, s) = time_str.split(':')
-
-                    if sum_of_break > 0:
-                        # Subtracting break time from total time
-                        item.total_hr_worked_excluding = timedelta(days=days, hours=int(h), minutes=int(m), seconds=float(s)) - timedelta(minutes=int(sum_of_break))
-                    else:
-                        item.total_hr_worked_excluding = timedelta(days=days, hours=int(h), minutes=int(m), seconds=float(s))
-            # if "total_hrs_worked" in item:
-            #     (h, m, s) = item.total_hrs_worked.split(':')
-            #     if sum_of_break > 0:
-            #         item.total_hr_worked_excluding = d = timedelta(hours=int(h), minutes=int(m), seconds=float(s))-timedelta(minutes=int(sum_of_break))
-            #     else:
-            #         item.total_hr_worked_excluding = d = timedelta(hours=int(h), minutes=int(m), seconds=float(s))
-                    
-            data.append(item)        
-        return render_template('company/attendance_report.html',employee_attendance=data,employees_details=company_employees,start=start_date,end=end_date)
-
-    
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 @company.route('/resend_password/<emp_id>')
 @login_required
 def resend_password(emp_id):
+    logger.info(f"Resend password requested for employee ID: {emp_id}")
     employee = EmployeeDetails.objects(_id=emp_id).first()
     if employee:
         user_exists = User.objects(_id=employee.user_id.id).first()
         if user_exists:
             new_user = []
-            S = 10  # number of characters in the string.  
-            # call random.choices() string module to find the string in Uppercase + numeric data.  
-            random_password = ''.join(random.choices(string.ascii_uppercase + string.digits, k = S)) 
+            S = 10  # number of characters in the string.
+            # call random.choices() string module to find the string in Uppercase + numeric data.
+            random_password = ''.join(choices(string.ascii_uppercase + string.digits, k=S))
             user_exists.update(password=generate_password_hash(random_password, method='sha256'))
-            new_user.append({"email":user_exists.email,"password":random_password})
+            new_user.append({"email": user_exists.email, "password": random_password})
             company_id = employee.company_id
-            send_password_emails.delay(new_user,str(company_id))
-            flash('Confirmation Link has been sent your registered email.','success')
-            return redirect(url_for('company.employees_list'))
+            logger.info(f"New password generated and updated for user ID: {user_exists.id}")
+            send_password_emails(new_user, str(company_id))
+            logger.info(f"Password email sent to the user with email: {user_exists.email}")
+            flash('Confirmation link has been sent to your registered email.', 'success')
+        else:
+            logger.warning(f"User not found for employee ID: {emp_id}")
+            flash('User not found.', 'danger')
+    else:
+        logger.warning(f"Employee not found with ID: {emp_id}")
+        flash('Employee not found.', 'danger')
+    return redirect(url_for('company.employees_list'))
 
-# def send_password_emails(new_users):
-#     for user in new_users:
-#         token = generate_confirmation_token(user['email'])
-#         confirm_url = url_for('auth.confirm_email', token=token, _external=True)
-#         html = render_template('email/employee_confirmation.html', confirm_url=confirm_url,current_password=user['password'])
-#         msg = Message('Please confirm your email!', sender = app.config['MAIL_USERNAME'], recipients = [user['email']])
-#         msg.html = html
-#         mail.send(msg)
-#     return True
-@celery.task(track_started = True,result_extended=True,name='Hr-Resend-Password-Email')
-def send_password_emails(new_users,company_id):
+
+# @celery.task(track_started=True, result_extended=True, name='Hr-Resend-Password-Email')
+def send_password_emails(new_users, company_id):
+    logger.info("Starting send_password_emails task")
     app = create_app()  # create the Flask app
     mail = Mail(current_app)  # initialize Flask-Mail with default email server details
 
@@ -2532,16 +2450,17 @@ def send_password_emails(new_users,company_id):
         mail_use_tls = company_details.email_config.company_email_tls
         mail_username = company_details.email_config.company_email_user
         mail_password = company_details.email_config.company_email_password
-       
+
         current_app.config.update(
-        MAIL_SERVER=mail_server,
-        MAIL_PORT=mail_port,
-        MAIL_USE_TLS=mail_use_tls,
-        MAIL_USERNAME=mail_username,
-        MAIL_PASSWORD=mail_password
+            MAIL_SERVER=mail_server,
+            MAIL_PORT=mail_port,
+            MAIL_USE_TLS=mail_use_tls,
+            MAIL_USERNAME=mail_username,
+            MAIL_PASSWORD=mail_password
         )
-        
+
         mail.init_app(current_app)
+        logger.info("Mail configuration updated from company details")
     else:
         mail_server = app.config['MAIL_SERVER']
         mail_port = app.config['MAIL_PORT']
@@ -2549,16 +2468,19 @@ def send_password_emails(new_users,company_id):
         mail_username = app.config['MAIL_USERNAME']
         mail_password = app.config['MAIL_PASSWORD']
         mail.init_app(app)
+        logger.info("Mail configuration loaded from default app config")
 
     with current_app.app_context():
         for user in new_users:
             token = generate_confirmation_token(user['email'])
             confirm_url = url_for('auth.confirm_email', token=token, _external=True)
             html = render_template('email/employee_confirmation.html', confirm_url=confirm_url, current_password=user['password'])
-            msg = Message('Please confirm your email! | Cubes HRMS', sender=("Cubes HRMS",mail_username), recipients=[user['email']])
+            msg = Message('Please confirm your email! | Cubes HRMS', sender=("Cubes HRMS", mail_username), recipients=[user['email']])
             msg.html = html
             mail.send(msg)
+            logger.info(f"Password email sent to: {user['email']}")
 
+    logger.info("send_password_emails task completed")
     return True
 
 @company.route('/createoffice/settings/', methods=['POST'])
@@ -2609,8 +2531,10 @@ def adjustments():
     if not adjustment_details and current_user.type == "employee": 
         employee_details = EmployeeDetails.objects(user_id=current_user.id).only('company_id').first()
         adjustment_details = CompanyPayrollAdjustment.objects(company_id=employee_details.company_id,adjustment_month_on_payroll=payroll_month,adjustment_year_on_payroll=payroll_year)
-    # adjustment_details = CompanyPayrollAdjustment.objects(company_id=current_user.id)
+
     return render_template('company/adjustments/adjustments.html',adjustment_details=adjustment_details,start_of_month=selected_of_month)
+
+
 
 @company.route('/create/adjustments', methods=['GET','POST'])
 @roles_accepted('admin','company','expensemanager')
@@ -2727,6 +2651,7 @@ def create_adjustments():
         # company_details = CompanyDetails.objects(user_id=current_user.id).only('employees','adjustment_reasons').first()  
         start_of_month = datetime.today().replace(day=1,minute=0, hour=0, second=0,microsecond=0)
         return render_template('company/adjustments/create_adjustment.html',company_details=company_details,start_of_month=start_of_month)
+        
 
 @company.route('/delete/adjustment/<adjustment_id>')
 @login_required
@@ -2737,6 +2662,7 @@ def delete_adjustment(adjustment_id):
     if adjustment_details: 
         # todo: Create a record in Activity Log 
         activity_log = create_activity_log(request,current_user.id,adjustment_details.company_id.id)    
+        print(adjustment_details._id, "removed")
         adjustment_details.delete()
         if True:
             flash('Adjustment Deleted Successfully!', 'success')
@@ -2768,41 +2694,107 @@ def create_reason():
         return render_template('company/settings.html')
     
 #Employee List Page
+# @company.route('/generate/payroll', methods=['POST'])
+# @login_required
+# @roles_accepted('admin','company')
+# def generate_payroll():
+#     selected_month = request.form.get('selected_month')
+#     sub_company = request.form.get('sub_company') 
+#     sm = datetime. strptime(selected_month, '%Y-%m-%d')
+#     message = 'Payroll Generation for the month of ' + sm.strftime('%B %Y') + ' has '
+#     if selected_month:
+
+#         result = generate_bulk_payroll(selected_month,str(current_user.id), sub_company)
+#         # result = generate_bulk_payroll(selected_month,str(current_user.id), sub_company)
+        
+#         #    result = add_bulk_open_leaves(leave_data,str(current_user.id))
+#         if result[0]:
+#             # task_scheduled_details = ScheduledBackgroundTask(celery_task_id=result.id,company_id=current_user.id,task_type='generate_bulk_payroll',message=message,uploaded_on=datetime.now())
+#             # task_scheduled_details.save()
+#             return {
+#                 'sucess': "True", 
+#                 'message': 'Sucess'
+#             }
+#         else:
+#             return {
+#                 'sucess': "False", 
+#                 'message': result[1]
+#             }
+#     else:
+#         return {
+#                 'sucess': "False", 
+#                 'message': "please select a month."
+#         }
+
+
+
 @company.route('/generate/payroll', methods=['POST'])
 @login_required
-@roles_accepted('admin','company')
+@roles_accepted('admin', 'company')
 def generate_payroll():
     selected_month = request.form.get('selected_month')
-    sub_company = request.form.get('sub_company') 
-    sm = datetime. strptime(selected_month, '%Y-%m-%d')
-    message = 'Payroll Generation for the month of ' + sm.strftime('%B %Y') + ' has '
-    if selected_month:
+    sub_company = request.form.get('sub_company')
 
-        result = generate_bulk_payroll.delay(selected_month,str(current_user.id), sub_company)
-        # result = generate_bulk_payroll(selected_month,str(current_user.id), sub_company)
-        
-        #    result = add_bulk_open_leaves(leave_data,str(current_user.id))
-        if result[0]:
-            task_scheduled_details = ScheduledBackgroundTask(celery_task_id=result.id,company_id=current_user.id,task_type='generate_bulk_payroll',message=message,uploaded_on=datetime.now())
-            task_scheduled_details.save()
-            return {
-                'sucess': "True", 
-                'message': 'Sucess'
-            }
-        else:
-            return {
-                'sucess': "False", 
-                'message': result[1]
-            }
-    else:
+    # Check if the selected month is provided
+    if not selected_month:
         return {
-                'sucess': "False", 
-                'message': "please select a month."
+            'success': "False",
+            'message': "Please select a month."
         }
 
-@celery.task(track_started = True,result_extended=True,name='Generate-Payroll-Data')
+    # Parse the selected month
+    sm = datetime.strptime(selected_month, '%Y-%m-%d')
+    message = 'Payroll Generation for the month of ' + sm.strftime('%B %Y') + ' has '
+
+    # Parse the sub_company JSON string into a list
+    if sub_company:
+        try:
+            sub_company_list = json.loads(sub_company)
+            # Convert each company ID to ObjectId (if needed)
+            sub_company_ids = [ObjectId(company_id) for company_id in sub_company_list]
+
+
+        except Exception as e:
+            return {
+                'success': "False",
+                'message': f"Error parsing sub_company: {str(e)}"
+            }
+    else:
+        sub_company_ids = ''
+
+    results = []  # Store results for each sub company
+    if len(sub_company_list) == 0:
+    # If empty, pass None for the company
+        result = generate_bulk_payroll(selected_month, str(current_user.id), sub_company_list )
+        results.append(result)
+    else:
+   
+        sub_company_ids = [ObjectId(company_id) for company_id in sub_company_list]
+        for company in sub_company_ids:
+            result = generate_bulk_payroll(selected_month, str(current_user.id), company)
+            results.append(result)
+
+
+    # Process results
+    all_success = all(res[0] for res in results)  # Check if all results are successful
+    if all_success:
+        return {
+           'sucess': "True", 
+            'message': 'Sucess'
+        }
+    else:
+        # If any result is not successful, compile error messages
+        error_messages = [res[1] for res in results if not res[0]]
+        return {
+            'sucess': "False", 
+            'message': error_messages
+        }
+
+
+# @celery.task(track_started = True,result_extended=True,name='Generate-Payroll-Data')
 def generate_bulk_payroll(_month, current_user, sub_company):
     selected_month = datetime. strptime(_month, '%Y-%m-%d')
+
     employees_details = CompanyDetails.objects(user_id=ObjectId(current_user)).first()
 
     print(sub_company)
@@ -2821,11 +2813,15 @@ def generate_bulk_payroll(_month, current_user, sub_company):
             )
         )
 
-        active_employees = list(filter(lambda x:x['employee_company_details']['status']==True,sub_company_employees_details))
+        # active_employees = list(filter(lambda x:x['employee_company_details']['status']==True,sub_company_employees_details))
+        # active_employees = filter_active_employees(sub_company_employees_details.employees, selected_month, sub_company)
+        active_employees = filter_active_employees(sub_company_employees_details, selected_month, sub_company)  #added By ashiq date : 20/09/2024 issues : subcompnay 
 
     else :
-        active_employees = list(filter(lambda x:x['employee_company_details']['status']==True,employees_details.employees))
+        # active_employees = list(filter(lambda x:x['employee_company_details']['status']==True,employees_details.employees))
         # active_employees = list(filter(lambda x:x['_id']==ObjectId('624fe7dfe715a9c4baa8045b'),employees_details.employees))
+        active_employees = filter_active_employees(employees_details.employees, selected_month, None)
+
     
     overal_salary_to_be_paid = 0.0
     overal_salary_to_be_paid_ja = 0.0
@@ -2964,7 +2960,9 @@ def generate_bulk_payroll(_month, current_user, sub_company):
             
             #......................................................................................
             try :
-                index = index + 1
+                if ("FZE" in employee.employee_sif_details.company_exchange.exchange_name):
+                    index = index + 1
+
                 edr_record = wps_factory.generate_edr(employee, employee_payroll, index)
 
 
@@ -3064,7 +3062,7 @@ def generate_bulk_payroll(_month, current_user, sub_company):
 
             wps_factory.generate_scr(sub_company_obj, payroll_details, sif_record)    
         else:
-            employer_details = EmployeeDetails.objects(user_id=employees_details.user_id.id).first()
+            employer_details = CompanyDetails.objects(user_id=employees_details.user_id.id).first()
 
             wps_factory.generate_scr(employer_details, payroll_details, sif_record)    
 
@@ -3574,85 +3572,96 @@ def update_leave_approvers():
         new_approval_level = request.form.get('edit_approval_level')
         new_approvers_list = request.form.getlist('edit_leave_approver[]')
         edit_leave_app_id = request.form.get('edit_leave_app_id')
-        # Update CompanyLeaveApprovers Record
-        # print(new_approvers_list)
+        
+        # Fetch the current CompanyLeaveApprovers record
         company_leave_approver = CompanyLeaveApprovers.objects(_id=ObjectId(edit_leave_app_id)).first()
-        # company_leave_approver.department_approval_level = new_approval_level
-        # Todo: Check if the approval level has been changed
-        if new_approval_level != company_leave_approver.department_approval_level:
-            current_approval_level = company_leave_approver.department_approval_level
-            # Todo: Check if the new approval level is increased or decreased
-            # if Increased, Calculate increased by how much ; then update accordingly 
-            approval_inc_by = int(new_approval_level) - int(current_approval_level) 
-            # print(approval_inc_by)
+        if not company_leave_approver:
+            return json.dumps({"status": "failed", "message": "Company leave approver record not found"})
+
+        # Compare new_approvers to existing to find employee that are no more approvers
+        for emp_leave_approver in company_leave_approver.approvers:
+            if str(emp_leave_approver.employee_details_id._id) not in new_approvers_list:
+                # Remove employee from the approvers list
+                # Remove employee from the company_leave_approver list
+                if hasattr(emp_leave_approver, 'employee_details_id'):
+                    emp_details = emp_leave_approver.employee_details_id
+                    emp_details.is_approver = False
+                    emp_details.save()
+
+
+        current_approval_level = company_leave_approver.department_approval_level
+        
+        # Check if the approval level has changed
+        if new_approval_level != current_approval_level:
+            approval_inc_by = int(new_approval_level) - int(current_approval_level)
+            approval_dec_by = int(current_approval_level) - int(new_approval_level)
+            
+            # Handle increased approval levels
             if approval_inc_by > 0:
                 for index in range(int(new_approval_level)):
-                    employee_leave_approver = EmployeeLeaveApprover.objects(employee_approval_level=str(index+1),department_name=dept_name,company_id=current_user.id).first()
-                    # Todo: Update the new approver to the existing one if existed
+                    approver_id = new_approvers_list[index] if index < len(new_approvers_list) else None
+                    employee_leave_approver = EmployeeLeaveApprover.objects(
+                        employee_approval_level=str(index+1),
+                        department_name=dept_name,
+                        company_id=current_user.id
+                    ).first()
+
                     if employee_leave_approver:
-                        # Check whether the new approver exists or not
-                        new_aprrover = new_approvers_list[index]
-                        employee_leave_approver.update(employee_details_id=ObjectId(new_aprrover))
-                        # add value to a list only if its not in the list already
-                        s = CompanyLeaveApprovers.objects(_id=ObjectId(edit_leave_app_id)).update_one(add_to_set__approvers=employee_leave_approver._id)
-                    # else Create a new employee leave approver
+                        if approver_id != str(employee_leave_approver.employee_details_id._id):
+                            employee_leave_approver.update(employee_details_id=ObjectId(approver_id))
+                            company_leave_approver.update(add_to_set__approvers=employee_leave_approver._id)
                     else:
-                        # check if the EmployeeLeaveApprover exist for the 
-                        employee_leave_approver = EmployeeLeaveApprover()
-                        employee_leave_approver.company_id = current_user.id
-                        employee_leave_approver.department_name = dept_name
-                        employee_leave_approver.employee_approval_level = str(index+1)
-                        employee_leave_approver.employee_details_id = ObjectId(new_approvers_list[index])
-                        employee_leave_approver.company_approval_id = company_leave_approver._id
-                        employee_leave_approver.save()
-                        # Data in List of Reference
-                        company_leave_approver.update(push__approvers=employee_leave_approver._id)
-                        # Employee Details Set is_approver flag to true
-                        EmployeeDetails.objects(_id=ObjectId(new_approvers_list[index])).update(is_approver=True)
+                        if approver_id:
+                            employee_leave_approver = EmployeeLeaveApprover(
+                                company_id=current_user.id,
+                                department_name=dept_name,
+                                employee_approval_level=str(index+1),
+                                employee_details_id=ObjectId(approver_id),
+                                company_approval_id=company_leave_approver._id
+                            )
+                            employee_leave_approver.save()
+                            company_leave_approver.update(push__approvers=employee_leave_approver._id)
+                            emp_details = EmployeeDetails.objects(_id=ObjectId(approver_id)).first()
+                            if (emp_details):
+                                emp_details.update(is_approver=True)
+
+            
+            # Handle decreased approval levels
+            elif approval_dec_by > 0:
+                for index in range(int(new_approval_level), int(current_approval_level)):
+                    employee_leave_approver = EmployeeLeaveApprover.objects(
+                        employee_approval_level=str(index+1),
+                        department_name=dept_name,
+                        company_id=current_user.id
+                    ).first()
                     
-            else:
-            # If Decreased, Calculate decreased by how much ; then update accordingly
-                approval_dec_by = int(current_approval_level) - int(new_approval_level)
-                # Update the New Aprrovers 
-                for index in range(int(new_approval_level)):
-                    employee_leave_approver = EmployeeLeaveApprover.objects(employee_approval_level=str(index+1),department_name=dept_name,company_id=current_user.id).first()
-                    # Todo: Update the new approver to the existing one if existed
                     if employee_leave_approver:
-                        # Check whether the new approver exists or not
-                        new_aprrover = new_approvers_list[index]
-                        employee_leave_approver.update(employee_details_id=ObjectId(new_aprrover))
-                # start and stop ; Start from new approval level and end on last approval level i.e 5
-                for index in range(int(new_approval_level),5):
-                    print(index) 
-                    employee_leave_approver = EmployeeLeaveApprover.objects(employee_approval_level=str(index+1),department_name=dept_name,company_id=company_leave_approver.company_id.id).first()
-                    if employee_leave_approver:
-                        # employee_leave_approver.update(employee_approval_level='')
                         company_leave_approver.update(pull__approvers=employee_leave_approver._id)
-            # update the new deparmtental approval level
-            status = company_leave_approver.update(department_approval_level=new_approval_level)
+                        employee_leave_approver.delete()
+            
+            # Update the approval level in the company leave approver record
+            company_leave_approver.update(department_approval_level=new_approval_level)
+
+        # Handle case where the number of approvers hasn't changed but approvers themselves need updating
         else:
-            # Todo: Change the approver from the list with the new employee id
-            for index,item in enumerate(company_leave_approver.approvers):
-                print(index)
-                employee_leave_approver = EmployeeLeaveApprover.objects(employee_approval_level=str(index+1),department_name=dept_name,company_id=company_leave_approver.company_id.id).first()
-                # Todo: Update the new approver to the existing one if existed
-                if employee_leave_approver:
-                    # Check whether the new approver exists or not
-                    new_aprrover = new_approvers_list[index]
+            for index, approver_id in enumerate(new_approvers_list):
+                if index < len(company_leave_approver.approvers):
+                    employee_leave_approver = EmployeeLeaveApprover.objects(
+                        employee_approval_level=str(index+1),
+                        department_name=dept_name,
+                        company_id=company_leave_approver.company_id.id
+                    ).first()
                     
-                    status = employee_leave_approver.update(employee_details_id=ObjectId(new_aprrover))
-                    # add value to a list only if its not in the list already
-                    s = CompanyLeaveApprovers.objects(_id=ObjectId(edit_leave_app_id)).update_one(add_to_set__approvers=employee_leave_approver._id)
-                    
-                    # print(new_aprrover)
-        if status:
-            msg =  json.dumps({'status':'success'})
-            msghtml = json.loads(msg)
-            return msghtml
-        else:
-            msg =  json.dumps({"status":"failed"})
-            msghtml = json.loads(msg)
-            return msghtml
+                    if employee_leave_approver:
+                        employee_leave_approver.update(employee_details_id=ObjectId(approver_id))
+                        company_leave_approver.update(add_to_set__approvers=employee_leave_approver._id)
+                        emp_details = EmployeeDetails.objects(_id=ObjectId(approver_id)).first()
+                        if (emp_details):
+                            emp_details.update(is_approver=True)
+
+        msg = json.dumps({'status': 'success'})
+        return json.loads(msg)
+
 
 @company.route('/update/leaveapplicationstatus/', methods=['POST'])
 def update_leave_application_status():
@@ -4202,10 +4211,16 @@ def leaves_applications():
 @login_required
 @roles_accepted('admin','company')
 def payroll_view(): 
-    sub_company=None
+    sub_company = None
+    selected_sub_company=None
     if request.method=="POST":
         selected_of_month = datetime. strptime(request.form.get('selected_month'), '%Y-%m-%d')  if request.form.get('selected_month') else datetime.today().replace(day=1,minute=0, hour=0, second=0,microsecond=0)
         sub_company = request.form.get('sub_company')
+        selected_sub_company = request.form.get('sub_company')
+        if selected_sub_company == "all company":
+            sub_company = None  # Pass None when "All Company" is selected
+        else:
+            sub_company = selected_sub_company 
     else:
         selected_of_month = datetime.today().replace(day=1,minute=0, hour=0, second=0,microsecond=0)
     
@@ -4219,10 +4234,10 @@ def payroll_view():
         payroll_details = CompanyPayroll.objects(company_id=current_user.id,payroll_month=payroll_month,payroll_year=payroll_year)
 
 
-    company_details = CompanyDetails.objects(user_id=current_user.id).only('company_name','company_logo', 'sub_companies').first()
+    company_details = CompanyDetails.objects(user_id=current_user.id).only('company_name','company_logo', 'sub_companies','Currency').first()
     return render_template('company/payroll_view.html',start_of_month=selected_of_month,
                            payroll_details=payroll_details,company_details=company_details, 
-                           sub_company=sub_company, selected_sub_company = sub_company)
+                           sub_company=sub_company, selected_sub_company = selected_sub_company)
 
 
 def dereference_dbrefs(scrs, className):
@@ -4238,9 +4253,15 @@ def dereference_dbrefs(scrs, className):
 @roles_accepted('admin','company')
 def payroll_wps_view(): 
     sub_company = None
+    selected_sub_company=None
     if request.method == "POST":
         selected_month = datetime.strptime(request.form.get('selected_month'), '%Y-%m-%d') if request.form.get('selected_month') else datetime.today().replace(day=1, minute=0, hour=0, second=0, microsecond=0)
-        sub_company = request.form.get('sub_company')
+        selected_sub_company = request.form.get('sub_company')
+
+        if selected_sub_company == "all company":
+            sub_company = None  # Pass None when "All Company" is selected
+        else:
+            sub_company = selected_sub_company 
     else:
         selected_month = datetime.today().replace(day=1, minute=0, hour=0, second=0, microsecond=0)
     
@@ -4251,39 +4272,95 @@ def payroll_wps_view():
     end_of_the_month = nxt_mnth - timedelta(days=nxt_mnth.day)
 
     sdr_details = CompanySif.objects(company_id=current_user.id, sif_month=selected_month, sif_year=payroll_year, sif_type="SCR").first()
-    company_details = CompanyDetails.objects(user_id=current_user.id).only('sub_companies').first()
-    sif_record = SIF.objects(start_date=selected_month, end_date=end_of_the_month).first()
 
+    company_details = CompanyDetails.objects(user_id=current_user.id).only('sub_companies').first()
+    company_details_name = CompanyDetails.objects(user_id=current_user.id).first()
+    sif_record = SIF.objects(start_date=selected_month, end_date=end_of_the_month, company = company_details.id).first()
+
+    company_name_details = company_details_name.company_name
 
     if sub_company:
         payroll_details = CompanyPayroll.objects(company_id=current_user.id, payroll_month=payroll_month, payroll_year=payroll_year, working_sub_company=ObjectId(sub_company))
         sif_record = SIF.objects(sub_company=ObjectId(sub_company), start_date=selected_month, end_date=end_of_the_month).first()
         
         if sif_record:
-
             edrs_valus, scrs_values, table_head, scrs = get_data_for_WPS_view(sif_record)
-            
-            return render_template('company/payroll_wps_view_new.html', selected_sub_company = ObjectId(sub_company),
-                                   start_of_month=selected_month, company_details=company_details,
-                                   edr_data=sif_record.EDR_records, scr_data=scrs, sdr_details=sdr_details,
-                                   table_head = table_head, edrs_valus = edrs_valus, scrs_values = scrs_values
-                                   )
+
+            edrs_valus = preprocess_data(edrs_valus) #Added By Ashiq Date : 19/sep/2024 Issues : Date formate 
+
+
+            # return render_template('company/payroll_wps_view_new.html', selected_sub_company = ObjectId(sub_company),
+            #                        start_of_month=selected_month, company_details=company_details,
+            #                        edr_data=sif_record.EDR_records, scr_data=scrs, sdr_details=sdr_details,
+            #                        table_head = table_head, edrs_valus = edrs_valus, scrs_values = scrs_values
+            #                        )   
+            return render_template(
+                    'company/payroll_wps_view.html',
+                    company_details=company_details,
+                    start_of_month=selected_month,
+                    selected_sub_company=selected_sub_company,
+                    payroll_details=payroll_details,
+                    sdr_details=sdr_details,
+                    edr_data=sif_record.EDR_records, 
+                    scr_data=scrs,
+                    table_head = table_head, 
+                    edrs_valus = edrs_valus, 
+                    scrs_values = scrs_values,
+                    company_name_details = company_name_details
+                )   #Added By ashiq  Date:13/sep/2024  Issues  : wps 
+        
     else:
         sub_company = ObjectId(request.form.get('sub_company')) if sub_company else None
 
         payroll_details = CompanyPayroll.objects(company_id=current_user.id, payroll_month=payroll_month, payroll_year=payroll_year)
 
         if sif_record and not sif_record.sub_company:
+            #Added By Ashiq Date : 13/sep/2024 Issues : wps 
             edrs_valus, scrs_values, table_head, scrs = get_data_for_WPS_view(sif_record)
-            
-            return render_template('company/payroll_wps_view_new.html', selected_sub_company = ObjectId(sub_company),
-                                    start_of_month=selected_month, company_details=company_details,
-                                    edr_data=sif_record.EDR_records, scr_data=scrs, sdr_details=sdr_details,
-                                    table_head = table_head, edrs_valus = edrs_valus, scrs_values = scrs_values
-                                    )
+            cleaned_company_name =  company_name_details .replace('\xa0', ' ').strip()
+            edrs_valus = preprocess_data(edrs_valus)  #Added By Ashiq Date : 19/sep/2024 Issues : Date formate 
+           
+            if cleaned_company_name  == 'BAIT AL FEN GEN. TR.':
+                return render_template(
+                    'company/payroll_wps_view.html',
+                    company_details=company_details,
+                    start_of_month=selected_month,
+                    selected_sub_company=selected_sub_company,
+                    payroll_details=payroll_details,
+                    sdr_details=sdr_details,
+                    company_name_details = company_name_details 
+
+                )
+            else  :
+                return render_template(
+                    'company/payroll_wps_view.html',
+                    company_details=company_details,
+                    start_of_month=selected_month,
+                    selected_sub_company=selected_sub_company,
+                    payroll_details=payroll_details,
+                    sdr_details=sdr_details,
+                    edr_data=sif_record.EDR_records, 
+                    scr_data=scrs,
+                    table_head = table_head, 
+                    edrs_valus = edrs_valus, 
+                    scrs_values = scrs_values,
+                    company_name_details = company_name_details
+                )
+
+        # if sif_record and not sif_record.sub_company:
+        #     edrs_valus, scrs_values, table_head, scrs = get_data_for_WPS_view(sif_record)
+
+        #     return render_template('company/payroll_wps_view.html', company_details=company_details, start_of_month=selected_month,
+        #                     selected_sub_company = sub_company, payroll_details=payroll_details, sdr_details=sdr_details,)
+        
+        #     return render_template('company/payroll_wps_view_new.html', selected_sub_company = ObjectId(sub_company),
+        #                             start_of_month=selected_month, company_details=company_details,
+        #                             edr_data=sif_record.EDR_records, scr_data=scrs, sdr_details=sdr_details,
+        #                             table_head = table_head, edrs_valus = edrs_valus, scrs_values = scrs_values
+        #                             )
 
     return render_template('company/payroll_wps_view.html', company_details=company_details, start_of_month=selected_month,
-                            selected_sub_company = sub_company, payroll_details=payroll_details, sdr_details=sdr_details)
+                            selected_sub_company = selected_sub_company, payroll_details=payroll_details, sdr_details=sdr_details, company_name_details = company_name_details)
 
 @company.route('/payrollinfo', methods=['GET'])
 def get_payroll():
@@ -4313,6 +4390,8 @@ def get_payroll():
     # sum(c.a for c in c_list)
     # print(gp_with_deduction)
     employee_details = EmployeeDetails.objects(_id=ObjectId(employee_id)).exclude('employee_bank_details','documents').first()
+
+    company_details = CompanyDetails.objects(user_id=current_user.id).only('Currency').first()
     
     if payroll_data and employee_details:   
         employee_data = loads(employee_details.to_json())
@@ -4322,7 +4401,8 @@ def get_payroll():
                 'payroll_data':loads(payroll_data.to_json()),
                 # 'gross_pay':gross_pay,
                 'additions':additions,
-                'deductions':deductions
+                'deductions':deductions,
+                'company_details':company_details.Currency
                 }
     else:
         employee_details = EmployeeDetails.objects(_id=ObjectId(employee_id)).exclude('employee_bank_details','documents').first()
@@ -4337,6 +4417,8 @@ def get_payroll():
 @login_required
 @roles_accepted('admin','company')
 def monthly_attendance_report():
+    company_employees = get_company_employees(current_user)
+
     if request.method=="POST":
         # company_employees = CompanyDetails.objects(user_id=current_user.id).only('employees').first()
         attendance_range = request.form.get('daterange').split(' - ')
@@ -4347,12 +4429,27 @@ def monthly_attendance_report():
         data = []
         if employee_details_id:
             employee_attendance = EmployeeAttendance.objects(company_id=current_user.id,attendance_date__gte=start_date,attendance_date__lte=end_date,employee_details_id=ObjectId(employee_details_id))
+
+            set_of_absent_days = get_set_of_absent_days(employee_attendance, start_date, end_date)
+            
             for i in employee_attendance:
                 if "total_hrs_worked" in i:
                     (h, m, s) = i.total_hrs_worked.split(':')
                     d = timedelta(hours=int(h), minutes=int(m), seconds=float(s))
                     total_hrs_worked += d
+
+            start_date_counter = start_date
+
             for item in employee_attendance:
+                if (item.attendance_date != start_date_counter):
+                    if start_date_counter in set_of_absent_days:
+                        absent_record = EmployeeAttendance(attendance_status="absent", attendance_date = start_date_counter,
+                                                            employee_details_id=item.employee_details_id)
+                        data.append(absent_record)
+                
+                day = timedelta(days=1)
+                start_date_counter += day
+
                 sum_of_break = sum(bh.break_difference for bh in item.break_history if bh.already_ended)
                 if "total_hrs_worked" in item:
                     hrs_worked_str = item.total_hrs_worked.split(', ')[-1]  # Extracting the time component
@@ -4365,13 +4462,19 @@ def monthly_attendance_report():
                     else:
                         item.total_hr_worked_excluding = d
                     total_hrs_worked += d
+                    
 
                 data.append(item)
-            return render_template('company/attendance_report.html',employee_attendance=data,selected_emp=ObjectId(employee_details_id),start=start_date,end=end_date,total_hrs_worked=chop_microseconds(total_hrs_worked))
+            return render_template('company/attendance_report.html',employee_attendance=data,
+                                   selected_emp=ObjectId(employee_details_id),start=start_date,
+                                   end=end_date,total_hrs_worked=chop_microseconds(total_hrs_worked),
+                                   employees_details=company_employees)
                     
         else:
             employee_attendance = EmployeeAttendance.objects(company_id=current_user.id,attendance_date__gte=start_date,attendance_date__lte=end_date)
+                    
             for item in employee_attendance:
+
                 sum_of_break = sum(bh.break_difference for bh in item.break_history if bh.already_ended)
                 if "total_hrs_worked" in item:
                     hrs_worked_str = item.total_hrs_worked.split(', ')[-1]  # Extracting the time component
@@ -4386,14 +4489,18 @@ def monthly_attendance_report():
                     total_hrs_worked += d
 
                 data.append(item)
-        return render_template('company/monthly_attendance_report.html',employee_attendance=data,start=start_date,end=end_date)
+            return render_template('company/monthly_attendance_report.html',employee_attendance=data,
+                               start=start_date,end=end_date, employees_details=company_employees)
         # attendance_date = datetime. strptime(request.form.get('attendance_range[0]'), '%d/%m/%Y')  if request.form.get('attendance_date') else datetime.today().replace(minute=0, hour=0, second=0,microsecond=0)
     else:
-        company_employees = CompanyDetails.objects(user_id=current_user.id).only('employees','clock_in_options').first()
+
+        # company_employees = CompanyDetails.objects(user_id=current_user.id).only('employees','clock_in_options').first()
         start_date = datetime.today().replace(minute=0, hour=0, second=0,microsecond=0)
         end_date = datetime.today().replace(minute=0, hour=0, second=0,microsecond=0)
         employee_attendance = EmployeeAttendance.objects(company_id=current_user.id,attendance_date__gte=start_date,attendance_date__lte=end_date)
         data =[]
+
+
         for item in employee_attendance:
             sum_of_break = sum(bh.break_difference for bh in item.break_history if bh.already_ended)
             if "total_hrs_worked" in item:
@@ -4408,7 +4515,7 @@ def monthly_attendance_report():
                     item.total_hr_worked_excluding = d
 
             data.append(item)
-        return render_template('company/monthly_attendance_report.html',employee_attendance=data,start=start_date,end=end_date)
+        return render_template('company/monthly_attendance_report.html',employee_attendance=data,start=start_date,end=end_date, employees_details=company_employees)
 
 
 @company.route('/assign/roles/', methods=['POST'])
@@ -4583,14 +4690,22 @@ def bulk_upload_bank_details():
     
 #Create Employees Open Leave
 # @celery.task(track_started = True,result_extended=True,name='Bank-Details-Data')
-def add_bulk_bank_details(bank_data,current_user):
+def add_bulk_bank_details(bank_data, current_user):
     for data in bank_data:
-        # Todo: Check if the employee exist with employee_id; if exist proceed with next
-        bank_details = BankDetails.objects(bank_name=data['Bank'],routing_code=data['Routing_Number']).first()
+        # Skip records with null or missing values
+        if not data.get('Bank'):
+            continue
+
+        # Check if bank details already exist
+        bank_details = BankDetails.objects(bank_name=data['Bank'], routing_code=data['Routing_Number']).first()
         if not bank_details:
             new_bank_details = BankDetails()
             new_bank_details.bank_name = data['Bank']
             new_bank_details.routing_code = data['Routing_Number']
+
+            # Assign ObjectId directly
+            new_bank_details.company_id = ObjectId(str(current_user))
+
             new_bank_details.save()
     return True
 
@@ -4842,7 +4957,110 @@ def create_company_profiile():
             return msghtml["html"]
     else:
         return render_template('company/settings.html')
+
+
+@company.route('/deletemultipleaccess/settings', methods=['POST'])
+def delete_multiple_access():
+    company_details = CompanyDetails.objects(user_id=current_user.id).first()
+    existing_multiple_access_docs = MutipleAcces.objects(company_id=current_user.id).all()
     
+    data_id = request.form.get('dataId')
+    
+    if not data_id:
+        return jsonify({'status': 'failed', 'message': 'dataId is required'}), 400
+    
+    for doc in existing_multiple_access_docs:
+     if current_user.id == doc.company_id:
+        return jsonify({'status': 'failed', 'message': 'Cannot delete the current user\'s access'}), 200
+    
+    try:
+        
+        item = MutipleAcces.objects(_id=data_id).first()
+        
+        if item:
+            item.delete()  # Deleting the item from the database
+            return jsonify({'status': 'success', 'message': 'Multiple Access Deleted'}), 200
+        else:
+            return jsonify({'status': 'failed', 'message': 'Item not found'}), 404
+
+    except Exception as e:
+        return jsonify({'status': 'failed', 'message': str(e)}), 500
+
+
+
+@company.route('/Creatmultiple/savemultipleaccess', methods=['POST'])
+def create_multiple_access():
+    # Fetch company details for the current user
+    company_details = CompanyDetails.objects(user_id=current_user.id).first()
+
+    if not company_details:
+        return jsonify({'success': False, 'message': 'Company details not found for the user'})
+
+    # Initialize a list to hold existing multiple access entries
+    existing_multiple_access_data = []
+    
+    # Fetch existing MultipleAccess documents
+    existing_multiple_access_docs = MutipleAcces.objects(company_id=current_user.id).all()
+
+    for data in existing_multiple_access_docs:
+        for listdata in data.MultipleAccessEntry:
+            existing_multiple_access_data.append(MultipleAccessEntry(
+                multiple_access_email_id=listdata.multiple_access_email_id,
+                multiple_access_company_id=listdata.multiple_access_company_id,
+                multiple_access_company_name=listdata.multiple_access_company_name,
+                company_logo=listdata.company_logo,
+            ))
+
+    if request.method == 'POST':
+        # Parse JSON data from the frontend
+        data = request.get_json()
+        employees = data.get('employees', [])
+
+        if employees:
+            success_count = 0
+            skipped_count = 0
+
+            for employee in employees:
+                try:
+                    # Extract employee information
+                    company_id = employee.get('user_id')
+                    email = employee.get('email')
+                    company_logo = employee.get('company_logo', '')
+                    company_name = employee.get('company_name', '')
+                    url = employee.get('url', '')
+
+                    # Convert company_id to ObjectId
+                    company_id = ObjectId(company_id) if company_id else None
+                    Main_company_id= ObjectId(current_user.id) if current_user.id else None
+
+                    # Check for duplicate entries
+                    if MutipleAcces.objects(email=email, company_id=company_id).first():
+                        skipped_count += 1
+                        continue
+
+                    # Create and save the new document
+                    new_doc = MutipleAcces(
+                        email=email,
+                        company_id=company_id,
+                        Main_company_id=Main_company_id,
+                        MultipleAccessEntry=existing_multiple_access_data,  # Pass the list
+                    )
+                    new_doc.save()
+                    success_count += 1
+
+                except Exception as e:
+                    print(f"Error processing employee {employee}: {e}")
+                    skipped_count += 1
+
+            return jsonify({
+                'success': True,
+                'message': f'{success_count} employees updated successfully, {skipped_count} skipped',
+            })
+
+        return jsonify({'success': False, 'message': 'No employees selected'})
+
+    return jsonify({'success': False, 'message': 'Invalid request method'})    
+
 @company.route('/reimbursement')
 @login_required
 def reimbursement():
@@ -5581,8 +5799,642 @@ def check_weekly_pending_leave_application():
     # print(pending_applications)
     return True
 
+
+
+
+
+# @company.route('/MonthlyAccrualLeaves')
+# def monthly_accrual_leaves():
+#     current_date_1 = datetime.now()
+
+#     # Subtract one month from the current date
+#     previous_month_date = current_date_1 - relativedelta(months=1)
+#     current_date = previous_month_date # Monthly Ending Date
+
+
+#     # # Find the first day of the next month
+#     # first_day_of_next_month = (current_date.replace(day=1) + timedelta(days=32)).replace(day=1)
+#     # # Subtract one day to get the end of the current month
+#     # current_date = first_day_of_next_month - timedelta(days=1)
+#     company_details = CompanyDetails.objects().all()
+
+#     for company_detail in company_details:
+#         leave_adjustments = []
+#         active_employees = [employee for employee in company_detail.employees if employee.employee_company_details.status]
+#         one_time_leave_policies = [leave_policy for leave_policy in company_detail.leave_policies if leave_policy.allowance_type == 'onetime']
+#         if one_time_leave_policies:
+#             for employee in active_employees:
+#                 if employee.employee_company_details.date_of_joining:
+#                     try:
+#                         date_of_joining = datetime.strptime(employee.employee_company_details.date_of_joining, '%d/%m/%Y')
+#                         # Further processing for valid dates
+#                         date_of_joining=datetime.strptime(employee.employee_company_details.date_of_joining, '%d/%m/%Y')
+#                         days_worked = (current_date - date_of_joining).days
+#                         if days_worked < 365:
+#                             # print("Less Than 1 Year of Joining");
+#                             for leave_policy in one_time_leave_policies:
+#                                 new_leave_balance = 0 
+#                                 before_adjustment = 0
+#                                 prorated_accruals = 0
+#                                 employee_leave_policy = EmployeeLeavePolicies.objects(leave_policy_id=leave_policy,employee_details_id=employee._id).first()
+#                                 # Check if the current month is the joining month of the employee
+#                                 # if true then calculate the amount they will recieve the accurals based on the joining date calculate based on the below formula
+#                                 # no of days worked = current_date - joining_date
+#                                 # prorated_accurals = no of days worked / 24 (this if employees who are on probabtion and less than a year of joining i.e they will get only 24 working days annual leave)
+#                                                         # OR
+#                                 # prorated_accurals = no of days worked / 30 (this if employees who are more than a year of joining i.e they will get only 30 working days annual leave)
+#                                 # Check if the current month is the joining month
+#                                 if current_date.year == date_of_joining.year and current_date.month == date_of_joining.month:
+#                                     # if days_worked < 365:  # Assuming probation period is less than a year
+#                                     prorated_accruals = (days_worked / 30) * 2 
+#                                     # else:
+#                                     #     prorated_accruals = (days_worked / 30) * 2.5
+#                                 if employee_leave_policy:
+#                                         print(employee_leave_policy) 
+#                                         before_adjustment = employee_leave_policy.balance
+#                                         new_leave_balance = employee_leave_policy.balance + (prorated_accruals if prorated_accruals > 0 else float(leave_policy.probabtion_allowance_days))
+#                                 else:
+#                                         #create New with the new amount    
+#                                         new_leave_balance = prorated_accruals if prorated_accruals > 0 else float(leave_policy.probabtion_allowance_days)
+#                                         employee_leave_policy = EmployeeLeavePolicies()
+#                                         employee_leave_policy.company_id = company_detail.user_id
+#                                         employee_leave_policy.employee_details_id = employee._id
+#                                         employee_leave_policy.leave_policy_id = leave_policy._id
+#                                         employee_leave_policy.balance = new_leave_balance
+#                                         employee_leave_policy.save()
+#                                         employee.update(push__employee_leave_policies=employee_leave_policy._id)
+                                        
+#                                 if  new_leave_balance > 0:     
+#                                         previous_month = (datetime.now() - timedelta(days=30)).strftime("%B %Y")
+#                                         adjustment_comment = "Monthly Accrual Adjustment for Month " + previous_month  
+#                                         # adjustment_comment = 'Monthly Accrual Adjustment for Month ' + datetime.now().strftime("%B %Y")
+#                                         new_data = EmployeeLeaveAdjustment(
+#                                                     company_id = company_detail.user_id,
+#                                                     employee_details_id =  employee._id,
+#                                                     employee_leave_pol_id = employee_leave_policy._id, 
+#                                                     adjustment_type = 'increment',
+#                                                     adjustment_days = str(new_leave_balance),
+#                                                     adjustment_comment = adjustment_comment,
+#                                                     before_adjustment=  str(employee_leave_policy.balance),
+#                                                     after_adjustment = str(new_leave_balance)
+#                                                 )
+#                                         status = new_data.save()
+#                                         company_details = employee_leave_policy.update(push__employee_leave_adjustments=new_data._id,balance=new_leave_balance)  
+#                         else:
+#                             # print("More Than 1 year of joining");
+#                             for leave_policy in one_time_leave_policies:
+#                                 new_leave_balance = 0 
+#                                 before_adjustment = 0
+#                                 prorated_accruals = 0
+#                                 employee_leave_policy = EmployeeLeavePolicies.objects(leave_policy_id=leave_policy,employee_details_id=employee._id).first()
+#                                 # Check if the current month is the joining month of the employee
+#                                 # if true then calculate the amount they will recieve the accurals based on the joining date calculate based on the below formula
+#                                 # no of days worked = current_date - joining_date
+#                                 # prorated_accurals = no of days worked / 24 (this if employees who are on probabtion and less than a year of joining i.e they will get only 24 working days annual leave)
+#                                                         # OR
+#                                 # prorated_accurals = no of days worked / 30 (this if employees who are more than a year of joining i.e they will get only 30 working days annual leave)
+#                                 # Check if the current month is the joining month
+#                                 if current_date.year == date_of_joining.year and current_date.month == date_of_joining.month:
+#                                         prorated_accruals = (days_worked / 30) * 2.5 
+#                                 if employee_leave_policy:
+#                                         before_adjustment = employee_leave_policy.balance
+#                                         new_leave_balance = employee_leave_policy.balance + (prorated_accruals if prorated_accruals > 0 else float(leave_policy.non_probabtion_allowance_days))
+#                                 else:
+#                                         #create New with the new amount     
+#                                         new_leave_balance = prorated_accruals if prorated_accruals > 0 else float(leave_policy.non_probabtion_allowance_days)
+#                                         employee_leave_policy = EmployeeLeavePolicies()
+#                                         employee_leave_policy.company_id = company_detail.user_id
+#                                         employee_leave_policy.employee_details_id = employee._id
+#                                         employee_leave_policy.leave_policy_id = leave_policy._id
+#                                         employee_leave_policy.balance = new_leave_balance
+#                                         employee_leave_policy.save()
+#                                         employee.update(push__employee_leave_policies=employee_leave_policy._id)
+#                                 if  new_leave_balance > 0:       
+#                                     previous_month = (datetime.now() - timedelta(days=30)).strftime("%B %Y")
+#                                     adjustment_comment = "Monthly Accrual Adjustment for Month " + previous_month
+#                                     print(adjustment_comment)
+#                                     new_data = EmployeeLeaveAdjustment(
+#                                                 company_id = company_detail.user_id,
+#                                                 employee_details_id =  employee._id,
+#                                                 employee_leave_pol_id = employee_leave_policy._id, 
+#                                                 adjustment_type = 'increment',
+#                                                 adjustment_days = str(new_leave_balance),
+#                                                 adjustment_comment = adjustment_comment,
+#                                                 before_adjustment=  str(employee_leave_policy.balance),
+#                                                 after_adjustment = str(new_leave_balance)
+#                                             )
+#                                     status = new_data.save()
+#                                     company_details = employee_leave_policy.update(push__employee_leave_adjustments=new_data._id,balance=new_leave_balance)  
+#                     except ValueError:
+#                         # Handling for invalid date format
+#                         continue
+#     return True
+
+# @app.route('/findduplicates')
+# @login_required
+# def findduplicates():
+#     # Access the collection from the MongoDB database
+#     collection = EmployeeLeaveAdjustment
+
+#     # Aggregation pipeline to find duplicates based on 'employee_details_id', 'company_id', and 'adjustment_days'
+#     pipeline = [
+#         {
+#             "$group": {
+#                 "_id": {
+#                     "employee_details_id": "$employee_details_id",  # Group by 'employee_details_id'
+#                     "company_id": "$company_id",  # Group by 'company_id'
+#                     "adjustment_days": "$adjustment_days"  # Group by 'adjustment_days'
+#                 },
+#                 "count": {"$sum": 1},  # Count the occurrences
+#                 "docs": {"$push": "$$ROOT"}  # Keep the original documents
+#             }
+#         },
+#         {
+#             "$match": {
+#                 "count": {"$gt": 1}  # Only select groups with more than 1 occurrence (duplicates)
+#             }
+#         },
+#         {
+#             # # Optional: Match documents based on 'created_at' date if you want to filter by date
+#             # # Uncomment this part if you want to add date filtering
+#             # "$match": {
+#             #     "created_at": {
+#             #         "$gte": ISODate("2024-01-01T00:00:00Z"),  # Adjust this date range as needed
+#             #         "$lte": ISODate("2024-12-31T23:59:59Z")
+#             #     }
+#             # }
+#         }
+#     ]
+
+#     # Run the aggregation
+#     duplicates = list(collection.aggregate(pipeline))
+
+#     # Send the result as a JSON response
+#     return jsonify(duplicates)
+
+# from mongoengine import Q
+# from flask_pymongo import PyMongo
+# @company.route('/findduplicates', methods=['GET'])
+# @login_required
+# def find_duplicates():
+#     # Get company_id from the query parameters
+#     company_id = request.args.get('company_id')
+
+#     # Ensure that company_id is provided
+#     if not company_id:
+#         return jsonify({"error": "company_id is required"}), 400
+
+#     # Access the collection from the MongoDB database and filter by company_id
+#     collection = EmployeeLeaveAdjustment.objects(company_id=ObjectId(company_id))
+
+#     # Aggregation pipeline to find duplicates based on specific fields
+#     # pipeline = [
+#     #     {
+#     #         "$match": {
+#     #             "company_id": ObjectId(company_id),
+#     #         }
+#     #     },
+#     #     {
+#     #         "$lookup": {
+#     #             "from": "employee_details",
+#     #             "localField": "employee_details_id",
+#     #             "foreignField": "_id",
+#     #             "as": "employee_info"
+#     #         }
+#     #     },
+#     #     {
+#     #         "$group": {
+#     #             "_id": {
+#     #                 "created_date": {"$dateToString": {"format": "%Y-%m-%d", "date": "$created_at"}},
+#     #                 "modified_date": {"$dateToString": {"format": "%Y-%m-%d", "date": "$modified_on"}},
+#     #                 "modified_by": "$modified_by"
+#     #             },
+#     #             "count": {"$sum": 1},
+#     #             "docs": {"$push": {
+#     #                 "_id": "$_id",
+#     #                 "employee_details_id": "$employee_details_id",
+#     #                 "employee_name": {"$arrayElemAt": ["$employee_info.first_name", 0]},
+#     #                 "adjustment_days": "$adjustment_days",
+#     #                 "before_adjustment": "$before_adjustment",
+#     #                 "after_adjustment": "$after_adjustment",
+#     #                 "created_at": "$created_at",
+#     #                 "modified_on": "$modified_on"
+#     #             }}
+#     #         }
+#     #     },
+#     #     {
+#     #         "$match": {
+#     #             "count": {"$gt": 1}
+#     #         }
+#     #     }
+#     # ]
+#     pipeline = [
+#         {
+#             "$match": {
+#                 "company_id": ObjectId(company_id),
+#             }
+#         },
+#         {
+#             "$lookup": {
+#                 "from": "employee_details",
+#                 "localField": "employee_details_id",
+#                 "foreignField": "_id",
+#                 "as": "employee_info"
+#             }
+#         },
+#         {
+#             "$lookup": {
+#                 "from": "employee_leave_application",
+#                 "localField": "_id",
+#                 "foreignField": "leave_adjustment",
+#                 "as": "leave_info"
+#             }
+#         },
+#         {
+#             "$group": {
+#                 "_id": {
+#                     "created_date": {"$dateToString": {"format": "%Y-%m-%d", "date": "$created_at"}},
+#                     "modified_date": {"$dateToString": {"format": "%Y-%m-%d", "date": "$modified_on"}},
+#                     "modified_by": "$modified_by"
+#                 },
+#                 "count": {"$sum": 1},
+#                 "docs": {
+#                     "$push": {
+#                         "_id": "$_id",
+#                         "employee_details_id": "$employee_details_id",
+#                         "employee_name": {"$arrayElemAt": ["$employee_info.first_name", 0]},
+#                         "adjustment_days": "$adjustment_days",
+#                         "before_adjustment": "$before_adjustment",
+#                         "after_adjustment": "$after_adjustment",
+#                         "created_at": "$created_at",
+#                         "modified_on": "$modified_on",
+#                         # Include leave info fields
+#                         "leave_from": {"$arrayElemAt": ["$leave_info.leave_from", 0]},
+#                         "approved_on": {"$arrayElemAt": ["$leave_info.approved_on", 0]},
+#                     }
+#                 }
+#             }
+#         },
+#         {
+#             "$match": {
+#                 "count": {"$gt": 1}
+#             }
+#         }
+#     ]
+#     # pipeline = [
+#     #     {
+#     #         "$match": {
+#     #             "company_id": ObjectId(company_id),
+#     #         }
+#     #     },
+#     #     {
+#     #         "$lookup": {
+#     #             "from": "employee_details",
+#     #             "localField": "employee_details_id",
+#     #             "foreignField": "_id",
+#     #             "as": "employee_info"
+#     #         }
+#     #     },
+#     #     {
+#     #         "$lookup": {
+#     #             "from": "employee_leave_application",
+#     #             "localField": "_id",  # Assuming leave_adjustment is referenced by _id
+#     #             "foreignField": "leave_adjustment",
+#     #             "as": "leave_info"
+#     #         }
+#     #     },
+#     #     # {
+#     #     #     "$addFields": {
+#     #     #         # Adding a comparison between created_at and leave_from (from leave_info)
+#     #     #         "matching_leave_info": {
+#     #     #             "$filter": {
+#     #     #                 "input": "$leave_info",
+#     #     #                 "as": "leave",
+#     #     #                 "cond": {
+#     #     #                     "$eq": [
+#     #     #                         {"$dateToString": {"format": "%Y-%m-%d", "date": "$created_at"}},
+#     #     #                         {"$dateToString": {"format": "%Y-%m-%d", "date": "$$leave.leave_from"}}
+#     #     #                     ]
+#     #     #                 }
+#     #     #             }
+#     #     #         }
+#     #     #     }
+#     #     # },
+#     #     {
+#     #         "$group": {
+#     #             "_id": {
+#     #                 "created_date": {"$dateToString": {"format": "%Y-%m-%d", "date": "$created_at"}},
+#     #                 "modified_date": {"$dateToString": {"format": "%Y-%m-%d", "date": "$modified_on"}},
+#     #                 "modified_by": "$modified_by"
+#     #             },
+#     #             "count": {"$sum": 1},
+#     #             "docs": {
+#     #                 "$push": {
+#     #                     "_id": "$_id",
+#     #                     "employee_details_id": "$employee_details_id",
+#     #                     "employee_name": {"$arrayElemAt": ["$employee_info.first_name", 0]},
+#     #                     "adjustment_days": "$adjustment_days",
+#     #                     "before_adjustment": "$before_adjustment",
+#     #                     "after_adjustment": "$after_adjustment",
+#     #                     "created_at": "$created_at",
+#     #                     "modified_on": "$modified_on",
+#     #                     # Include matching leave info fields
+#     #                     "leave_from": {"$arrayElemAt": ["$matching_leave_info.leave_from", 0]},
+#     #                     "approved_on": {"$arrayElemAt": ["$matching_leave_info.approved_on", 0]},
+#     #                 }
+#     #             }
+#     #         }
+#     #     },
+#     #     {
+#     #     "$match": {
+#     #         "count": {"$gt": 1}
+#     #     }
+#     # }
+#     # ]
+
+
+
+
+#     # Run the aggregation on the filtered collection
+#     duplicates = list(collection.aggregate(pipeline))
+
+#     # Sort docs within each duplicate by employee_name in ascending order
+#     for duplicate in duplicates:
+#         created_date = duplicate['_id']['created_date']
+#         duplicate['docs'].sort(key=lambda x: (created_date, x['employee_name']))  # Sort by created_date then by employee name
+
+#     # Render the template with the duplicates
+#     return render_template('company/adjustments/duplicates.html', duplicates=duplicates)
+
+
+
+# @company.route('/deleteadjustment123/<string:doc_id>', methods=['get'])
+# @login_required
+# def deleteadjustment123(doc_id):
+#     try:
+#         # Find and delete the document by ObjectId
+#         adjustment = EmployeeLeaveAdjustment.objects(_id=ObjectId(doc_id)).first()
+        
+#         if adjustment:
+#             adjustment.delete()
+#             return jsonify({"success": True, "message": "Adjustment deleted successfully."}), 200
+#         else:
+#             return jsonify({"error": "Adjustment not found."}), 404
+#     except Exception as e:
+#         return jsonify({"error": str(e)}), 500
+
+
+
+# Added by Ashiq date : 25/09/2024   issues : accrual leave issues
+
+# @company.route('/MonthlyAccrualLeaves/<int:day>/<int:month>/<int:year>')
+# def monthly_accrual_leaves(day, month, year):
+#     # Convert the day, month, and year into a datetime object
+#     # current_date_1 = datetime(year, month, day)
+
+#     # # Subtract one month from the current date
+#     # previous_month_date = current_date_1 - relativedelta(months=1)
+#     current_date = datetime(year, month, day)  # Monthly Ending Date
+
+#     company_details = CompanyDetails.objects().all()
+
+#     for company_detail in company_details:
+#         leave_adjustments = []
+#         active_employees = [employee for employee in company_detail.employees if employee.employee_company_details.status]
+#         one_time_leave_policies = [leave_policy for leave_policy in company_detail.leave_policies if leave_policy.allowance_type == 'onetime']
+#         if one_time_leave_policies:
+#             for employee in active_employees:
+#                 if employee.employee_company_details.date_of_joining:
+#                     try:
+#                         date_of_joining = datetime.strptime(employee.employee_company_details.date_of_joining, '%d/%m/%Y')
+#                         days_worked = (current_date - date_of_joining).days
+#                         if days_worked < 365:
+#                             for leave_policy in one_time_leave_policies:
+#                                 new_leave_balance = 0
+#                                 prorated_accruals = 0
+#                                 employee_leave_policy = EmployeeLeavePolicies.objects(leave_policy_id=leave_policy, employee_details_id=employee._id).first()
+
+#                                 # Check if the current month is the joining month
+#                                 if current_date.year == date_of_joining.year and current_date.month == date_of_joining.month:
+#                                     prorated_accruals = (days_worked / 30) * 2
+
+#                                 if employee_leave_policy:
+#                                     new_leave_balance = employee_leave_policy.balance + (prorated_accruals if prorated_accruals > 0 else float(leave_policy.probabtion_allowance_days))
+#                                 else:
+#                                     new_leave_balance = prorated_accruals if prorated_accruals > 0 else float(leave_policy.probabtion_allowance_days)
+#                                     employee_leave_policy = EmployeeLeavePolicies()
+#                                     employee_leave_policy.company_id = company_detail.user_id
+#                                     employee_leave_policy.employee_details_id = employee._id
+#                                     employee_leave_policy.leave_policy_id = leave_policy._id
+#                                     employee_leave_policy.balance = new_leave_balance
+#                                     employee_leave_policy.save()
+#                                     employee.update(push__employee_leave_policies=employee_leave_policy._id)
+
+#                                 if new_leave_balance > 0:
+#                                     previous_month = (current_date  - timedelta(days=30)).strftime("%B %Y")
+#                                     adjustment_comment = "Monthly Accrual Adjustment for Month " + previous_month
+
+#                                     new_data = EmployeeLeaveAdjustment(
+#                                         company_id=company_detail.user_id,
+#                                         employee_details_id=employee._id,
+#                                         employee_leave_pol_id=employee_leave_policy._id,
+#                                         adjustment_type='increment',
+#                                         adjustment_days=str(new_leave_balance),
+#                                         adjustment_comment=adjustment_comment,
+#                                         before_adjustment=str(employee_leave_policy.balance),
+#                                         after_adjustment=str(new_leave_balance),
+#                                         created_at= current_date.strftime("%d %B %Y %H:%M:%S")
+#                                     )
+#                                     status = new_data.save()
+#                                     employee_leave_policy.update(push__employee_leave_adjustments=new_data._id, balance=new_leave_balance)
+#                         else:
+#                             for leave_policy in one_time_leave_policies:
+#                                 new_leave_balance = 0
+#                                 prorated_accruals = 0
+#                                 employee_leave_policy = EmployeeLeavePolicies.objects(leave_policy_id=leave_policy, employee_details_id=employee._id).first()
+
+#                                 if current_date.year == date_of_joining.year and current_date.month == date_of_joining.month:
+#                                     prorated_accruals = (days_worked / 30) * 2.5
+
+#                                 if employee_leave_policy:
+#                                     new_leave_balance = employee_leave_policy.balance + (prorated_accruals if prorated_accruals > 0 else float(leave_policy.non_probabtion_allowance_days))
+#                                 else:
+#                                     new_leave_balance = prorated_accruals if prorated_accruals > 0 else float(leave_policy.non_probabtion_allowance_days)
+#                                     employee_leave_policy = EmployeeLeavePolicies()
+#                                     employee_leave_policy.company_id = company_detail.user_id
+#                                     employee_leave_policy.employee_details_id = employee._id
+#                                     employee_leave_policy.leave_policy_id = leave_policy._id
+#                                     employee_leave_policy.balance = new_leave_balance
+#                                     employee_leave_policy.save()
+#                                     employee.update(push__employee_leave_policies=employee_leave_policy._id)
+
+#                                 if new_leave_balance > 0:
+#                                     previous_month = (current_date - timedelta(days=30)).strftime("%B %Y")
+#                                     adjustment_comment = "Monthly Accrual Adjustment for Month " + previous_month
+#                                     new_data = EmployeeLeaveAdjustment(
+#                                         company_id=company_detail.user_id,
+#                                         employee_details_id=employee._id,
+#                                         employee_leave_pol_id=employee_leave_policy._id,
+#                                         adjustment_type='increment',
+#                                         adjustment_days=str(new_leave_balance),
+#                                         adjustment_comment=adjustment_comment,
+#                                         before_adjustment=str(employee_leave_policy.balance),
+#                                         after_adjustment=str(new_leave_balance),
+#                                         created_at= current_date.strftime("%d %B %Y %H:%M:%S")
+#                                     )
+#                                     status = new_data.save()
+#                                     employee_leave_policy.update(push__employee_leave_adjustments=new_data._id, balance=new_leave_balance)
+
+#                     except ValueError:
+#                         continue
+
+#     # Format the current date and time to be displayed in the response
+#     processed_datetime = current_date.strftime("%d %B %Y %H:%M:%S")
+#     return f"Accrual Leaves Processed Successfully on {processed_datetime}"
+
+
+# @company.route('/Monthlyadjustment/<int:day>/<int:month>/<int:year>/<company_id>')
+# def monthly_adjustment_leaves(day, month, year):
+#     current_date = datetime(year, month, day)
+#     company_id=company_id
+#     employee_details = EmployeeLeaveAdjustment.objects(
+#         company_id=company_id, 
+#         adjustment_date__lte=current_date
+#     ).all()
+
+
+    
+
+
+
+@company.route('/MonthlyAccrualLeaves/<int:day>/<int:month>/<int:year>')
+def monthly_accrual_leaves1(day, month, year):
+    # Convert the day, month, and year into a datetime object
+    current_date = datetime(year, month, day)  # Monthly Ending Date
+
+    company_details = CompanyDetails.objects().all()
+
+    for company_detail in company_details:
+        leave_adjustments = []
+        active_employees = [employee for employee in company_detail.employees if employee.employee_company_details.status]
+        one_time_leave_policies = [leave_policy for leave_policy in company_detail.leave_policies if leave_policy.allowance_type == 'onetime']
+        
+        if one_time_leave_policies:
+            for employee in active_employees:
+                if employee.employee_company_details.date_of_joining:
+                    try:
+                        date_of_joining = datetime.strptime(employee.employee_company_details.date_of_joining, '%d/%m/%Y')
+                        days_worked = (current_date - date_of_joining).days
+                        
+                        # If the employee has worked less than 365 days
+                        if days_worked < 365:
+                            for leave_policy in one_time_leave_policies:
+                                new_leave_balance = 0
+                                prorated_accruals = 0
+                                employee_leave_policy = EmployeeLeavePolicies.objects(leave_policy_id=leave_policy, employee_details_id=employee._id).first()
+
+                                # Check if the current month is the joining month
+                                if current_date.year == date_of_joining.year and current_date.month == date_of_joining.month:
+                                    prorated_accruals = (days_worked / 30) * 2.5
+
+                                if employee_leave_policy:
+                                    # Get the last leave adjustment for this employee policy
+                                    last_adjustment = EmployeeLeaveAdjustment.objects(employee_leave_pol_id=employee_leave_policy._id).order_by('-created_at').first()
+                                    
+                                    # Check if the last adjustment was done today
+                                    if last_adjustment and last_adjustment.created_at.strftime("%d %B %Y") == current_date.strftime("%d %B %Y"):
+                                        continue  # Skip if adjustment was already made today
+                                    
+                                    new_leave_balance = employee_leave_policy.balance + (prorated_accruals if prorated_accruals > 0 else float(leave_policy.probabtion_allowance_days))
+                                else:
+                                    new_leave_balance = prorated_accruals if prorated_accruals > 0 else float(leave_policy.probabtion_allowance_days)
+                                    employee_leave_policy = EmployeeLeavePolicies()
+                                    employee_leave_policy.company_id = company_detail.user_id
+                                    employee_leave_policy.employee_details_id = employee._id
+                                    employee_leave_policy.leave_policy_id = leave_policy._id
+                                    employee_leave_policy.balance = new_leave_balance
+                                    employee_leave_policy.save()
+                                    employee.update(push__employee_leave_policies=employee_leave_policy._id)
+
+                                if new_leave_balance > 0:
+                                    previous_month = (current_date - timedelta(days=30)).strftime("%B %Y")
+                                    adjustment_comment = "Monthly Accrual Adjustment for Month " + previous_month
+
+                                    new_data = EmployeeLeaveAdjustment(
+                                        company_id=company_detail.user_id,
+                                        employee_details_id=employee._id,
+                                        employee_leave_pol_id=employee_leave_policy._id,
+                                        adjustment_type='increment',
+                                        adjustment_days=str(new_leave_balance),
+                                        adjustment_comment=adjustment_comment,
+                                        before_adjustment=str(employee_leave_policy.balance),
+                                        after_adjustment=str(new_leave_balance),
+                                        created_at=current_date.strftime("%d %B %Y %H:%M:%S")
+                                    )
+                                    status = new_data.save()
+                                    employee_leave_policy.update(push__employee_leave_adjustments=new_data._id, balance=new_leave_balance)
+                        
+                        # If the employee has worked 365 days or more
+                        else:
+                            for leave_policy in one_time_leave_policies:
+                                new_leave_balance = 0
+                                prorated_accruals = 0
+                                employee_leave_policy = EmployeeLeavePolicies.objects(leave_policy_id=leave_policy, employee_details_id=employee._id).first()
+
+                                if current_date.year == date_of_joining.year and current_date.month == date_of_joining.month:
+                                    prorated_accruals = (days_worked / 30) * 2.5
+
+                                if employee_leave_policy:
+                                    # Get the last leave adjustment for this employee policy
+                                    last_adjustment = EmployeeLeaveAdjustment.objects(employee_leave_pol_id=employee_leave_policy._id).order_by('-created_at').first()
+                                    
+                                    # Check if the last adjustment was done today
+                                    if last_adjustment and last_adjustment.created_at.strftime("%d %B %Y") == current_date.strftime("%d %B %Y"):
+                                        continue  # Skip if adjustment was already made today
+
+                                    new_leave_balance = employee_leave_policy.balance + (prorated_accruals if prorated_accruals > 0 else float(leave_policy.non_probabtion_allowance_days))
+                                else:
+                                    new_leave_balance = prorated_accruals if prorated_accruals > 0 else float(leave_policy.non_probabtion_allowance_days)
+                                    employee_leave_policy = EmployeeLeavePolicies()
+                                    employee_leave_policy.company_id = company_detail.user_id
+                                    employee_leave_policy.employee_details_id = employee._id
+                                    employee_leave_policy.leave_policy_id = leave_policy._id
+                                    employee_leave_policy.balance = new_leave_balance
+                                    employee_leave_policy.save()
+                                    employee.update(push__employee_leave_policies=employee_leave_policy._id)
+
+                                if new_leave_balance > 0:
+                                    previous_month = (current_date - timedelta(days=30)).strftime("%B %Y")
+                                    adjustment_comment = "Monthly Accrual Adjustment for Month " + previous_month
+                                    new_data = EmployeeLeaveAdjustment(
+                                        company_id=company_detail.user_id,
+                                        employee_details_id=employee._id,
+                                        employee_leave_pol_id=employee_leave_policy._id,
+                                        adjustment_type='increment',
+                                        adjustment_days=str(new_leave_balance),
+                                        adjustment_comment=adjustment_comment,
+                                        before_adjustment=str(employee_leave_policy.balance),
+                                        after_adjustment=str(new_leave_balance),
+                                        created_at=current_date.strftime("%d %B %Y %H:%M:%S")
+                                    )
+                                    status = new_data.save()
+                                    employee_leave_policy.update(push__employee_leave_adjustments=new_data._id, balance=new_leave_balance)
+
+                    except ValueError:
+                        continue
+
+    # Format the current date and time to be displayed in the response
+    processed_datetime = current_date.strftime("%d %B %Y %H:%M:%S")
+    return f"Accrual Leaves Processed Successfully on {processed_datetime}"
+
+
+
 @celery.task(track_started = True,result_extended=True,name='Monthly-Accrual-Leaves')
 def monthly_accrual_leaves():
+    # logging.info("Running monthly leave accrual task.")
+    # print("Monthly leave accrual task is running...")
+    # return True
+
     current_date = datetime.now() # Monthly Ending Date
     # # Find the first day of the next month
     # first_day_of_next_month = (current_date.replace(day=1) + timedelta(days=32)).replace(day=1)
@@ -5618,7 +6470,7 @@ def monthly_accrual_leaves():
                                 # Check if the current month is the joining month
                                 if current_date.year == date_of_joining.year and current_date.month == date_of_joining.month:
                                     # if days_worked < 365:  # Assuming probation period is less than a year
-                                    prorated_accruals = (days_worked / 30) * 2 
+                                    prorated_accruals = (days_worked / 30) * 2.5
                                     # else:
                                     #     prorated_accruals = (days_worked / 30) * 2.5
                                 if employee_leave_policy:
@@ -5702,44 +6554,208 @@ def monthly_accrual_leaves():
                         continue
     return True
                         
-@celery.task(track_started = True,result_extended=True,name='Yearly-Reset-Leaves')
-def yearly_reset_leaves():
-    current_date = datetime.now() # Monthly Ending Date
-    # # Find the first day of the next month
-    # first_day_of_next_month = (current_date.replace(day=1) + timedelta(days=32)).replace(day=1)
-    # # Subtract one day to get the end of the current month
-    # current_date = first_day_of_next_month - timedelta(days=1)
+# @celery.task(track_started = True,result_extended=True,name='Yearly-Reset-Leaves')
+# def yearly_reset_leaves():
+#     current_date = datetime.now() # Monthly Ending Date
+#     # # Find the first day of the next month
+#     # first_day_of_next_month = (current_date.replace(day=1) + timedelta(days=32)).replace(day=1)
+#     # # Subtract one day to get the end of the current month
+#     # current_date = first_day_of_next_month - timedelta(days=1)
+#     company_details = CompanyDetails.objects().all()
+#     employees_details = EmployeeDetails.objects.all()
+#     for company_detail in company_details:
+#         leave_adjustments = []    
+#         active_employees = list(filter(lambda x:x['employee_company_details']['status']==True,employees_details.employees))
+#         annual_leave_policies = [leave_policy for leave_policy in company_detail.leave_policies if leave_policy.allowance_type == 'annual']
+#         # active_employees = list(filter(lambda x:x['_id']==ObjectId('62aae4481adf764c58786e54'),company_detail.employees))
+#         for employee in active_employees:
+#             for leave_policy in annual_leave_policies:
+#                 new_leave_balance = leave_policy.allowance_days 
+#                 before_adjustment = 0
+#                 employee_leave_policy = EmployeeLeavePolicies.objects(employee_details_id=employee._id,leave_policy_id=leave_policy._id,company_id=company_detail.user_id).first()
+#                 if employee_leave_policy:
+#                         before_adjustment = employee_leave_policy.balance
+#                         new_leave_balance = float(new_leave_balance)
+#                         print(employee_leave_policy.leave_policy_id.leave_policy_name)
+#                         print("new_leave_balance",new_leave_balance)
+#                         previous_year = (datetime.now() - timedelta(days=30)).strftime("%Y")
+#                         adjustment_comment = 'Yearly Reset of the Leave for Year ' +  previous_year
+#                         new_data = EmployeeLeaveAdjustment(
+#                                     company_id = company_detail.user_id,
+#                                     employee_details_id =  employee._id,
+#                                     employee_leave_pol_id = employee_leave_policy._id, 
+#                                     adjustment_type = 'increment',
+#                                     adjustment_days = str(new_leave_balance),
+#                                     adjustment_comment = adjustment_comment,
+#                                     before_adjustment=  str(employee_leave_policy.balance),
+#                                     after_adjustment = str(new_leave_balance)
+#                                 )
+#                         status = new_data.save()
+#                         company_details = employee_leave_policy.update(push__employee_leave_adjustments=new_data._id,balance=new_leave_balance)  
+#     return True
+@celery.task(track_started=True, result_extended=True, name='Yearly-Reset-Leaves')
+def yearly_reset_leaves(reset_date=None):
+    """
+    Reset employee leave balances for the specified year based on the provided date.
+    If no date is provided, default to the current date.
+    """
+    if reset_date:
+        reset_date = datetime.strptime(reset_date, "%Y-%m-%d")
+    else:
+        reset_date = datetime.now()  # Use the current date if none provided
+
+    reset_year = reset_date.year
+
     company_details = CompanyDetails.objects().all()
+    employees_details = EmployeeDetails.objects().all()
+
     for company_detail in company_details:
-        leave_adjustments = []
-        active_employees = list(filter(lambda x:x['employee_company_details']['status']==True,employees_details.employees))
-        annual_leave_policies = [leave_policy for leave_policy in company_detail.leave_policies if leave_policy.allowance_type == 'annual']
-        # active_employees = list(filter(lambda x:x['_id']==ObjectId('62aae4481adf764c58786e54'),company_detail.employees))
+        active_employees = list(
+            filter(lambda x: x['employee_company_details']['status'] == True, employees_details.employees)
+        )
+        annual_leave_policies = [
+            leave_policy for leave_policy in company_detail.leave_policies if leave_policy.allowance_type == 'annual'
+        ]
+
         for employee in active_employees:
             for leave_policy in annual_leave_policies:
-                new_leave_balance = leave_policy.allowance_days 
+                new_leave_balance = leave_policy.allowance_days
                 before_adjustment = 0
-                employee_leave_policy = EmployeeLeavePolicies.objects(employee_details_id=employee._id,leave_policy_id=leave_policy._id,company_id=company_detail.user_id).first()
+
+                employee_leave_policy = EmployeeLeavePolicies.objects(
+                    employee_details_id=employee._id,
+                    leave_policy_id=leave_policy._id,
+                    company_id=company_detail.user_id
+                ).first()
+
                 if employee_leave_policy:
-                        before_adjustment = employee_leave_policy.balance
-                        new_leave_balance = float(new_leave_balance)
-                        print(employee_leave_policy.leave_policy_id.leave_policy_name)
-                        print("new_leave_balance",new_leave_balance)
-                        previous_year = (datetime.now() - timedelta(days=30)).strftime("%Y")
-                        adjustment_comment = 'Yearly Reset of the Leave for Year ' +  previous_year
-                        new_data = EmployeeLeaveAdjustment(
-                                    company_id = company_detail.user_id,
-                                    employee_details_id =  employee._id,
-                                    employee_leave_pol_id = employee_leave_policy._id, 
-                                    adjustment_type = 'increment',
-                                    adjustment_days = str(new_leave_balance),
-                                    adjustment_comment = adjustment_comment,
-                                    before_adjustment=  str(employee_leave_policy.balance),
-                                    after_adjustment = str(new_leave_balance)
-                                )
-                        status = new_data.save()
-                        company_details = employee_leave_policy.update(push__employee_leave_adjustments=new_data._id,balance=new_leave_balance)  
+                    before_adjustment = employee_leave_policy.balance
+                    new_leave_balance = float(new_leave_balance)
+
+                    print(employee_leave_policy.leave_policy_id.leave_policy_name)
+                    print("new_leave_balance", new_leave_balance)
+
+                    adjustment_comment = 'Yearly Reset of the Leave for Year ' + str(reset_year)
+
+                    new_data = EmployeeLeaveAdjustment(
+                        company_id=company_detail.user_id,
+                        employee_details_id=employee._id,
+                        employee_leave_pol_id=employee_leave_policy._id,
+                        adjustment_type='increment',
+                        adjustment_days=str(new_leave_balance),
+                        adjustment_comment=adjustment_comment,
+                        before_adjustment=str(employee_leave_policy.balance),
+                        after_adjustment=str(new_leave_balance)
+                    )
+
+                    status = new_data.save()
+                    company_details = employee_leave_policy.update(
+                        push__employee_leave_adjustments=new_data._id, balance=new_leave_balance
+                    )
+
     return True
+
+
+
+
+@company.route('/yearly_reset_leaves/<int:day>/<int:month>/<int:year>', methods=['GET'])
+def yearly_reset_leaves_route(day, month, year):
+    try:
+        # Parse the reset date based on the URL parameters or use the current date if not provided
+        reset_date = datetime(year, month, day)
+    except ValueError as e:
+        return jsonify({"status": "error", "message": str(e)}), 400
+
+    # Trigger the Celery task to reset leaves
+    task = yearly_reset_leaves.delay(reset_date=reset_date)
+
+    company_details = CompanyDetails.objects().all()
+    employees_details = EmployeeDetails.objects().all()
+
+    for company_detail in company_details:
+        # Get active employees directly from employees_details
+        active_employees = list(
+            filter(lambda x: x['employee_company_details']['status'] == True, employees_details)
+        )
+        annual_leave_policies = [
+            leave_policy for leave_policy in company_detail.leave_policies if leave_policy.allowance_type == 'annual'
+        ]
+
+        for employee in active_employees:
+            for leave_policy in annual_leave_policies:
+                new_leave_balance = leave_policy.allowance_days
+                before_adjustment = 0
+
+                employee_leave_policy = EmployeeLeavePolicies.objects(
+                    employee_details_id=employee._id,
+                    leave_policy_id=leave_policy._id,
+                    company_id=company_detail.user_id
+                ).first()
+
+                if employee_leave_policy:
+                    before_adjustment = employee_leave_policy.balance
+                    new_leave_balance = float(new_leave_balance)
+
+                    # Format the date to include it in the adjustment comment
+                    formatted_date = reset_date.strftime('%Y-%m-%d')
+
+                    # Get the current date and time for created_at
+                    current_date = datetime.now()
+                    created_at = datetime(year, month, day).strftime("%d %B %Y %H:%M:%S")  # Format: '09 December 2024 14:30:45'
+
+                    # Check if an adjustment already exists for the same year, employee, and leave policy
+                    existing_adjustment = EmployeeLeaveAdjustment.objects(
+                        employee_details_id=employee._id,
+                        employee_leave_pol_id=employee_leave_policy._id,
+                        created_at__startswith=formatted_date  # Match the date part of created_at
+                    ).first()
+
+                    if existing_adjustment:
+                        # If an adjustment already exists, skip creating a new one
+                        continue
+
+                    # Construct the adjustment comment including the formatted date
+                    adjustment_comment = f"Yearly Reset of the Leave for Year {formatted_date}"
+
+                    # Create the leave adjustment record
+                    new_data = EmployeeLeaveAdjustment(
+                        company_id=company_detail.user_id,
+                        employee_details_id=employee._id,
+                        employee_leave_pol_id=employee_leave_policy._id,
+                        adjustment_type='increment',
+                        adjustment_days=str(new_leave_balance),  # Convert the numeric value to a string
+                        adjustment_comment=adjustment_comment,
+                        before_adjustment=str(before_adjustment),  # Convert before_adjustment to a string
+                        after_adjustment=str(new_leave_balance),   # Convert after_adjustment to a string
+                        created_at=created_at  # Add the current date and time
+                    )
+
+                    status = new_data.save()
+
+                    # Update the leave policy balance and append the adjustment to the employee's record
+                    employee_leave_policy.update(
+                        push__employee_leave_adjustments=new_data._id,
+                        balance=new_leave_balance
+                    )
+
+    # Return response after triggering the task
+    return jsonify({
+        "status": "success",
+        "message": f"Yearly reset leave task initiated for {reset_date.strftime('%Y-%m-%d')}",
+        "task_id": task.id
+    }), 200
+
+
+from celery import shared_task
+@shared_task
+def run_monthly_accrual_leaves12():
+    logging.info("Running monthly leave accrual task.")
+
+    print("Monthly accrual leaves task is being executed111112222.")
+    return "Accrual leaves processed successfully111111222!"
+
+
+
 
 @company.route('/test')
 @login_required
@@ -6609,4 +7625,110 @@ def get_dbref_fields(dbref):
     return None
 
 
+def delete_adjustments(adjustment_ids):
+    """
+    Safely delete the given adjustment records by taking care of linked payroll records.
 
+    :param adjustment_ids: List of adjustment IDs to be deleted.
+    """
+    company_details = CompanyDetails.objects(user_id=current_user.id).only('employees','adjustment_reasons','company_name','departments').first()
+
+    if not adjustment_ids:
+        return "No adjustments to delete."
+
+    for adjustment in adjustment_ids:
+        # Fetch the adjustment record
+        
+        if not adjustment:
+            continue
+
+        # Get the related payroll record
+        employee_payroll_data = CompanyPayroll.objects(
+            company_id=adjustment.company_id,
+            payroll_month=adjustment.adjustment_month_on_payroll,
+            payroll_year=adjustment.adjustment_year_on_payroll,
+            employee_details_id=adjustment.employee_details_id
+        ).first()
+
+        if employee_payroll_data:
+            # Adjust the total additions or deductions based on the adjustment type
+            if adjustment.adjustment_type == 'addition':
+                employee_payroll_data.total_additions -= float(adjustment.adjustment_amount)
+            elif adjustment.adjustment_type == 'deduction':
+                employee_payroll_data.total_deductions -= float(adjustment.adjustment_amount)
+
+            # Recalculate the salary to be paid
+            employee_payroll_data.salary_to_be_paid = (
+                float(employee_payroll_data.total_salary) +
+                float(employee_payroll_data.total_additions) -
+                float(employee_payroll_data.total_deductions)
+            )
+
+            # Remove the adjustment from the respective list
+            if adjustment.adjustment_type == 'addition':
+                employee_payroll_data.update(pull__adjustment_additions=adjustment.id)
+            elif adjustment.adjustment_type == 'deduction':
+                employee_payroll_data.update(pull__adjustment_deductions=adjustment.id)
+
+            # Save the updated payroll data
+            employee_payroll_data.save()
+
+        # # Delete the adjustment document if it exists
+        # if adjustment.adjustment_document:
+        #     filename = secure_filename(file.filename)
+
+        #     delete_adjustment_document(filename, company_details._id)  # Assuming you have this function defined
+
+        # Finally, delete the adjustment record
+        adjustment.delete()
+
+        # Log the deletion action
+        create_activity_log("Adjustment Deleted", current_user.id, adjustment.company_id)
+
+    return "Adjustments deleted successfully."
+
+#Added By Ashiq Date : 19/sep/2024 Issues : Date formate start
+def preprocess_data(data):
+    formatted_data = {}
+    for bank, records in data.items():
+        formatted_records = [
+            [
+                 value.strftime("%d/%m/%Y") if isinstance(value, date) else value
+                for value in record
+            ]
+            for record in records
+        ]
+        formatted_data[bank] = formatted_records
+    return formatted_data
+#end
+def delete_adjustment_document(file_name, company_name):
+    """
+    Delete the specified adjustment document from the file system.
+
+    :param file_name: The name of the document to delete.
+    :param company_name: The name of the company to locate the document folder.
+    :return: Boolean indicating success or failure of the deletion.
+    """
+    if not file_name:
+        return False
+
+    # Construct the file path
+    file_path = os.path.join(
+        app.config['UPLOAD_DOCUMENT_FOLDER'], 
+        company_name.strip(), 
+        'adjustments', 
+        file_name
+    )
+    
+    try:
+        # Check if the file exists and delete it
+        if os.path.exists(file_path):
+            os.remove(file_path)
+            return True
+        else:
+            print(f"File {file_path} does not exist.")
+            return False
+    except Exception as e:
+        print(f"Error deleting file {file_path}: {e}")
+        return False
+    

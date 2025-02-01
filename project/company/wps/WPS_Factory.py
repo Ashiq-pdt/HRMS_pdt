@@ -63,7 +63,11 @@ class WPS_Strategy:
             'RAK Bank': RAK_EDR,
             'DIB': DIB_EDR,
             'Mashreq': Mashreq_EDR,
-            'CBT_FZE': CBT_FZE_EDR
+            'Commercial Bank International FZE': CBT_FZE_EDR,
+            'Commercia Bank International (CBI)': CBD_EDR,
+            'National Bank of Kuwait (NBK)': NBK_EDR,
+            
+
         }
         self.scr_map = {
             'CBD': CBD_SCR,
@@ -73,7 +77,10 @@ class WPS_Strategy:
             'RAK Bank': Mashreq_SCR,
             'DIB': Mashreq_SCR,
             'Mashreq': Mashreq_SCR,
-            'CBT_FZE': None
+            'Commercial Bank International FZE': None,
+            "Commercia Bank International (CBI)": CBD_SCR,
+            "National Bank of Kuwait (NBK)" : None
+            
         }
 
 
@@ -81,15 +88,41 @@ class WPS_Strategy:
         """Using the bank name we select the right edr model"""
 
         bank_name = employee_details.employee_sif_details.company_exchange.exchange_name
+        print(bank_name)
 
         print(bank_name, 'bank name')
 
-        if bank_name not in self.edr_map:
-            # raise Exception(f'Unsupported Bank Name: {bank_name}')
-            return Generic_EDR
+        try:
+            if bank_name not in self.edr_map:
+                return Generic_EDR
+        except KeyError as e:
+            print(f'KeyError in WPS_Strategy: {e}')
+        except Exception as e:
+            print(f'Error in WPS_Strategy: {e}')
+
 
         return self.edr_map[bank_name]
+
+    # def get_edr(self, employee_details) -> EDR:
+    #     """Using the bank name we select the right EDR model"""
     
+    
+    #     try:
+    #         bank_name = employee_details.employee_sif_details.company_exchange.exchange_name
+    #     except AttributeError as e:
+    #         print(f'AttributeError: {e}, bank name not found in employee details.')
+    #         return Generic_EDR  # Default to Generic_EDR if bank_name is not found
+
+    #     print(f"Bank Name: {bank_name}")
+
+     
+    #     if not bank_name or bank_name not in self.edr_map:
+    #         print(f"Bank name '{bank_name}' not found, returning Generic_EDR.")
+    #         return Generic_EDR
+
+    #     # Return the appropriate EDR model
+    #     return self.edr_map.get(bank_name, Generic_EDR)
+
     def get_scr(self, bank_name) -> SCR:
         """Using the bank name we select the right scr model"""
 

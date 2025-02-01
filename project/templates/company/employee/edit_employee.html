@@ -751,12 +751,15 @@
                                         <input type="text" class="form-control" name="bank_name" placeholder="Name">
                                     </div> -->
                                     <div class="col-md-9">
-                                        <select name="bank_name"  class="form-control custom-select select2 salary-type" data-placeholder="Select Bank">
+                                        <select name="bank_name" class="form-control custom-select select2 salary-type" data-placeholder="Select Bank">
                                             <option label="Select Bank" value=""></option>
                                             {% for item in bank_list %}
-                                                <option value="{{item.bank_name}}">{{item.bank_name}} ( {{item.routing_code}} )</option>
+                                                <option value="{{ item.bank_name }}" 
+                                                    {% if item.bank_name == employee.employee_bank_details.bank_name %}selected{% endif %}>
+                                                    {{ item.bank_name }} ( {{ item.routing_code }} )
+                                                </option>
                                             {% endfor %}
-                                        </select>     
+                                        </select>                                         
                                     </div>
                                 </div>
                             </div>
@@ -1156,14 +1159,14 @@
                                                             <div class="mb-md-0">
                                                                 <h6 class="mb-1 text-muted fs-16">Remaining Leaves : <span class="font-weight-semibold fs-18 text-danger">{{subitem.balance}}</span></h6>
                                                             </div>
-                                                            <div class="ms-auto mt-1">
+                                                            <!-- <div class="ms-auto mt-1">
                                                                 <a class="task-btn btn-success border-0 me-0" data-bs-toggle="modal"data-bs-target="#editLeavemodal" 
                                                                 data-leave_id="{{item._id}}"
                                                                 data-emp_details_id="{{employee._id}}"
                                                                 data-selected_leavetype="{{item.leave_policy_name}}"
                                                                 data-current_balance="{{subitem.balance}}"
                                                                 data-employee_leave_policy_id="{{subitem._id}}">Edit</a>
-                                                            </div>
+                                                            </div> -->
                                                         </div>
                                                     </div>
                                                 {% endif %} 

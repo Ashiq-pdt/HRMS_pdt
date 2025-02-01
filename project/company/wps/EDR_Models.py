@@ -127,8 +127,8 @@ class CBD_EDR(EDR):
     variable_pay = LongField(required=True, max_value=999999999999999, db_field='VarPay')
     from_date = DateField(required=True, db_field='Fromdate')
     to_date = DateField(required=True, db_field='Todate')
-    account_no = StringField(required=True, max_length=10, db_field='Accountno')
-    routing_code = StringField(required=True, max_length=10, db_field='RoutingCode')
+    account_no = StringField(required=True, max_length=50, db_field='Accountno')
+    routing_code = StringField(required=True, max_length=15, db_field='RoutingCode')
     leave = IntField(required=True, max_value=9999, db_field='Leave')
 
     @classmethod
@@ -140,7 +140,6 @@ class CBD_EDR(EDR):
         required_fields = [
             'employee_sif_details.employee_mol_no',
             'employee_bank_details.routing_code',
-            'employee_bank_details.account_no',
             'employee_company_details.total_salary'
         ]
 
@@ -151,11 +150,11 @@ class CBD_EDR(EDR):
         return cls(
             employee=employee_details,
             mol_id=employee_details.employee_sif_details.employee_mol_no,
-            salary=employee_details.employee_company_details.total_salary,
+            salary=employee_payroll_details.salary_to_be_paid,
             variable_pay=employee_payroll_details.total_additions,
             from_date=start_date,
             to_date=end_date,
-            account_no=employee_details.employee_bank_details.account_no,
+            account_no=employee_details.employee_bank_details.iban_no,
             routing_code=employee_details.employee_bank_details.routing_code,
             leave=EDR.calculate_leave_days(employee_payroll_details.unpaid_leaves, employee_payroll_details.half_days)
         )
@@ -192,7 +191,7 @@ class Joyalukkas_EDR(EDR):
             # 'first_name',
             # 'last_name',
             # 'employee_company_details.total_salary',
-            'employee_bank_details.account_no',
+            # 'employee_bank_details.account_no',  #Added By Ashiq  date: 11/09/2024  issues: wps 
             # 'employee_bank_details.bank_name'
         ]
 
@@ -210,8 +209,15 @@ class Joyalukkas_EDR(EDR):
             leave=EDR.calculate_leave_days(unpaid_leaves, half_days),
             month=int(start_date.strftime('%m')),
             year=int(start_date.strftime('%Y')),
-            bank_acc_no=employee_details.employee_bank_details.account_no,
-            bank_name=employee_details.employee_bank_details.bank_name
+            # bank_acc_no=employee_details.employee_bank_details.account_no,
+            # bank_name=employee_details.employee_bank_details.bank_name
+
+               
+            # Handle null for bank account number  #Added By Ashiq  date: 11/09/2024  issues: wps 
+            bank_acc_no=employee_details.employee_bank_details.iban_no if employee_details.employee_bank_details.iban_no else 'Unknown iban_no',
+            
+            # Handle null for bank name   #Added By Ashiq  date: 11/09/2024  issues: wps 
+            bank_name=employee_details.employee_bank_details.bank_name if employee_details.employee_bank_details.bank_name else 'Unknown Bank Name'
         )
 
     def __str__(self):
@@ -381,7 +387,8 @@ class Emirates_Islamic_EDR(EDR):
 
 class Al_Ansari_EDR(EDR):
     record_type = StringField(max_length=3, min_length=3, required=True, db_field='Record Type')
-    unique_employee_id = StringField(min_length=14, max_length=35, required=True, db_field='Employee Unique ID')
+    #unique_employee_id = StringField(min_length=1, max_length=35, required=True, db_field='Employee Unique ID')
+    unique_employee_id = StringField(max_length=35, required=True, db_field='Employee Unique ID') #change  min length 14 to 1 chabged by ashiq  date :11/09/2024 issues : wps
     emp_name = StringField(max_length=50, required=True, db_field='Employee Name')
     agent_id = StringField(max_length=35, required=True, db_field='Agent ID')
     account_no = StringField(max_length=23, required=True, db_field='IBAN/Account No')
@@ -403,9 +410,9 @@ class Al_Ansari_EDR(EDR):
         half_days = getattr(employee_payroll_details, 'half_days', 0)
 
         required_fields = [
-            'employee_sif_details.employee_mol_no',
-            'employee_bank_details.routing_code',
-            'employee_bank_details.account_no',
+            #'employee_sif_details.employee_mol_no', #Added By Ashiq  date: 11/09/2024  issues: wps 
+            #'employee_bank_details.routing_code',  #Added By Ashiq  date: 11/09/2024  issues: wps 
+            #'employee_bank_details.account_no',  #Added By Ashiq  date: 11/09/2024  issues: wps 
             'employee_company_details.total_salary'
         ]
 
@@ -419,8 +426,13 @@ class Al_Ansari_EDR(EDR):
             record_type = 'EDR',
             unique_employee_id = employee_details.employee_sif_details.employee_mol_no,
             emp_name = f"{employee_details.first_name} {employee_details.last_name}",
-            agent_id = employee_details.employee_bank_details.routing_code,
-            account_no = employee_details.employee_bank_details.account_no,
+            # agent_id = employee_details.employee_bank_details.routing_code,
+            # account_no = employee_details.employee_bank_details.account_no,
+            # Handle null for routing code and account number  #Added By Ashiq  date: 11/09/2024  issues: wps 
+
+            agent_id = employee_details.employee_bank_details.routing_code if employee_details.employee_bank_details.routing_code else 'Unknown Routing Code',
+            account_no = employee_details.employee_bank_details.iban_no if employee_details.employee_bank_details.iban_no else 'Unknown iban_no',
+            
             start_date = start_date,
             end_date = end_date,
             total_days = (end_date - start_date).days,
@@ -432,7 +444,7 @@ class Al_Ansari_EDR(EDR):
     def __str__(self):
         return f"Al_Ansari {self.emp_name}-{self.fixed_component}-{self.start_date}-{self.end_date}-{self.leave}"
 
-class Generic_EDR(Document):
+class Generic_EDR(EDR):
     from_date = DateField(required=True)
     to_date = DateField(required=True)
     record_type = StringField(required=False, db_field='Record Type')
@@ -483,8 +495,15 @@ class Generic_EDR(Document):
         return cls(
             record_type='EDR',  # Default record type
             unique_employee_id=safe_getattr(employee_details.employee_sif_details, 'employee_mol_no', ''),
-            routing_code=safe_getattr(employee_details.employee_bank_details, 'routing_code', ''),
-            employee_account=safe_getattr(employee_details.employee_bank_details, 'account_no', ''),
+            # routing_code=safe_getattr(employee_details.employee_bank_details, 'routing_code', ''),
+            # employee_account=safe_getattr(employee_details.employee_bank_details, 'account_no', ''),
+
+            # Handle null values for routing code and account number  #Added By Ashiq  date: 11/09/2024  issues: wps 
+            routing_code=safe_getattr(employee_details.employee_bank_details, 'routing_code', None),
+            employee_account=safe_getattr(employee_details.employee_bank_details, 'account_no', None),
+            
+            from_date=start_date,
+            to_date=end_date,
             start_date=start_date,
             end_date=end_date,
             days=days_in_period,
@@ -514,7 +533,6 @@ class CBT_FZE_EDR(EDR):
         total_additions = float(getattr(employee_payroll_details, 'total_additions', 0.00))
 
         required_fields = [
-            'employee_bank_details.account_no',
             'employee_company_details.total_salary',
             'employee_bank_details.bank_name',
             'employee_bank_details.swift_code'
@@ -531,7 +549,7 @@ class CBT_FZE_EDR(EDR):
             employee=employee_details,
             name=f"{employee_details.first_name} {employee_details.last_name}",
             bank_short_name=short_name,
-            iban_no=employee_details.employee_bank_details.account_no,
+            iban_no=employee_details.employee_bank_details.iban_no,
             amount=float(employee_details.employee_company_details.total_salary) + total_additions,
             bank_full_name=inverted_bank_dict[short_name],
             swift_code=employee_details.employee_bank_details.swift_code
@@ -540,3 +558,62 @@ class CBT_FZE_EDR(EDR):
     def __str__(self):
         return f"""Generic EDR: {self.name} - {self.bank_short_name} - {self.iban_no}
          - {self.amount}"""
+
+class NBK_EDR(EDR):
+    no = IntField(required=True, db_field='Payment Serial Number')
+    name = StringField(required=False, db_field='Name')
+    unique_employee_id = StringField(min_length=1, max_length=35, required=True, db_field='Beneficiary Civil Id')
+    iban_no = StringField(required=True, db_field='Account # for NBK A/C & IBAN for other Bank')
+    bank_short_name = StringField(required=True, db_field='Bank Short Name')
+    bank_full_name = StringField(required=True, db_field='Bank Full Name')
+    currency = StringField(required=True, db_field='Currency', default='KWD')
+    amount = FloatField(required=True, db_field='Amount')
+
+    _counter = 1  # Class-level counter for `no`
+
+    @classmethod
+    def create_edr(cls, employee_details=None, employee_payroll_details=None):
+        total_additions = getattr(employee_payroll_details, 'total_additions', 0.00)
+        if isinstance(total_additions, dict):
+            raise ValueError("total_additions cannot be a dictionary.")
+        total_additions = float(total_additions)
+
+        required_fields = [
+            'employee_company_details.total_salary',
+            'employee_bank_details.bank_name',
+        ]
+
+        validation = EDR.validate_employee_details(employee_details, required_fields)
+        if isinstance(validation, list):
+            return validation
+
+        short_name = get_shortname(employee_details.employee_bank_details.bank_name)
+        inverted_bank_dict = {v: k for k, v in bank_dict.items()}
+
+        # Determine IBAN or Account Number
+        bank_details = getattr(employee_details, 'employee_bank_details', {})
+        if isinstance(bank_details, dict):
+            iban_or_account = bank_details.get('account_no') if short_name == "NBK" else bank_details.get('iban_no')
+        else:
+            iban_or_account = bank_details.account_no if short_name == "NBK" else bank_details.iban_no
+
+        bank_full_name = inverted_bank_dict.get(short_name, "Unknown Bank Name")
+
+        edr_instance = cls(
+            no=cls._counter,
+            unique_employee_id=employee_details.employee_sif_details.employee_mol_no,
+            employee=employee_details,
+            name=employee_details.employee_bank_details.account_holder,
+            bank_short_name=short_name,
+            iban_no=iban_or_account,
+            amount=float(employee_details.employee_company_details.total_salary) + total_additions,
+            bank_full_name=bank_full_name,
+            currency='KWD',
+        )
+
+        cls._counter += 1  # Increment the counter
+
+        return edr_instance
+
+    def __str__(self):
+        return f"""Generic EDR: {self.name} - {self.bank_short_name} - {self.iban_no} - {self.amount} {self.currency}"""

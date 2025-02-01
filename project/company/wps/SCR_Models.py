@@ -62,6 +62,52 @@ class SCR(ABC, Document, metaclass=CombinedMeta):
         self.start_date = start_date
         self.end_date = end_date
 
+
+
+class NBK_SCR(SCR):
+    record_type = StringField(required=True, max_length=3, db_field='Record Type')
+    employer_unique_id = StringField(required=True, min_length=13, max_length=35, db_field='Employer Unique ID')
+    #routing_code = StringField(required=True, max_length=9, db_field='Routing Code of the Employers Bank')
+    file_creation_date = DateField(required=True, db_field='File Creation Date')
+    file_creation_time = StringField(required=True, max_length=4, db_field='File Creation Time')
+    salary_month = StringField(required=True, max_length=7, db_field='Salary Month')
+    edr_count = IntField(required=True, db_field='EDR Count')
+    total_salary = FloatField(required=True, db_field='Total Salary')
+    payment_currency = StringField(required=True, max_length=3, default="AED", db_field='Payment Currency')
+    employer_reference = StringField(max_length=150, db_field='Employer Reference')
+
+    @classmethod
+    def create_scr(cls,  company_details, payroll_details, currency='AED', employer_reference='None'):
+        current_date = datetime.now().strftime('%Y-%m-%d')
+        current_time = datetime.now().strftime('%H%M')
+
+        scr = cls(
+            record_type='SCR',
+            employer_unique_id= company_details.company_unique_id,
+            #routing_code= company_details.company_routing_code,
+            file_creation_date=current_date,
+            file_creation_time=current_time,
+            salary_month=datetime.now().strftime('%m-%Y'),
+            payment_currency=currency,
+            employer_reference=payroll_details.reference,
+            edr_count=0,
+            total_salary=0.0
+        )
+        scr.set_common_fields(company_details, payroll_details)
+        return scr
+
+    def update_scr(self, edr_records):
+        if edr_records:
+            fixed_component = getattr(edr_records, 'fixed_component', 0.0)
+            variable_component = getattr(edr_records, 'variable_component', 0.0)
+            current_salary = fixed_component + variable_component
+            self.edr_count += 1
+            self.total_salary += current_salary
+        # if edr_records:
+        #     current_salary = edr_records.fixed_component + edr_records.variable_component
+        #     self.edr_count += 1
+        #     self.total_salary += current_salary
+
 class Mashreq_SCR(SCR):
     record_type = StringField(required=True, max_length=3, db_field='Record Type')
     employer_unique_id = StringField(required=True, min_length=13, max_length=35, db_field='Employer Unique ID')
@@ -72,7 +118,7 @@ class Mashreq_SCR(SCR):
     edr_count = IntField(required=True, db_field='EDR Count')
     total_salary = FloatField(required=True, db_field='Total Salary')
     payment_currency = StringField(required=True, max_length=3, default="AED", db_field='Payment Currency')
-    employer_reference = StringField(max_length=35, db_field='Employer Reference')
+    employer_reference = StringField(max_length=150, db_field='Employer Reference')
 
     @classmethod
     def create_scr(cls,  company_details, payroll_details, currency='AED', employer_reference='None'):

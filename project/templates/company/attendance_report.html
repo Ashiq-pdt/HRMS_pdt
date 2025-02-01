@@ -61,11 +61,11 @@
                                 </select>
                             </div>
                         </div>
-                        <div class="col-md-2 col-lg-2">
+                        <div class="col-md-4 col-lg-4">
                             <div class="leave-content active" id="multiple">
                                 <div class="form-group">
-                                    <label class="form-label">Date From:</label>
-                                    <!-- <div class="input-group">
+                                    <label class="form-label">Date</label>
+                                    <div class="input-group">
                                         <input type="text" name="daterange" class="form-control"
                                             placeholder="select dates" id="dt_range"
                                             value="{{start.strftime('%d/%m/%Y') + ' - ' + end.strftime('%d/%m/%Y')}}" />
@@ -73,41 +73,6 @@
                                             <div class="input-group-text">
                                                 <i class="bx bx-calendar"></i>
                                             </div>
-                                        </div>
-                                    </div> -->
-                                    <div class="wd-200 mg-b-30">
-                                        <div class="input-group">
-                                            <div class="input-group-prepend">
-                                                <div class="input-group-text">
-                                                    <span class="feather feather-calendar"></span>
-                                                </div>
-                                            </div><input class="form-control fc-datepicker" name="attendance_date_from" placeholder="DD/MM/YYYY" type="text" value="{{start.strftime('%d/%m/%Y')}}">
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-2 col-lg-2">
-                            <div class="leave-content active" id="multiple">
-                                <div class="form-group">
-                                    <label class="form-label">Date to:</label>
-                                    <!-- <div class="input-group">
-                                        <input type="text" name="daterange" class="form-control"
-                                            placeholder="select dates" id="dt_range"
-                                            value="{{start.strftime('%d/%m/%Y') + ' - ' + end.strftime('%d/%m/%Y')}}" />
-                                        <div class="input-group-append">
-                                            <div class="input-group-text">
-                                                <i class="bx bx-calendar"></i>
-                                            </div>
-                                        </div>
-                                    </div> -->
-                                    <div class="wd-200 mg-b-30">
-                                        <div class="input-group">
-                                            <div class="input-group-prepend">
-                                                <div class="input-group-text">
-                                                    <span class="feather feather-calendar"></span>
-                                                </div>
-                                            </div><input class="form-control fc-datepicker" name="attendance_date_to" placeholder="DD/MM/YYYY" type="text" value="{{end.strftime('%d/%m/%Y')}}">
                                         </div>
                                     </div>
                                 </div>
@@ -171,11 +136,11 @@
             </div>
             <div class="card-body">
                 <div class="table-responsive">
-                    <table class="table  table-vcenter text-nowrap table-bordered border-bottom table-striped" id="attendance-report">
+                    <table class="table  table-vcenter text-nowrap table-bordered border-bottom table-striped" id="report">
                         <thead>
                             <tr>
                                 <th class="border-bottom-0">Date</th>
-                                <th class="border-bottom-0">Day</th>
+                                <th class="border-bottom-0" hidden>Day</th>
                                 <th class="border-bottom-0">Employee Name</th>
                                 <th class="border-bottom-0">Status</th>
                                 <th class="border-bottom-0">Clock In From</th>
@@ -198,7 +163,7 @@
                                         <span class="badge badge-warning-light">{{item.attendance_date.strftime('%A')}}</span>
                                     {% endif %} -->
                                 </td>
-                                <td>
+                                <td hidden>
                                     {% if item.attendance_date.strftime('%A') == "Sunday" %}
                                         <span class="badge badge-warning-light">{{item.attendance_date.strftime('%A')}}</span>
                                     {% else %}
@@ -247,7 +212,7 @@
                                     {% endif %}
                                 </td>
                                 <td>{{item.working_from.clock_in_from|default('-')}}</td>
-                                <td>{{item.working_office.office_name|default('-')}}</td>
+                                <td>{{item.working_office.office_name|default('-')}} </td>
                                 <td>
                                     {% if item.attendance_status == 'present' %}
                                         
@@ -360,7 +325,9 @@
                                     {% if employee_attendance|selectattr('employee_details_id.employee_company_details.employee_id','equalto',item.employee_company_details.employee_id)|list|length<=0 %}
                                         <tr>
                                             <td>-</td>
-
+                                            <td hidden>
+                                                -
+                                            </td> 
                                             <td>{{item.first_name + ' ' + item.last_name}}
                                             </td>
                                             <td>
@@ -393,6 +360,7 @@
                     </table>
                 </div>
             </div>
+
         </div>
     </div>
 </div>
@@ -722,13 +690,18 @@
 <script src="https://cdn.datatables.net/plug-ins/1.10.19/sorting/datetime-moment.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/shim.min.js" integrity="sha512-nPnkC29R0sikt0ieZaAkk28Ib7Y1Dz7IqePgELH30NnSi1DzG4x+envJAOHz8ZSAveLXAHTR3ai2E9DZUsT8pQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 <!-- INTERNAL Datepicker js -->
-<!-- <script src="{{ url_for('static', filename='assets/plugins/date-picker/jquery-ui.js')}}"></script> -->
+<script src="{{ url_for('static', filename='assets/plugins/date-picker/jquery-ui.js')}}"></script>
 <!-- INTERNAl Bootstrap-timepicker js-->
 <script src="{{ url_for('static', filename='assets/plugins/bootstrap-timepicker/bootstrap-timepicker.js') }}"></script>
 <script
     src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDeeEzz6bIkKS91kBSsTpbp0C8TcMvoC8Y&callback=initMap&libraries=places&v=weekly"
     async defer></script>
 <script>
+   $('.fc-datepicker').datepicker({
+	 showOtherMonths: true,
+	 selectOtherMonths: true
+   });
+
 
     var points = [];
 
@@ -768,8 +741,8 @@
 
 <script>
 
-    $(document).ready(function() {
-        $('#attendance-report').DataTable({
+$(document).ready(function() {
+        $('#report').DataTable({
             "order": [],
             "paging": false,
             language: {
@@ -780,11 +753,12 @@
             buttons: [
                 {
                     extend: 'excelHtml5',
-                    title: 'Attendance Report ' + $('#dt_range').val()
+                    title: 'Attendance Report '
                 },
             ]
         });
     });
+    
 
     // function downloadSummary() {
         //     const totalHoursWorked = document.getElementById('totalHoursWorked').innerText.trim();
@@ -860,53 +834,6 @@
     //         // Handle the error
     //     });
     // }
-
-    function fetchAttendanceSummary() {
-    const attendanceDateFrom = document.querySelector('[name="attendance_date_from"]').value;
-    const attendanceDateTo = document.querySelector('[name="attendance_date_to"]').value;
-
-    const data = {
-        attendance_date_from: attendanceDateFrom,
-        attendance_date_to: attendanceDateTo
-    };
-
-    console.log('Sending data:', data);
-
-    const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]').value;
-
-    fetch("/attendancesummary", {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'X-CSRF-TOKEN': csrftoken
-        },
-        body: JSON.stringify(data)
-    })
-    .then(response => {
-        if (!response.ok) {
-            throw new Error('Network response was not ok');
-        }
-        return response.text();
-    })
-    .then(response => {
-        console.log('Response received:', response);
-        $('#summaryContainer').html(response);
-        swal({
-            title: "Success",
-            text: "Attendance Summary Fetched Successfully!",
-            icon: "success",
-        });
-    })
-    .catch(error => {
-        console.error('Error occurred:', error);
-        swal({
-            title: "Error",
-            text: "An error occurred while fetching the attendance summary. Please try again.",
-            icon: "error",
-        });
-    });
-}
-
 
 
 

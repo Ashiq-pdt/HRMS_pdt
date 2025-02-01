@@ -38,12 +38,15 @@
             <li><a href="{{url_for('employee.attendance_history')}}" class="slide-item"><i class="fe fe-check-circle  sidemenu_icon"></i>Attendance History</a></li>
 
             <li><a href="{{url_for('employee.reimbursement')}}" class="slide-item"><i class="fe fe-check-circle  sidemenu_icon"></i>Reimbursment</a></li>
+
+
             {% if session['is_approver'] or session['is_super_approver'] %}
             <li><a href="{{url_for('employee.leaves_approvals')}}" class="slide-item"><i class="fe fe-pocket  sidemenu_icon"></i>Leave Approvals </a></li>
             {% endif %}
             {% if session['is_time_approver'] %}
             <li><a href="{{url_for('employee.time_approvals')}}" class="slide-item"><i class="fe fe-clock  sidemenu_icon"></i>Time Approvals </a></li>
             {% endif %}
+            
             <!-- <li><a href="#" class="slide-item"><i
                         class="fe fe-clipboard  sidemenu_icon"></i>Attendance</a></li>
             <li><a href="#" class="slide-item"><i class="fe fe-send  sidemenu_icon"></i>Apply
@@ -118,18 +121,26 @@
 {% endif %}
 
 {% if current_user.has_role('expensemanager') %}
-<ul class="side-menu py-0">
-    <li class="slide">
-        <a class="side-menu__item" data-bs-toggle="slide" href="">
-            <i class="feather feather-command  sidemenu_icon"></i>
-            <span class="side-menu__label">Expense Manager</span><i class="angle fa fa-angle-right"></i></a>
-        <ul class="slide-menu">
-            <li><a href="{{url_for('company.adjustments')}}" class="slide-item"><i
-                        class="fe fe-dollar-sign  sidemenu_icon"></i>Payroll Adjustments</a></li>
+    {% if session.user_company_id == session.multiple_access_company_id or not session.multiple_access_company_id %}
+        <ul class="side-menu py-0">
+            <li class="slide">
+                <a class="side-menu__item" data-bs-toggle="slide" href="">
+                    <i class="feather feather-command sidemenu_icon"></i>
+                    <span class="side-menu__label">Expense Manager</span>
+                    <i class="angle fa fa-angle-right"></i>
+                </a>
+                <ul class="slide-menu">
+                    <li>
+                        <a href="{{ url_for('company.adjustments') }}" class="slide-item">
+                            <i class="fe fe-dollar-sign sidemenu_icon"></i>Payroll Adjustments
+                        </a>
+                    </li>
+                </ul>
+            </li>
         </ul>
-    </li>
-</ul>
+    {% endif %}
 {% endif %}
+
 
 <ul class="side-menu py-0">
     <li class="slide">

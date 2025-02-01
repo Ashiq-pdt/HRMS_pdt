@@ -51,6 +51,17 @@
 			table.dataTable thead td {
 				padding: 5px 10px !important;
 			}
+	
+			.dropdown-text {
+				display: flex;
+				white-space: normal;
+				overflow-wrap: break-word;
+				word-wrap: break-word;
+				line-height: 1.2;
+				max-width: 400px;
+				align-items: center;
+			}
+									
 		</style>
 		{% endblock %}
 </head>
@@ -109,6 +120,74 @@
 													<span class="light-layout"><i class="fe fe-sun"></i></span>
 												</a>
 											</div> -->
+
+											<!-- {% if multiple_access_doc and multiple_access_doc.MultipleAccessEntry %}
+												<div class="dropdown d-flex">
+													<select id="myDropdown" onchange="window.location.href=this.value">
+														<option value="" disabled selected>Select an Company</option>
+														{% for entry in multiple_access_doc.MultipleAccessEntry %}
+														<option value="/multiple_access/{{ entry.multiple_access_email_id}}">
+															{{ entry.multiple_access_company_name }}
+														</option>
+														{% endfor %}
+													</select>
+												</div>
+											{% endif %} -->
+
+											<!-- {% if session.multiple_access_doc and session.multiple_access_doc.MultipleAccessEntry %}
+												<div class="dropdown d-flex">
+													<select id="myDropdown" onchange="window.location.href=this.value">
+														<option value="" disabled selected>Select a Company</option>
+														{% for entry in session.multiple_access_doc.MultipleAccessEntry %}
+														<option value="/multiple_access/{{ entry.multiple_access_email_id }}">
+															{{ entry.multiple_access_company_name }}
+														</option>
+														{% endfor %}
+													</select>
+												</div>
+											{% endif %} -->
+
+											{% if session.multiple_access_doc and session.multiple_access_doc.MultipleAccessEntry %}
+												
+												<div class="dropdown profile-dropdown" style="display: flex;align-items: center;align-content: flex-end;">
+													<a href="javascript:void(0);" class="nav-link pe-1 ps-0 leading-none" data-bs-toggle="dropdown">
+														<span>
+															{% if session.mutipleacces_company %}
+																<div class="company-name">{{ session.mutipleacces_company }}</div>
+															{% else %}
+																<div class="company-name">{{ session.Main_company_name }}</div>
+															{% endif %}
+														</span>
+													</a>
+													<div class="dropdown-menu dropdown-menu-end dropdown-menu-arrow animated">
+														{% for entry in session.multiple_access_doc.MultipleAccessEntry %}
+															<a class="dropdown-item d-flex" href="/multiple_access/{{ entry.multiple_access_email_id }}">
+																<img src="{{url_for('static', filename='uploads/profile/'+entry.company_logo|default('profile.png',true))}}" alt="user-img" class="avatar-xxl rounded-circle mb-1"style="height: 25px;width: 25px;">
+																<div class="dropdown-text">{{ entry.multiple_access_company_name }}</div>
+															</a>
+														{% endfor %}
+														
+													</div>
+												</div>
+
+											
+											{% endif %}
+
+											<!-- {% if multiple_access_doc and multiple_access_doc.MultipleAccessEntry %}
+												<div class="dropdown d-flex">
+													<select id="myDropdown" onchange="window.location.href=this.value">
+														<option value="" disabled selected>Select a Company</option>
+														{% for entry in multiple_access_doc.multiple_access_email_id %}
+															<option value="/multiple_access/{{ entry.multiple_access_company_id }}">
+																{{ entry.multiple_access_company_name }}
+															</option>
+														{% endfor %}
+													</select>
+												</div>
+											{% endif %} -->
+
+
+										
 											{% if current_user.type == 'company' and 'subscription_end_on' in current_user%}
 												<div class="card-alert mb-0">
 													<span class="menu-btn-switch">

@@ -11,6 +11,27 @@
     table.dataTable thead td {
         padding: 5px 10px !important;
     }
+
+    .attendance-present {
+    background-color: #d4edda; /* Light green */
+    color: #155724; /* Dark green */
+    }
+
+    .attendance-absent {
+        background-color: #f8d7da; /* Light red */
+        color: #721c24; /* Dark red */
+    }
+
+    .attendance-leave {
+        background-color: #fff3cd; /* Light yellow */
+        color: #856404; /* Dark yellow */
+    }
+
+    .attendance-late {
+        background-color: #d1ecf1; /* Light blue */
+        color: #0c5460; /* Dark blue */
+    }
+
 </style>
 
 
@@ -67,11 +88,11 @@
                                 </div>
                             </div>
                         </div>
-                        <div class="col-md-2 col-lg-2">
+                        <div class="col-md-4 col-lg-4">
                             <div class="leave-content active" id="multiple">
                                 <div class="form-group">
-                                    <label class="form-label">Date From:</label>
-                                    <!-- <div class="input-group">
+                                    <label class="form-label">Date</label>
+                                    <div class="input-group">
                                         <input type="text" name="daterange" class="form-control"
                                             placeholder="select dates" id="dt_range"
                                             value="{{start.strftime('%d/%m/%Y') + ' - ' + end.strftime('%d/%m/%Y')}}" />
@@ -80,8 +101,8 @@
                                                 <i class="bx bx-calendar"></i>
                                             </div>
                                         </div>
-                                    </div> -->
-                                    <div class="wd-200 mg-b-30">
+                                    </div>
+                                    <!-- <div class="wd-200 mg-b-30">
                                         <div class="input-group">
                                             <div class="input-group-prepend">
                                                 <div class="input-group-text">
@@ -89,24 +110,14 @@
                                                 </div>
                                             </div><input class="form-control fc-datepicker" name="attendance_date_from" placeholder="DD/MM/YYYY" type="text" value="{{start.strftime('%d/%m/%Y')}}">
                                         </div>
-                                    </div>
+                                    </div> -->
                                 </div>
                             </div>
                         </div>
-                        <div class="col-md-2 col-lg-2">
+                        <!-- <div class="col-md-2 col-lg-2">
                             <div class="leave-content active" id="multiple">
                                 <div class="form-group">
                                     <label class="form-label">Date to:</label>
-                                    <!-- <div class="input-group">
-                                        <input type="text" name="daterange" class="form-control"
-                                            placeholder="select dates" id="dt_range"
-                                            value="{{start.strftime('%d/%m/%Y') + ' - ' + end.strftime('%d/%m/%Y')}}" />
-                                        <div class="input-group-append">
-                                            <div class="input-group-text">
-                                                <i class="bx bx-calendar"></i>
-                                            </div>
-                                        </div>
-                                    </div> -->
                                     <div class="wd-200 mg-b-30">
                                         <div class="input-group">
                                             <div class="input-group-prepend">
@@ -118,7 +129,7 @@
                                     </div>
                                 </div>
                             </div>
-                        </div>
+                        </div> -->
                         <div class="col-md-2 col-lg-2 ">
                             <div class="form-group mt-5">
                                 <button class="btn btn-primary btn-block">Search</button>
@@ -193,10 +204,10 @@
                             <tr>
                                 <td>{{ data.employee_details.first_name }} {{ data.employee_details.last_name }}</td>
                                 <td>{{ data.attendance }}</td>
-                                <td>{{ data.days_present }}</td>
-                                <td>{{ data.days_absent }}</td>
-                                <td>{{ data.days_on_leave }}</td>
-                                <td>{{ data.late_count }}</td>
+                                <td  style="color: #155724; /* Dark green */" >{{ data.days_present }}</td>
+                                <td style="color: #721c24; /* Dark red */">{{ data.days_absent }}</td>
+                                <td style="color: #856404; /* Dark yellow */">{{ data.days_on_leave }}</td>
+                                <td style="color: #0c5460; /* Dark blue */">{{ data.late_count }}</td>
                             </tr>
                             {% endfor %}
                         </tbody>
@@ -217,17 +228,6 @@
                     <span aria-hidden="true">×</span>
                 </button>
             </div>
-            <!-- <div class="modal-body p-0">
-                <div class="row">
-                    <div class="col-md-12">
-                        <div class="pt-5 text-center">
-                            <h6 class="mb-1 fs-14 font-weight-semibold">Employee Name: <small
-                                    class="text-muted fs-14">Test Employee</small></h6>
-
-                        </div>
-                    </div>
-                </div>
-            </div> -->
             <!-- Container -->
             <div style="max-height:80vh;overflow-y:scroll;background:aliceblue">
                 <ul class="notification">
@@ -532,7 +532,7 @@
 <script src="https://cdn.datatables.net/plug-ins/1.10.19/sorting/datetime-moment.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/shim.min.js" integrity="sha512-nPnkC29R0sikt0ieZaAkk28Ib7Y1Dz7IqePgELH30NnSi1DzG4x+envJAOHz8ZSAveLXAHTR3ai2E9DZUsT8pQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 <!-- INTERNAL Datepicker js -->
-<!-- <script src="{{ url_for('static', filename='assets/plugins/date-picker/jquery-ui.js')}}"></script> -->
+<script src="{{ url_for('static', filename='assets/plugins/date-picker/jquery-ui.js')}}"></script>
 <!-- INTERNAl Bootstrap-timepicker js-->
 <script src="{{ url_for('static', filename='assets/plugins/bootstrap-timepicker/bootstrap-timepicker.js') }}"></script>
 <script
@@ -1149,6 +1149,11 @@
             $('.present_div').hide();
         }
     });
+
+    $('.fc-datepicker').datepicker({
+        format:'dd/mm/yyyy',
+        autoHide: true
+      });
 </script>
 
 <!-- custom js -->

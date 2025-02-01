@@ -55,61 +55,101 @@
 
 <!--Row-->
 <div class="row">
-    <div class="col-xl-3 col-md-12 col-lg-12 d-flex">
-        <div class="card">
-            <div class="card-body py-2">
-                <div class="countdowntimer mt-0">
-                    <span id="clocktimer2" class="border-0"></span>
-                    <label class="form-label">Current Time</label>
-                </div>
-                <div class="btn-list text-center mt-2">
-                    <button class="btn btn-primary clock_in_btn" data-bs-toggle="modal"
-                        data-bs-target="#clockinmodal">Clock In</button>
-                    <button class="btn btn-success startbreakBtn breakBtn {{'d-none' if (break_data) or (session.already_checked_in == False) else ''}}" data-btn-type="start">Start Break</button>
-                    <button class="btn btn-secondary endbreakBtn breakBtn {{'d-none' if not break_data else ''}}" data-btn-type="end" data-break-id="{{break_data._id if break_data else ''}}">End Break</button>
-                    <button class="btn btn-danger clock_out_btn" data-bs-toggle="modal" data-bs-target="#clockoutmodal" {{'disabled' if ((break_data) or (session.already_checked_in == False)) else ''}}>Clock
-                        Out</button>
-                </div>
-                <div class="tags text-center pt-2 d-none clock_in_status">
-                    <span class="tag">Clocked In At:</span>
-                </div>
-                <div class="tags text-center pt-2 d-none clock_out_status">
-                    <span class="tag">Clocked Out At:</span>
-                </div>
-            </div>
-        </div>
-    </div>
-    <div class="col-sm-12 col-lg-3 d-flex">
-        <div class="card">
-            <div class="card-body text-center list-icons">
-                <i class="feather feather-box fill-white text-primary icon-dropshadow-primary"></i>
-                <p class="card-text mt-3 mb-0">Total Present</p>
-                <p class="h2 text-center font-weight-bold">{{present_count}}</p>
-            </div>
-        </div>
-    </div>
-    <div class="col-sm-12 col-lg-3 d-flex">
-        <div class="card">
-            <div class="card-body text-center list-icons">
-                <i class="feather feather-briefcase fill-white text-primary icon-dropshadow-primary"></i>
-                <p class="card-text mt-3 mb-0">Total Absent</p>
-                <p class="h2 text-center font-weight-bold">{{absent_count}}</p>
-            </div>
-        </div>
-    </div>
-    <div class="col-sm-12 col-lg-3 d-flex">
-        <div class="card">
-            <div class="card-body text-center list-icons">
-                <i class="fa fa-hourglass-2 fill-white text-primary icon-dropshadow-primary"></i>
-                <p class="card-text mt-3 mb-0">Late</p>
-                <p class="h2 text-center font-weight-bold">{{late_count}}</p>
-            </div>
-        </div>
-    </div>
-</div>
-<!-- /Row-->
 
-<!--Row-->
+    
+    {% if  session.user_company_id and session.multiple_access_company_id and  session.user_company_id != session.multiple_access_company_id %}
+        <div class="col-sm-12 col-lg-4 d-flex">
+            <div class="card">
+                <div class="card-body text-center list-icons">
+                    <i class="feather feather-box fill-white text-primary icon-dropshadow-primary"></i>
+                    <p class="card-text mt-3 mb-0">Total Present</p>
+                    <p class="h2 text-center font-weight-bold">{{present_count}}</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-sm-12 col-lg-4 d-flex">
+            <div class="card">
+                <div class="card-body text-center list-icons">
+                    <i class="feather feather-briefcase fill-white text-primary icon-dropshadow-primary"></i>
+                    <p class="card-text mt-3 mb-0">Total Absent</p>
+                    <p class="h2 text-center font-weight-bold">{{absent_count}}</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-sm-12 col-lg-4 d-flex">
+            <div class="card">
+                <div class="card-body text-center list-icons">
+                    <i class="fa fa-hourglass-2 fill-white text-primary icon-dropshadow-primary"></i>
+                    <p class="card-text mt-3 mb-0">Late</p>
+                    <p class="h2 text-center font-weight-bold">{{late_count}}</p>
+                </div>
+            </div>
+        </div>
+            
+    {% else %}
+        <div class="col-xl-3 col-md-12 col-lg-12 d-flex">
+
+                <div class="card">
+                    <div class="card-body py-2">
+                        <div class="countdowntimer mt-0">
+                            <span id="clocktimer2" class="border-0"></span>
+                            <label class="form-label">Current Time</label>
+                        </div>
+                        <div class="btn-list text-center mt-2">
+                            <button class="btn btn-primary clock_in_btn" data-bs-toggle="modal"
+                                data-bs-target="#clockinmodal">Clock In</button>
+                            <button class="btn btn-success startbreakBtn breakBtn {{'d-none' if (break_data) or (session.already_checked_in == False) else ''}}" data-btn-type="start">Start Break</button>
+                            <button class="btn btn-secondary endbreakBtn breakBtn {{'d-none' if not break_data else ''}}" data-btn-type="end" data-break-id="{{break_data._id if break_data else ''}}">End Break</button>
+                            <button class="btn btn-danger clock_out_btn" data-bs-toggle="modal" data-bs-target="#clockoutmodal" {{'disabled' if ((break_data) or (session.already_checked_in == False)) else ''}}>Clock
+                                Out</button>
+                        </div>
+                        <div class="tags text-center pt-2 d-none clock_in_status">
+                            <span class="tag">Clocked In At:</span>
+                        </div>
+                        <div class="tags text-center pt-2 d-none clock_out_status">
+                            <span class="tag">Clocked Out At:</span>
+                        </div>
+                    </div>
+                </div>
+        
+        
+
+        </div>
+        <div class="col-sm-12 col-lg-3 d-flex">
+            <div class="card">
+                <div class="card-body text-center list-icons">
+                    <i class="feather feather-box fill-white text-primary icon-dropshadow-primary"></i>
+                    <p class="card-text mt-3 mb-0">Total Present</p>
+                    <p class="h2 text-center font-weight-bold">{{present_count}}</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-sm-12 col-lg-3 d-flex">
+            <div class="card">
+                <div class="card-body text-center list-icons">
+                    <i class="feather feather-briefcase fill-white text-primary icon-dropshadow-primary"></i>
+                    <p class="card-text mt-3 mb-0">Total Absent</p>
+                    <p class="h2 text-center font-weight-bold">{{absent_count}}</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-sm-12 col-lg-3 d-flex">
+            <div class="card">
+                <div class="card-body text-center list-icons">
+                    <i class="fa fa-hourglass-2 fill-white text-primary icon-dropshadow-primary"></i>
+                    <p class="card-text mt-3 mb-0">Late</p>
+                    <p class="h2 text-center font-weight-bold">{{late_count}}</p>
+                </div>
+            </div>
+        </div>
+    {% endif %}
+    
+    <!-- <input type="text" id="office_lat" value="{{session.office_lat}}" readonly>
+    <input type="text" id="office_lng" value="{{session.office_lng}}" readonly>
+    <input type="text" id="office_radius" value="{{session.office_radius}}" readonly> -->
+
+</div>
+
 <div class="row">
     {% if upcoming_schedule %}
         <div class="col-xxl-4 col-xl-6 col-md-6 col-lg-6">
@@ -143,7 +183,6 @@
             </div>
         </div>
     {% endif %}
-
     <div class="col-xl-4 col-lg-6 col-md-6 50vh" >
         <div class="card mb-0 h-90 overflowy-scroll">
             <div class="card-header border-0">
@@ -276,8 +315,8 @@
             </div>
         </div>
     </div>
-
 </div>
+
 <!-- Modals Start -->
 {% include "company/modals/employee_modals.html" %}
 <!-- Modal End -->
@@ -476,7 +515,6 @@
                             $('.clock_in_status').removeClass('d-none')
                             $('.clock_in_status span').addClass('bg-primary')
                             $('.clock_in_status span').html("Clocked In At:" + " " +data.checked_in_time)
-
                             swal({
                                 title: "Success",
                                 text: "Hurrrayyyyy! You Successfully Clocked In Today!",
@@ -596,7 +634,6 @@
                             if(break_type=='start'){
                                 $('.startbreakBtn').attr('disabled',true)
                                 $('.startbreakBtn').addClass('d-none')
-
                                 $('.clock_out_btn').attr('disabled',true);
 
                                 $('.endbreakBtn').attr('data-break-id',data.break_id)
