@@ -35,10 +35,16 @@ class AppConfig:
         }
     } 
 
-    app_config_server_name = 'hrms.cubes-intl.com'
+    app_config_server_name = '127.0.0.1:5000'
 
     app_config_login_url_mail = 'hrms.cubes-intl.com'
 
+    db_uri="mongodb://localhost:27017/hrm-test-db-live"
+
+
+    # app_config_server_name = 'hrms.cubes-intl.com'
+
+    # app_config_login_url_mail = 'hrms.cubes-intl.com'
+
     # db_uri = "mongodb://hrms_live:Pdtcubes0913!hrms_live@127.0.0.1:27017/hrms_live"
-    db_uri="mongodb://localhost:27017/PdtHrms"
 

@@ -55,101 +55,63 @@
 
 <!--Row-->
 <div class="row">
+    <div class="col-xl-3 col-md-12 col-lg-12 d-flex">
+        <div class="card">
+            <div class="card-body py-2">
+                <div class="countdowntimer mt-0">
+                    <span id="clocktimer2" class="border-0"></span>
+                    <label class="form-label">Current Time</label>
+                </div>
+                <div class="btn-list text-center mt-2">
+                    <button class="btn btn-primary clock_in_btn" data-bs-toggle="modal"
+                        data-bs-target="#clockinmodal">Clock In</button>
+                    <button class="btn btn-success startbreakBtn breakBtn {{'d-none' if (break_data) or (session.already_checked_in == False) else ''}}" data-btn-type="start">Start Break</button>
+                    <button class="btn btn-secondary endbreakBtn breakBtn {{'d-none' if not break_data else ''}}" data-btn-type="end" data-break-id="{{break_data._id if break_data else ''}}">End Break</button>
+                    <button class="btn btn-danger clock_out_btn" data-bs-toggle="modal" data-bs-target="#clockoutmodal" {{'disabled' if ((break_data) or (session.already_checked_in == False)) else ''}}>Clock
+                        Out</button>
+                </div>
+                <div class="tags text-center pt-2 d-none clock_in_status">
+                    <span class="tag">Clocked In At:</span>
+                </div>
+                <div class="tags text-center pt-2 d-none clock_out_status">
+                    <span class="tag">Clocked Out At:</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-12 col-lg-3 d-flex">
+        <div class="card">
+            <div class="card-body text-center list-icons">
+                <i class="feather feather-box fill-white text-primary icon-dropshadow-primary"></i>
+                <p class="card-text mt-3 mb-0">Total Present</p>
+                <p class="h2 text-center font-weight-bold">{{present_count}}</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-12 col-lg-3 d-flex">
+        <div class="card">
+            <div class="card-body text-center list-icons">
+                <i class="feather feather-briefcase fill-white text-primary icon-dropshadow-primary"></i>
+                <p class="card-text mt-3 mb-0">Total Absent</p>
+                <p class="h2 text-center font-weight-bold">{{absent_count}}</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-12 col-lg-3 d-flex">
+        <div class="card">
+            <div class="card-body text-center list-icons">
+                <i class="fa fa-hourglass-2 fill-white text-primary icon-dropshadow-primary"></i>
+                <p class="card-text mt-3 mb-0">Late</p>
+                <p class="h2 text-center font-weight-bold">{{late_count}}</p>
+            </div>
+        </div>
+    </div>
 
-    
-    {% if  session.user_company_id and session.multiple_access_company_id and  session.user_company_id != session.multiple_access_company_id %}
-        <div class="col-sm-12 col-lg-4 d-flex">
-            <div class="card">
-                <div class="card-body text-center list-icons">
-                    <i class="feather feather-box fill-white text-primary icon-dropshadow-primary"></i>
-                    <p class="card-text mt-3 mb-0">Total Present</p>
-                    <p class="h2 text-center font-weight-bold">{{present_count}}</p>
-                </div>
-            </div>
-        </div>
-        <div class="col-sm-12 col-lg-4 d-flex">
-            <div class="card">
-                <div class="card-body text-center list-icons">
-                    <i class="feather feather-briefcase fill-white text-primary icon-dropshadow-primary"></i>
-                    <p class="card-text mt-3 mb-0">Total Absent</p>
-                    <p class="h2 text-center font-weight-bold">{{absent_count}}</p>
-                </div>
-            </div>
-        </div>
-        <div class="col-sm-12 col-lg-4 d-flex">
-            <div class="card">
-                <div class="card-body text-center list-icons">
-                    <i class="fa fa-hourglass-2 fill-white text-primary icon-dropshadow-primary"></i>
-                    <p class="card-text mt-3 mb-0">Late</p>
-                    <p class="h2 text-center font-weight-bold">{{late_count}}</p>
-                </div>
-            </div>
-        </div>
-            
-    {% else %}
-        <div class="col-xl-3 col-md-12 col-lg-12 d-flex">
-
-                <div class="card">
-                    <div class="card-body py-2">
-                        <div class="countdowntimer mt-0">
-                            <span id="clocktimer2" class="border-0"></span>
-                            <label class="form-label">Current Time</label>
-                        </div>
-                        <div class="btn-list text-center mt-2">
-                            <button class="btn btn-primary clock_in_btn" data-bs-toggle="modal"
-                                data-bs-target="#clockinmodal">Clock In</button>
-                            <button class="btn btn-success startbreakBtn breakBtn {{'d-none' if (break_data) or (session.already_checked_in == False) else ''}}" data-btn-type="start">Start Break</button>
-                            <button class="btn btn-secondary endbreakBtn breakBtn {{'d-none' if not break_data else ''}}" data-btn-type="end" data-break-id="{{break_data._id if break_data else ''}}">End Break</button>
-                            <button class="btn btn-danger clock_out_btn" data-bs-toggle="modal" data-bs-target="#clockoutmodal" {{'disabled' if ((break_data) or (session.already_checked_in == False)) else ''}}>Clock
-                                Out</button>
-                        </div>
-                        <div class="tags text-center pt-2 d-none clock_in_status">
-                            <span class="tag">Clocked In At:</span>
-                        </div>
-                        <div class="tags text-center pt-2 d-none clock_out_status">
-                            <span class="tag">Clocked Out At:</span>
-                        </div>
-                    </div>
-                </div>
-        
-        
-
-        </div>
-        <div class="col-sm-12 col-lg-3 d-flex">
-            <div class="card">
-                <div class="card-body text-center list-icons">
-                    <i class="feather feather-box fill-white text-primary icon-dropshadow-primary"></i>
-                    <p class="card-text mt-3 mb-0">Total Present</p>
-                    <p class="h2 text-center font-weight-bold">{{present_count}}</p>
-                </div>
-            </div>
-        </div>
-        <div class="col-sm-12 col-lg-3 d-flex">
-            <div class="card">
-                <div class="card-body text-center list-icons">
-                    <i class="feather feather-briefcase fill-white text-primary icon-dropshadow-primary"></i>
-                    <p class="card-text mt-3 mb-0">Total Absent</p>
-                    <p class="h2 text-center font-weight-bold">{{absent_count}}</p>
-                </div>
-            </div>
-        </div>
-        <div class="col-sm-12 col-lg-3 d-flex">
-            <div class="card">
-                <div class="card-body text-center list-icons">
-                    <i class="fa fa-hourglass-2 fill-white text-primary icon-dropshadow-primary"></i>
-                    <p class="card-text mt-3 mb-0">Late</p>
-                    <p class="h2 text-center font-weight-bold">{{late_count}}</p>
-                </div>
-            </div>
-        </div>
-    {% endif %}
-    
-    <!-- <input type="text" id="office_lat" value="{{session.office_lat}}" readonly>
-    <input type="text" id="office_lng" value="{{session.office_lng}}" readonly>
-    <input type="text" id="office_radius" value="{{session.office_radius}}" readonly> -->
 
 </div>
+<!-- /Row-->
 
+<!--Row-->
 <div class="row">
     {% if upcoming_schedule %}
         <div class="col-xxl-4 col-xl-6 col-md-6 col-lg-6">
@@ -316,7 +278,6 @@
         </div>
     </div>
 </div>
-
 <!-- Modals Start -->
 {% include "company/modals/employee_modals.html" %}
 <!-- Modal End -->
@@ -339,62 +300,87 @@
         // timeZone : "+1"
     });
     // Function to fetch the user's current location asynchronously
+// Function to get the current location with proper error handling
     function getCurrentLocation() {
-            return new Promise((resolve, reject) => {
-                if (navigator.geolocation) {
-                    navigator.geolocation.getCurrentPosition(
-                        position => {
-                            const latitude = position.coords.latitude;
-                            const longitude = position.coords.longitude;
-                            resolve({ latitude, longitude });
-                        },
-                        error => {
-                            reject(error);
+        return new Promise((resolve, reject) => {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(
+                    position => {
+                        const { latitude, longitude } = position.coords;
+                        resolve({ latitude, longitude });
+                    },
+                    error => {
+                        let errorMessage = '';
+
+                        switch (error.code) {
+                            case error.PERMISSION_DENIED:
+                                errorMessage = 'User denied the request for Geolocation.';
+                                break;
+                            case error.POSITION_UNAVAILABLE:
+                                errorMessage = 'Location information is unavailable.';
+                                break;
+                            case error.TIMEOUT:
+                                errorMessage = 'The request to get user location timed out.';
+                                break;
+                            case error.UNKNOWN_ERROR:
+                            default:
+                                errorMessage = 'An unknown error occurred while fetching the location.';
+                                break;
                         }
-                    );
-                } else {
-                    reject(new Error('Geolocation is not supported by this browser.'));
-                }
-            });
-        }
 
-        function getDistanceFromLatLonInMeter(lat1, lon1, lat2, lon2) {
-            const R = 6371; // Radius of the earth in km
-            const dLat = deg2rad(lat2 - lat1); // deg2rad below
-            const dLon = deg2rad(lon2 - lon1);
-            const a =
-                Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-                Math.cos(deg2rad(lat1)) * Math.cos(deg2rad(lat2)) *
-                Math.sin(dLon / 2) * Math.sin(dLon / 2);
-            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-            const d = (R * 1000) * c; // Distance in Meter
-            return d;
-        }
+                        reject(new Error(errorMessage));
+                    },
+                    {
+                        enableHighAccuracy: true, // optional, for more accurate location
+                        timeout: 10000, // optional, timeout in milliseconds
+                        maximumAge: 0 // optional, do not use a cached location
+                    }
+                );
+            } else {
+                reject(new Error('Geolocation is not supported by this browser.'));
+            }
+        });
+    }
 
-        function deg2rad(deg) {
-            return deg * (Math.PI / 180);
-        }
+    // Function to calculate the distance between two coordinates in meters
+    function getDistanceFromLatLonInMeter(lat1, lon1, lat2, lon2) {
+        const R = 6371; // Radius of the earth in km
+        const dLat = deg2rad(lat2 - lat1); // Convert latitude difference to radians
+        const dLon = deg2rad(lon2 - lon1); // Convert longitude difference to radians
+        const a =
+            Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+            Math.cos(deg2rad(lat1)) * Math.cos(deg2rad(lat2)) *
+            Math.sin(dLon / 2) * Math.sin(dLon / 2);
+        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        const distance = (R * 1000) * c; // Convert distance from km to meters
+        return distance;
+    }
+
+    // Function to convert degrees to radians
+    function deg2rad(deg) {
+        return deg * (Math.PI / 180);
+    }
     window.onload = function() {
     // Call getCurrentLocation() to fetch the user's location when the page loads
-        // getCurrentLocation()
-        //     .then(location => {
-        //         const current_lat = location.latitude;
-        //         const current_lng = location.longitude;
-        //         $('.current_longitude').attr('value',current_lng)
-        //         $('.current_latitude').attr('value',current_lat)
-        //         // Use the latitude and longitude data as needed
-        //         // For example, you can call your existing function here or perform other actions
-        //     })
-        //     .catch(error => {
-        //         // Handle errors when fetching the location
-        //         console.error('Error fetching location:', error.message);
-        //             console.log(error);
-        //             $('.clock_in_btn').attr('disabled', true)
-        //             //$('.clock_out_btn').attr('disabled', true)
-        //             $('.clock_in_status').removeClass('d-none')
-        //             $('.clock_in_status span').addClass('tag-red')
-        //             $('.clock_in_status span').html("Please enable GPS and allow to access your Location")
-        //     });
+        getCurrentLocation()
+            .then(location => {
+                const current_lat = location.latitude;
+                const current_lng = location.longitude;
+                $('.current_longitude').attr('value',current_lng)
+                $('.current_latitude').attr('value',current_lat)
+                // Use the latitude and longitude data as needed
+                // For example, you can call your existing function here or perform other actions
+            })
+            .catch(error => {
+                // Handle errors when fetching the location
+                console.error('Error fetching location:', error.message);
+                    console.log(error);
+                    $('.clock_in_btn').attr('disabled', true)
+                    //$('.clock_out_btn').attr('disabled', true)
+                    $('.clock_in_status').removeClass('d-none')
+                    $('.clock_in_status span').addClass('tag-red')
+                    $('.clock_in_status span').html("Please enable GPS and allow to access your Location")
+            });
 
         if("{{session.already_checked_in}}" == "True"){
             $('.clock_in_btn').attr('disabled', true)
@@ -428,50 +414,50 @@
         if("{{session.on_break}}" == "True"){
             $('.clock_out_btn').attr('disabled', true)
         }
-        // var geoOptions = {
-        //     enableHighAccuracy: true,
-        //     timeout: 10000,
-        //     maximumAge: 0
-        //   };
-        // navigator.geolocation.watchPosition(
-        //     function (position) {
-        //         $('.current_longitude').attr('value',position.coords.longitude)
-        //         $('.current_latitude').attr('value',position.coords.latitude)
-        //         current_lat = position.coords.latitude
-        //         current_lng = position.coords.longitude
-        //         console.log("current_lat on Load: ",current_lat);
-        //         console.log("current_lng on Load: ",current_lng);
+        var geoOptions = {
+            enableHighAccuracy: true,
+            timeout: 10000,
+            maximumAge: 0
+          };
+        navigator.geolocation.watchPosition(
+            function (position) {
+                $('.current_longitude').attr('value',position.coords.longitude)
+                $('.current_latitude').attr('value',position.coords.latitude)
+                current_lat = position.coords.latitude
+                current_lng = position.coords.longitude
+                console.log("current_lat on Load: ",current_lat);
+                console.log("current_lng on Load: ",current_lng);
 
-        //         //$('#location_accuracy').val(position.coords.accuracy)
-        //         checkin_lat = "{{session.office_lat}}"
-        //         checkin_lng = "{{session.office_lng}}"
-        //         radius = "{{session.office_radius}}"
-        //         //if ("{{session.allowed_outside}}"=="False") {
-        //           //  const distance = getDistanceFromLatLonInMeter(checkin_lat, checkin_lng, current_lat, current_lng);
-        //             //if (distance > radius || "{{session.already_checked_in}}" == "True") {
-        //               //  $('.clock_in_btn').attr('disabled', true)
-        //                 //if("{{session.already_checked_in}}" == "True"){
-        //                   //  $('.clock_in_status').removeClass('d-none')
-        //                     //$('.clock_in_status span').addClass('tag-green')
-        //                     //$('.clock_in_status span').html("Clocked In At:" + " " +"{{session.checked_in_time.strftime('%d %B %Y , %H:%M:%S %p') if session.checked_in_time else ""}}")
-        //                 //}
-        //                 //else{
-        //                   //  $('.clock_in_status').removeClass('d-none')
-        //                    // $('.clock_in_status span').addClass('tag-red')
-        //                    // $('.clock_out_btn').attr('disabled', true)
-        //                     //$('.clock_in_status span').html("Outside Clock In Radius, approx " + distance.toFixed(2) + " meters away.")
-        //                // }
-        //             //}
-        //         //}
-        //     },
-        //     function errorCallback(error) {
-        //         console.log(error);
-        //         $('.clock_in_btn').attr('disabled', true)
-        //         //$('.clock_out_btn').attr('disabled', true)
-        //         $('.clock_in_status').removeClass('d-none')
-        //         $('.clock_in_status span').addClass('tag-red')
-        //         $('.clock_in_status span').html("Please enable GPS and allow to access your Location")
-        //     },geoOptions);
+                $('#location_accuracy').val(position.coords.accuracy)
+                checkin_lat = "{{session.office_lat}}"
+                checkin_lng = "{{session.office_lng}}"
+                radius = "{{session.office_radius}}"
+                if ("{{session.allowed_outside}}"=="False") {
+                   const distance = getDistanceFromLatLonInMeter(checkin_lat, checkin_lng, current_lat, current_lng);
+                    if (distance > radius || "{{session.already_checked_in}}" == "True") {
+                       $('.clock_in_btn').attr('disabled', true)
+                        if("{{session.already_checked_in}}" == "True"){
+                           $('.clock_in_status').removeClass('d-none')
+                            $('.clock_in_status span').addClass('tag-green')
+                            $('.clock_in_status span').html("Clocked In At:" + " " +"{{session.checked_in_time.strftime('%d %B %Y , %H:%M:%S %p') if session.checked_in_time else ""}}")
+                        }
+                        else{
+                           $('.clock_in_status').removeClass('d-none')
+                           $('.clock_in_status span').addClass('tag-red')
+                           $('.clock_out_btn').attr('disabled', true)
+                            $('.clock_in_status span').html("Outside Clock In Radius, approx " + distance.toFixed(2) + " meters away.")
+                       }
+                    }
+                }
+            },
+            function errorCallback(error) {
+                console.log(error);
+                $('.clock_in_btn').attr('disabled', true)
+                //$('.clock_out_btn').attr('disabled', true)
+                $('.clock_in_status').removeClass('d-none')
+                $('.clock_in_status span').addClass('tag-red')
+                $('.clock_in_status span').html("Please enable GPS and allow to access your Location")
+            },geoOptions);
 
         
 
@@ -480,6 +466,7 @@
 </script>
 
 <script>
+
     // Ajax Add Offices
     $(document).on("click", '#btnClockIn', function (e) {
         e.preventDefault();
@@ -493,6 +480,8 @@
             dangerMode: true,
         }).then((willDelete) => {
             if (willDelete) {
+                console.log("Showing global loader");
+
                 $("#global-loader").show();
                 $.ajax({
                         headers: {
@@ -520,12 +509,16 @@
                                 text: "Hurrrayyyyy! You Successfully Clocked In Today!",
                                 icon: "success",
                             }).then(function(){
+                                console.log("Showing global loader");
+
                                 $("#global-loader").show();
                                 location.reload();
                                 });
                         }
                     })
                     .fail(function (err) {
+                        $("#global-loader").hide();
+
                         swal({
                             title: "Error",
                             text: "Ohh Noo! There seems to be some problem while Cloking In. Please try Again.",
@@ -551,6 +544,8 @@
             dangerMode: true,
         }).then((willDelete) => {
             if (willDelete) {
+                console.log("Showing global loader");
+
                 $("#global-loader").show();
                 $.ajax({
                         headers: {
@@ -562,6 +557,8 @@
                     })
                     .done(function (data) {
                         if(data.status == "success"){
+                            console.log("Hiding global loader");
+
                             $("#global-loader").hide();
                             $('.clock_out_btn').attr('disabled',true);
                             $('.startbreakBtn').attr('disabled',true)
@@ -585,6 +582,8 @@
                                     text: "Hurrrayyyyy! You Successfully Clocked Out Today!",
                                     icon: "success",
                                 }).then(function(){
+                                    console.log("Showing global loader");
+
                                     $("#global-loader").show();
                                     location.reload();
                                     });
@@ -592,6 +591,10 @@
                         }
                     })
                     .fail(function (err) {
+                        console.log("Hiding global loader");
+
+                        $("#global-loader").hide();
+
                         swal({
                             title: "Error",
                             text: "Ohh Noo! There seems to be some problem while Cloking In. Please try Again.",
@@ -619,6 +622,8 @@
             dangerMode: true,
         }).then((willDelete) => {
             if (willDelete) {
+                console.log("Showing global loader");
+
                 $("#global-loader").show();
                 $.ajax({
                         headers: {
@@ -630,6 +635,8 @@
                     })
                     .done(function (data) {
                         if(data.status == "success"){
+                            console.log("Hiding global loader");
+
                             $("#global-loader").hide();
                             if(break_type=='start'){
                                 $('.startbreakBtn').attr('disabled',true)
@@ -660,18 +667,23 @@
                             });
                         }
                         else{
+                            console.log("Hiding global loader");
+
                             $("#global-loader").hide();
                             swal({
                                 title: "Error",
                                 text: "Ohh Noo! There seems to be some problem. Please try Again.",
                                 icon: "error",
                             }).then(function(){
-                                $("#global-loader").show();
                                 location.reload();
                             });
                         }
                     })
                     .fail(function (err) {
+                        console.log("Hiding global loader");
+
+                        $("#global-loader").hide();
+
                         swal({
                             title: "Error",
                             text: "Ohh Noo! There seems to be some problem while Cloking In. Please try Again.",
@@ -695,6 +707,8 @@
             dangerMode: true,
         }).then((willDelete) => {
             if (willDelete) {
+                console.log("Showing global loader");
+
                 $("#global-loader").show();
                 $.ajax({
                         headers: {
@@ -706,6 +720,8 @@
                     })
                     .done(function (data) {
                         if(data.status == "success"){
+                            console.log("Hiding global loader");
+
                             $("#global-loader").hide();
                             $('#clockotmodal').modal('toggle');
                             swal({
@@ -724,6 +740,10 @@
                             text: "Ohh Noo! There seems to be some problem while Cloking In. Please try Again.",
                             icon: "error",
                         });
+                        console.log("Hiding global loader");
+
+                        $("#global-loader").hide();
+
                     })
             }
         });
@@ -731,73 +751,86 @@
     //EnD Ajax OT Request
 </script>
 <script>
-        // bind change event handler
-        $('#working_from').on('change', function() {
-            // update disabled property
-            outside_office_val = $('#working_from :selected').attr("data-outside_office")
-            selecy = $('#working_from :selected').val()
-            // Show loader
-            $("#global-loader").show();
+
+    $('#working_from').on('change', function() {
+
+        const outside_office_val = $('#working_from :selected').attr("data-outside_office");
+        const selecy = $('#working_from :selected').val();
+        let current_lat = sessionStorage.getItem('current_lat');
+        let current_lng = sessionStorage.getItem('current_lng');
+
+        if (current_lat && current_lng) {
+            console.log("Using stored location");
+            processLocation(parseFloat(current_lat), parseFloat(current_lng));
+        } else {
+            console.log("Fetching current location...");
             getCurrentLocation()
                 .then(location => {
-                    const current_lat = location.latitude;
-                    const current_lng = location.longitude;
-                    // console.log("Current Latitude:", current_lat);
-                    // console.log("Current Longitude:", current_lng);
-                    if (selecy) {
-                        if (outside_office_val == "False") {
-                            // Check with office radius
-                            checkin_lat = "{{session.office_lat}}"
-                            checkin_lng = "{{session.office_lng}}"
-                            radius = "{{session.office_radius}}"
-                            const distance = getDistanceFromLatLonInMeter(checkin_lat, checkin_lng, current_lat, current_lng);
-                            var diff_distance = distance - radius
-                            if (distance > radius) {
-                                $('#btnClockIn').attr('disabled', true)
-                                $('.radius_status').removeClass('d-none')
-                                $('.radius_status span').html("You are outside office radius. Please hit the reload button.")
-                            } else {
-                                $('#btnClockIn').attr('disabled', false)
-                                $('.radius_status').addClass('d-none')
-                            }
-                        } else {
-                            $('#btnClockIn').attr('disabled', false)
-                            $('.radius_status').addClass('d-none')
-                        }
-                        // Hide loader after processing
-                        $("#global-loader").hide();
-                    } else {
-                        $('#btnClockIn').attr('disabled', true)
-                    }
+                    current_lat = location.latitude;
+                    current_lng = location.longitude;
+
+                    // Store in sessionStorage
+                    sessionStorage.setItem('current_lat', current_lat);
+                    sessionStorage.setItem('current_lng', current_lng);
+
+                    processLocation(current_lat, current_lng);
                 })
                 .catch(error => {
                     console.error('Error fetching location:', error.message);
-                    // Hide loader in case of error
-                    $("#global-loader").hide();
+
+                    console.log("Hiding global loader");
                 });
+        }
 
-            // trigger change event to set initial value
-        }).change();
+        function processLocation(current_lat, current_lng) {
+            console.log("Current Latitude:", current_lat);
+            console.log("Current Longitude:", current_lng);
 
-        $('#btnRefresh').on('click', function(event) {
-            event.preventDefault(); // Prevents the default action of the button click, such as submitting a form or following a link
+            if (selecy) {
+                if (outside_office_val === "False") {
+                    // Check with office radius
+                    const checkin_lat = parseFloat("{{session.office_lat}}");
+                    const checkin_lng = parseFloat("{{session.office_lng}}");
+                    const radius = parseFloat("{{session.office_radius}}");
+
+                    const distance = getDistanceFromLatLonInMeter(checkin_lat, checkin_lng, current_lat, current_lng);
+                    console.log("Distance from office:", distance);
+
+                    if (distance > radius) {
+                        $('#btnClockIn').attr('disabled', true);
+                        $('.radius_status').removeClass('d-none');
+                        $('.radius_status span').html("You are outside office radius. Please hit the reload button.");
+                    } else {
+                        $('#btnClockIn').attr('disabled', false);
+                        $('.radius_status').addClass('d-none');
+                    }
+                } else {
+                    $('#btnClockIn').attr('disabled', false);
+                    $('.radius_status').addClass('d-none');
+                }
+            } else {
+                $('#btnClockIn').attr('disabled', true);
+            }
+
+            console.log("Hiding global loader");
+
+        }
+    }).change();
+
+    $('#btnRefresh').on('click', function(event) {
+            event.preventDefault(); 
             selecy = $('#working_from :selected').val();
             if (selecy) {
-                // Call the getCurrentLocation function
+               
                 getCurrentLocation()
                     .then(location => {
-                        // Success callback function when position is successfully retrieved
-                        // Update latitude and longitude values in the corresponding input fields
                         $('.current_latitude').val(location.latitude);
                         $('.current_longitude').val(location.longitude);
                         console.log(location.latitude);
                         console.log(location.longitude);
-                        // Trigger the change event on the 'working_from' select element to recheck the location
                         $('#working_from').trigger('change');
                     })
                     .catch(error => {
-                        // Error callback function when geolocation retrieval fails
-                        // Log the error message to the console for debugging purposes
                         console.log(error.message);
                     });
             }

@@ -4,14 +4,13 @@
 import datetime
 from random import choices
 from secrets import choice
-
+from .. import db
 from bson import ObjectId
 from mongoengine import *
 from flask_mongoengine import BaseQuerySet
-from project.models import User,CompanyOffices
+from ..models import User,CompanyOffices
 from flask import Flask
 import datetime
-from project import db
 
 
 class EmployeeCompanyDetails(db.DynamicEmbeddedDocument):

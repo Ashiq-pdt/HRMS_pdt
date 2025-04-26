@@ -125,12 +125,6 @@
                 <a class="nav-link" data-bs-toggle="pill" href="#tab-12" role="tab">
                     <i class="nav-icon fe fe-box"></i> Biometrics Settings
                 </a>
-                {% if multiple_access_doc %}
-                <a class="nav-link" data-bs-toggle="pill" href="#tab-13" role="tab">
-                    <i class="nav-icon fe fe-server"></i> Multiple Access Settings
-                </a>
-                {% endif %}
-
                 <!-- <a class="nav-link"  data-bs-toggle="pill" href="#tab-5" role="tab">
                     <i class="nav-icon las la-palette"></i> Theme Settings
                 </a> -->
@@ -200,28 +194,6 @@
                                     <div class="col-md-9">
                                         <input type="text" class="form-control" placeholder="Website"
                                             value="{{company_details.company_website}}" name="company_website">
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="form-group">
-                                <div class="row">
-                                    <div class="col-md-3">
-                                        <label class="form-label mb-0 mt-2">Currency</label>
-                                    </div>
-                                    <div class="col-md-9">
-                                        <input type="text" class="form-control" placeholder="Website"
-                                            value="{{company_details.Currency}}" name="company_Currency">
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="form-group">
-                                <div class="row">
-                                    <div class="col-md-3">
-                                        <label class="form-label mb-0 mt-2">Time Zone</label>
-                                    </div>
-                                    <div class="col-md-9">
-                                        <input type="text" class="form-control" placeholder="Website"
-                                            value="{{company_details.Timezone}}" name="company_Timezone">
                                     </div>
                                 </div>
                             </div>
@@ -2825,107 +2797,6 @@
             </div>
             <!--End Row-->
         </div>
-
-        <div class="tab-pane fade" id="tab-13" role="tabpanel">
-
-            <!--Row-->
-            <div class="row">
-                <div class="col-md-12">
-                    <div class="card">
-                        <div class="card-header border-bottom-0">
-                            <h3 class="card-title ">Multiple Access Settings</h3>
-                        </div>
-                        
-                        <div class="card-body">
-                            <!-- Accordion begin -->
-                            <ul class="demo-accordion accordionjs m-0" data-active-index="false">
-                                <!-- Section 1 -->
-                                <li class="acc_active">
-                                    <div class="card-header  border-0">
-                                        <h3>Multiple Access</h3>
-                                    </div>
-                                    <div class="card">
-                                        <div class="card-body pt-0">
-                                            <p>Setup Multiple Access .</p>
-                                            <div class="row">
-                                                <div class="col-xl-12 col-md-12 col-lg-12">
-                                                    <div class="card">
-                                                        <div class="card-header  border-0">
-                                                            <a href="javascript:void(0);" class="btn btn-primary me-3"
-                                                                data-bs-toggle="modal"
-                                                                data-bs-target="#AddMultipleAccess">Add
-                                                                New</a>
-                                                        </div>
-                                                        <div class="card-body pt-1">
-                                                            <div class="table-responsive">
-                                                                
-                                                                <table
-                                                                    class="table  table-vcenter text-nowrap table-bordered border-bottom table-striped"
-                                                                    id="multiple-access-table">
-                                                                    <thead>
-                                                                        <tr>
-                                                                            <th class="border-bottom-0">Email</th>
-                                                                            <th class="border-bottom-0">Comapany Access Name</th>
-                                                                            <!-- <th class="border-bottom-0">Actions</th> -->
-                                                                        </tr>
-                                                                    </thead>
-                                                                    <tbody>
-                                                                        {% if
-                                                                            multiple_access_doc|list|length >0
-                                                                        %}
-
-                                                                        {% for item in multiple_access_doc%}
-                                                                            <tr>
-                                                                                
-                                                                                <td>{{item.email}}</td>
-                                                                                <td>
-                                                                                    <ol class="custom-list">
-                                                                                        {% for dataacces in item.MultipleAccessEntry %}
-                                                                                            <li>{{ dataacces.multiple_access_company_name }}</li>
-                                                                                        {% endfor %}
-                                                                                    </ol>
-                                                                                </td>
-
-                                                                                <td>
-                                                                                        <a class="btn btn-danger btn-icon btn-sm btnDeleteMultipleAccess"
-                                                                                        data-bs-toggle="tooltip"
-                                                                                        data-original-title="Delete"
-                                                                                        data-id="{{item._id}}"
-                                                                                        href="javascript:void(0)"><i
-                                                                                            class="feather feather-trash-2"></i></a>
-                                                                                </td>
-                                                                            </tr>
-                                                                        {%endfor%}
-
-                                                                       
-                                                                        {% else %}
-                                                                        <div
-                                                                            class="expanel expanel-default mt-4 biometric-expanel">
-                                                                            <div class="expanel-body">
-                                                                                No Multiple Access Data.
-                                                                            </div>
-                                                                        </div>
-                                                                        {% endif %}
-                                                                    </tbody>
-                                                                </table>
-
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                    </div>
-                                </li>
-                                <!-- Section 1 -->
-                            </ul>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <!--End Row-->
-        </div>
     </div>
 
 </div>
@@ -4209,129 +4080,8 @@
             });
         });
         //EnD Assign Roles
-        $(document).on("click", '#btnddMultipleAccess', function (e) {
-            e.preventDefault();
-            var cs = $('#csrf').val();  // Get CSRF token
-            var selectedEmployees = [];
-
-            // Get the selected employees' IDs and emails
-            $('select[name="employees[]"] option:selected').each(function() {
-                var employeeId = $(this).val();
-                var employeeEmail = $(this).data('email');
-                selectedEmployees.push({ user_id: employeeId, email: employeeEmail });
-            });
-            // Check if at least one employee is selected
-            if (selectedEmployees.length === 0) {
-                swal({
-                    title: "Failed",
-                    text: "Please select at least one employee.",
-                    icon: "warning",
-                });
-                return;
-            }
-
-            swal({
-                title: "Are you sure?",
-                text: "You want to assign multiple access to these employees?",
-                icon: "warning",
-                buttons: true,
-                dangerMode: true,
-            }).then((willAssign) => {
-                if (willAssign) {
-                    $("#global-loader").show();  // Show loading spinner
-                    $.ajax({
-                        headers: {
-                            'X-CSRF-TOKEN': cs
-                        },
-                        url: '/Creatmultiple/savemultipleaccess',  // Update with the server URL
-                        type: 'POST',
-                        data: JSON.stringify({ employees: selectedEmployees }),  // Send selected employees data
-                        contentType: 'application/json',  // Set the content type as JSON
-                    })
-                    .done(function (data) {
-                        if (data.success) {
-                            $('#AddMultipleAccess').modal('hide');  // Close the modal
-                            $("#global-loader").hide();  // Hide the loader
-
-                            swal({
-                                title: "Success",
-                                text: "Multiple access successfully assigned!",
-                                icon: "success",
-                            }).then(function () {
-                                location.reload();  // Reload the page after success
-                            });
-                        } else {
-                            swal({
-                                title: "Failed",
-                                text: data.message || "Please try again.",
-                                icon: "warning",
-                            });
-                        }
-                    })
-                    .fail(function (err) {
-                        console.log(err);
-                        $('#message').html(err);
-                        $("#global-loader").hide();  // Hide the loader in case of failure
-                        swal({
-                            title: "Error",
-                            text: "An error occurred. Please try again later.",
-                            icon: "error",
-                        });
-                    });
-                }
-            });
-        });
 
 
-        $(document).on("click", '.btnDeleteMultipleAccess', function (e) {
-            e.preventDefault();
-            let csrfToken = $('#csrf').val();
-            let dataId = $(this).data('id');
-            alert(dataId);
-            
-            swal({
-                title: "Are you sure?",
-                text: "You want to edit these approval levels for this department?",
-                icon: "warning",
-                buttons: true,
-                dangerMode: true,
-            }).then((willDelete) => {
-                if (willDelete) {
-                    $.ajax({
-                        headers: {
-                            'X-CSRF-TOKEN': csrfToken
-                        },
-                        url: '/deletemultipleaccess/settings',
-                        type: 'POST',
-                        data: { dataId: dataId }, // Correct way to send dataId as form data
-                        success: function (data) {
-                            if (data.status === "success") {
-                                swal({
-                                    title: "Success",
-                                    text: "Successfully Edited Approval Level(s)!",
-                                    icon: "success",
-                                }).then(function () {
-                                    $("#global-loader").show();
-                                    location.reload();
-                                });
-                            } else {
-                                swal({
-                                    title: "Failed",
-                                    text: data.message || "Please Select Required Fields!",
-                                    icon: "warning",
-                                });
-                            }
-                        },
-                        error: function (err) {
-                            console.log(err);
-                            $('#message').html(err);
-                        }
-                    });
-                }
-            });
-        });
-
-        
         // Ajax Add Biometric Devices
         $(document).on("click", '#btnAddBiometric', function (e) {
             e.preventDefault();

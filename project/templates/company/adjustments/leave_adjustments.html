@@ -106,8 +106,7 @@
                                     </td>
                                     <td>{{item.employee_details_id.employee_company_details.department}}</td>
                                     <td>{{item.employee_leave_pol_id.leave_policy_id.leave_policy_name}}</td>
-                                    <td class="font-weight-semibold {{'text-success' if item.adjustment_type =='increment' else 'text-danger'}}">    {{ item.adjustment_days | float | round(2) }}
-
+                                    <td class="font-weight-semibold {{'text-success' if item.adjustment_type =='increment' else 'text-danger'}}">{{item.adjustment_days}} 
                                         {% if item.adjustment_comment %}
                                             <a class="btn btn-light btn-icon btn-sm p-0" href="javascript:void(0);">
                                                 <i class="text-info ion-chatbubble-working" data-bs-toggle="tooltip"
@@ -115,8 +114,8 @@
                                             </a>
                                         {% endif %}
                                     </td>
-                                    <td>{{item.before_adjustment | float | round(2) }} </td>
-                                    <td>{{item.after_adjustment | float | round(2) }}</td>
+                                    <td>{{item.before_adjustment}} </td>
+                                    <td>{{item.after_adjustment}}</td>
 
                                     <!-- <td class="text-start d-flex"> -->
                                         <!-- <a  href="javascript:void(0);" class="action-btns1" data-bs-toggle="tooltip" data-bs-placement="top" title="Accept">

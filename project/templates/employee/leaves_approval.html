@@ -203,8 +203,10 @@
                                                 <a href="javascript:void(0);" class="btn btn-lg btn-outline-light w-55 text-success fs-14"
                                                     data-leave_request_id="{{item._id}}" data-bs-toggle="modal"
                                                     data-bs-target="#previewapprovemodal"
+                                                    data-employee_id="{{item.employee_leave_app_id.employee_details_id.id}}"
                                                     data-start="{{item.employee_leave_app_id.leave_from.strftime('%d/%m/%Y')}}"
                                                     data-no_of_days="{{item.employee_leave_app_id.no_of_days}}"
+                                                    data-week_off="{{item.week_off_days_list}}"
                                                     data-end="{{item.employee_leave_app_id.leave_till.strftime('%d/%m/%Y')}}">Approve</a>
                                                 <a href="javascript:void(0);" class="btn btn-lg btn-outline-light w-55 text-danger fs-14"
                                                     data-leave_request_id="{{item._id}}" data-bs-toggle="modal"
@@ -372,8 +374,10 @@
                                                                 data-leave_request_id="{{item._id}}"
                                                                 data-bs-toggle="modal"
                                                                 data-bs-target="#previewapprovemodal"
+                                                                data-employee_id="{{item.employee_leave_app_id.employee_details_id.id}}"
                                                                 data-start="{{item.employee_leave_app_id.leave_from.strftime('%d/%m/%Y')}}"
                                                                 data-no_of_days="{{item.employee_leave_app_id.no_of_days}}"
+                                                                data-week_off="{{item.week_off_days_list}}"
                                                                 data-end="{{item.employee_leave_app_id.leave_till.strftime('%d/%m/%Y')}}">
                                                                 <i class="feather feather-check text-success"></i>
                                                             </a>
@@ -688,6 +692,8 @@
                                                                 data-leave_request_id="{{item._id}}"
                                                                 data-bs-toggle="modal"
                                                                 data-bs-target="#previewsuperapprovemodal"
+                                                                data-week_off="{{item.week_off_days_list}}"
+                                                                data-employee_id="{{item.employee_leave_app_id.employee_details_id.id}}"
                                                                 data-start="{{item.employee_leave_app_id.leave_from.strftime('%d/%m/%Y')}}"
                                                                 data-no_of_days="{{item.employee_leave_app_id.no_of_days}}"
                                                                 data-end="{{item.employee_leave_app_id.leave_till.strftime('%d/%m/%Y')}}">
@@ -804,6 +810,13 @@
                                 <label class="mb-0 font-weight-semibold">No Of Days:</label>
                                 <span class="badge badge-success badge-pill ms-2 old_no_of_days">1</span>
                             </div>
+                            
+                            <div class="" style="display: none;">
+                                <label class="mb-0 font-weight-semibold">week_off:</label>
+                                <input type="hidden" name="week-off-data_value" class="form-control week-off-data_value"
+                                            id="week-off-data_value" />
+                                <span class="badge badge-success badge-pill ms-2  week_off">1</span>
+                            </div>
                             <div class="form-group mt-3">
                                 <div class="row">
                                     <div class="col-md-9">
@@ -833,7 +846,7 @@
                                 <div class="">
                                     <label class="mb-0 font-weight-semibold">No Of Days:</label>
                                     <span class="badge badge-danger badge-pill ms-2 no_of_days">1</span>
-                                    <input type="text" name="no_of_days" id="no_of_days" value="1" class="form-control"
+                                    <input type="text" name="no_of_days" id="no_of_days" value="1" class="form-control no_of_days"
                                         hidden />
                                 </div>
                             </div>
@@ -865,7 +878,7 @@
 
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title">Preview & Super Approve Request</h5>
+                    <h5 class="modal-title">Preview & Super Approve Request2</h5>
                     <a class="btn-close" data-bs-dismiss="modal" aria-label="Close">
                         <span aria-hidden="true">×</span>
                     </a>
@@ -896,6 +909,12 @@
                                 <label class="mb-0 font-weight-semibold">No Of Days:</label>
                                 <span class="badge badge-success badge-pill ms-2 old_no_of_days">1</span>
                             </div>
+                            <div class="" style="display: none;">
+                                <label class="mb-0 font-weight-semibold">week_off:</label>
+                                <input type="hidden" name="week-off-data_value" class="form-control week-off-data_value"
+                                            id="week-off-data_value" />
+                                <span class="badge badge-success badge-pill ms-2  week_off">1</span>
+                            </div>
                             <div class="form-group mt-3">
                                 <div class="row">
                                     <div class="col-md-9">
@@ -925,7 +944,7 @@
                                 <div class="">
                                     <label class="mb-0 font-weight-semibold">No Of Days:</label>
                                     <span class="badge badge-danger badge-pill ms-2 no_of_days">1</span>
-                                    <input type="text" name="no_of_days" id="super_no_of_days" value="1" class="form-control"
+                                    <input type="text" name="no_of_days" id="super_no_of_days" value="1" class="form-control no_of_days"
                                         hidden />
                                 </div>
                             </div>
@@ -1287,9 +1306,41 @@
         $("#edit_leave_date_range").val(start + ' - ' + end);
         var no_of_days = $(e.relatedTarget).data('no_of_days');
         $(".old_no_of_days").html(no_of_days);
+        var week_off= $(e.relatedTarget).data('week_off');
+        $(".week_off").html(week_off);
+        var employee_id = $(e.relatedTarget).data('employee_id');
+        $(".week_off").html(week_off);
+        $(".week-off-data_value").val(JSON.stringify([week_off])); // Store as array in input field
+        sessionStorage.setItem("week_off_data", JSON.stringify([week_off]));
+        $.ajax({
+            url: "/get-employee-leave-details", 
+            type: "GET",
+            data: { employee_id: employee_id },
+            dataType: "json",
+            success: function(response) {
+                if (response.success) {
+                    var weekOffData = response.data.week_off_days_list;
+
+                    // Handle case where weekOffData is an array
+                    if (Array.isArray(weekOffData)) {
+                        // If it's an array, store it as a JSON string
+                        weekOffData = JSON.stringify(weekOffData);
+                    }
+
+                    $(".week_off").html(weekOffData);
+                    $("#week-off-data_value").val(weekOffData); // Store as array (JSON string)
+                } else {
+                    alert("Failed to fetch employee data.");
+                }
+            },
+            error: function(xhr, status, error) {
+                console.error("AJAX Error: " + status + " " + error);
+            }
+        });
     });
 
     $(document).on("show.bs.modal", '#previewsuperapprovemodal', function (e) {
+        var employee_id = $(e.relatedTarget).data('employee_id');
         var leave_request_id = $(e.relatedTarget).data('leave_request_id');
         $("#super_edit_leave_request_id").val(leave_request_id);
         var start = $(e.relatedTarget).data('start');
@@ -1298,7 +1349,40 @@
         $("#super_edit_leave_date_range").val(start + ' - ' + end);
         var no_of_days = $(e.relatedTarget).data('no_of_days');
         $(".old_no_of_days").html(no_of_days);
+
+        var week_off = $(e.relatedTarget).data('week_off');
+        var employee_id = $(e.relatedTarget).data('employee_id');
+        $(".week_off").html(week_off);
+        $(".week-off-data_value").val(JSON.stringify([week_off])); // Store as array in input field
+        sessionStorage.setItem("week_off_data", JSON.stringify([week_off]));
+
+        $.ajax({
+            url: "/get-employee-leave-details", 
+            type: "GET",
+            data: { employee_id: employee_id },
+            dataType: "json",
+            success: function(response) {
+                if (response.success) {
+                    var weekOffData = response.data.week_off_days_list;
+
+                    // Handle case where weekOffData is an array
+                    if (Array.isArray(weekOffData)) {
+                        // If it's an array, store it as a JSON string
+                        weekOffData = JSON.stringify(weekOffData);
+                    }
+
+                    $(".week_off").html(weekOffData);
+                    $("#week-off-data_value").val(weekOffData); // Store as array (JSON string)
+                } else {
+                    alert("Failed to fetch employee data.");
+                }
+            },
+            error: function(xhr, status, error) {
+                console.error("AJAX Error: " + status + " " + error);
+            }
+        });
     });
+
 
     $(document).on("show.bs.modal", '#superrejectleavemodal', function (e) {
         var leave_request_id = $(e.relatedTarget).data('leave_request_id');
@@ -1395,6 +1479,8 @@
     //EnD Ajax Reject Leave
     // Toggle Is Day off in Work Timings
     $('.edit_leave_date').change(function () {
+        
+
         if (this.checked) {
             $('.edit_day_off_div').show();
         } else {
@@ -1402,6 +1488,51 @@
         }
     });
     //End Toggle
+    
+   
+
+
+    
+    $(document).ready(function() {
+        var storedWeekOffData = [0];
+
+        console.log('storedWeekOffData', storedWeekOffData);
+
+        $('input[name="daterange"]').daterangepicker({
+            opens: 'left',
+            autoUpdateInput: true, // Change to true for automatic input update
+            locale: {
+                format: 'DD/MM/YYYY' // Ensure consistent date format
+            }
+        }, function(start, end) {
+            let leaveDays = countDaysExcludingWeekOffs(start, end, storedWeekOffData);
+
+            // Update the input field with formatted dates
+            $('input[name="daterange"]').val(start.format('DD/MM/YYYY') + ' - ' + end.format('DD/MM/YYYY'));
+
+            // Update the leave days count in the modal
+            $('.no_of_days').text(leaveDays);
+            $('.no_of_days').val(leaveDays);
+
+            console.log('leaveDays:', leaveDays);
+        });
+
+        function countDaysExcludingWeekOffs(start, end, week_offs) {
+            let totalDays = 0;
+            let current = moment(start); // Clone start date to prevent modifying original
+
+            while (current.isSameOrBefore(end, 'day')) {
+                let dayOfWeek = current.day(); // Get the day of the week (0 = Sunday, 1 = Monday, ...)
+
+                // Check if the current day is in the week_offs array (exclude it if it's a week off)
+                if (!week_offs.includes(dayOfWeek)) {
+                    totalDays++;
+                }
+                current.add(1, 'days'); // Move to the next day
+            }
+            return totalDays;
+        }
+    });
 
     $(document).ready(function () {
         $('.leave_application_history').click(function () {

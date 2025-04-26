@@ -294,12 +294,13 @@
                             </div>
                         </div>
                     </div>
+                    <input type="hidden" name="week-off-data" id="weekOffData" class="form-control" value="{{ week_off_days_list|tojson }}"/> 
                     <div class="form-group">
                         <label class="form-label">Leaves Types</label>
                         <select class="form-control custom-select select2" name="leave_type" data-placeholder="Select" id="leave_type">
                             <!-- <option label="Select"></option> -->
                             {% for item in employee_details.employee_leave_policies %}
-                                <option value="{{item._id}}">{{item.leave_policy_id.leave_policy_name+' '+'( Remaining Balance: ' + item.balance|string + ' )'}}</option>
+                                <option value="{{item._id}}" data-balance="{{ item.balance }}" data-name ="{{item.leave_policy_id.leave_policy_name}}">{{item.leave_policy_id.leave_policy_name+' '+'( Remaining Balance: ' + item.balance|string + ' )'}}</option>
                             {% endfor %}
                         </select>
                     </div>
@@ -391,59 +392,153 @@
         $('#hr-expense').DataTable();
     });
 
-    // Ajax Apply Leave
+    // // Ajax Apply Leave
+    // $(document).on("click", '#btnApplyLeave', function (e) {
+    //     e.preventDefault();
+    //     var cs = "{{ csrf_token() }}";
+    //     var leave_type = $('#leave_type :selected').val()
+    //     var emergency_contact = $('#emergency_contact').val()
+    //     var contact_address = $('#contact_address').val() 
+    //     var no_of_days= $('#no_of_days').val() 
+    //     var balance = $('#leave_type option:selected').data('balance');
+
+    //     console.log(balance);
+    //     console.log(no_of_days);
+
+    //     if(leave_type != '' && emergency_contact != '' && contact_address != ''){
+    //         if(balance  >= no_of_days)
+    //         {
+    //                 swal({
+    //                 title: "Are you sure?",
+    //                 text: "You want to apply for leave?",
+    //                 icon: "warning",
+    //                 buttons: true,
+    //                 dangerMode: true,
+    //             }).then((willDelete) => {
+    //                 if (willDelete) {
+    //                     $.ajax({
+    //                             headers: {
+    //                                 'X-CSRF-TOKEN': cs
+    //                             },
+    //                             url: '/applyleave',
+    //                             data: $('#apply_leave_form').serialize(),
+    //                             type: 'POST',
+    //                         })
+    //                         .done(function (data) {
+    //                             $('#applyleaves').modal('toggle');
+    //                             swal({
+    //                                 title: "Success",
+    //                                 text: "Successfully Applied for Leave!",
+    //                                 icon: "success",
+    //                             }).then(function(){ 
+    //                                 $("#global-loader").show();
+    //                                 location.reload();
+    //                                 });
+    //                         })
+    //                         .fail(function (err) {
+    //                             console.log(err);
+    //                             $('#message').html(err);
+    //                         })
+    //                 }
+    //             });
+    //         }
+    //         else{
+
+    //             swal({
+    //                 title: "Exceeds",
+    //                 text: "No of days exceeds or equals the remaining balance",
+    //                 icon: "error",
+    //             });
+                
+    //         }
+           
+    //     }
+    //     else{
+    //         swal({
+    //             title: "Error",
+    //             text: "Please Select the required fields.",
+    //             icon: "error",
+    //         });
+    //     }
+        
+    // });
+    // //EnD Ajax Apply Leave
+
     $(document).on("click", '#btnApplyLeave', function (e) {
         e.preventDefault();
-        var cs = "{{ csrf_token() }}";
-        var leave_type = $('#leave_type :selected').val()
-        var emergency_contact = $('#emergency_contact').val()
-        var contact_address = $('#contact_address').val()        
 
-        if(leave_type != '' && emergency_contact != '' && contact_address != ''){
-            swal({
-                title: "Are you sure?",
-                text: "You want to apply for leave?",
-                icon: "warning",
-                buttons: true,
-                dangerMode: true,
-            }).then((willDelete) => {
-                if (willDelete) {
-                    $.ajax({
-                            headers: {
-                                'X-CSRF-TOKEN': cs
-                            },
-                            url: '/applyleave',
-                            data: $('#apply_leave_form').serialize(),
-                            type: 'POST',
-                        })
-                        .done(function (data) {
-                            $('#applyleaves').modal('toggle');
-                            swal({
-                                title: "Success",
-                                text: "Successfully Applied for Leave!",
-                                icon: "success",
-                            }).then(function(){ 
-                                $("#global-loader").show();
-                                location.reload();
-                                });
-                        })
-                        .fail(function (err) {
-                            console.log(err);
-                            $('#message').html(err);
-                        })
-                }
-            });
-        }
-        else{
+        var cs = "{{ csrf_token() }}";
+        var leave_type = $('#leave_type :selected').val();
+        var emergency_contact = $('#emergency_contact').val();
+        var contact_address = $('#contact_address').val(); 
+        var no_of_days = parseInt($('#no_of_days').val(), 10);  // Ensure no_of_days is an integer
+        var balance = parseInt($('#leave_type option:selected').data('balance'), 10);  // Ensure balance is an integer
+        var data_name = $('#leave_type option:selected').data('name');
+
+        console.log(balance);
+        console.log(no_of_days);
+
+        // Check if all required fields are filled
+        if (leave_type && emergency_contact && contact_address) {
+
+            // Handle leave application based on leave type
+            if (data_name === 'Unpaid Leaves' || balance >= no_of_days) {
+                swal({
+                    title: "Are you sure?",
+                    text: "You want to apply for leave?",
+                    icon: "warning",
+                    buttons: true,
+                    dangerMode: true,
+                }).then((willDelete) => {
+                    if (willDelete) {
+                        // Make the AJAX request
+                        applyLeave(cs);
+                    }
+                });
+            } else {
+                // Display error if no_of_days exceeds balance
+                swal({
+                    title: "Exceeds",
+                    text: "No of days exceeds or equals the remaining balance",
+                    icon: "error",
+                });
+            }
+
+        } else {
+            // Display error if any required field is missing
             swal({
                 title: "Error",
                 text: "Please Select the required fields.",
                 icon: "error",
             });
         }
-        
     });
-    //EnD Ajax Apply Leave
+
+function applyLeave(cs) {
+    $.ajax({
+        headers: {
+            'X-CSRF-TOKEN': cs
+        },
+        url: '/applyleave',
+        data: $('#apply_leave_form').serialize(),
+        type: 'POST',
+    })
+    .done(function (data) {
+        $('#applyleaves').modal('toggle');
+        swal({
+            title: "Success",
+            text: "Successfully Applied for Leave!",
+            icon: "success",
+        }).then(function(){ 
+            $("#global-loader").show();
+            location.reload();
+        });
+    })
+    .fail(function (err) {
+        console.log(err);
+        $('#message').html(err);
+    });
+}
 
     // Ajax Delete Leave
     $(document).on("click", '.btnDeleteLeave', function (e) {
@@ -485,6 +580,81 @@
         });
     });
     //EnD Ajax Delete Leave
+    $(document).ready(function() {
+    let week_offs = [];
+    try {
+        week_offs = JSON.parse($('#weekOffData').val() || '[]'); // Fallback to empty array if null
+    } catch (e) {
+        console.error("Invalid JSON in weekOffData:", e);
+    }
+
+    $('input[name="daterange"]').daterangepicker({
+        opens: 'left',
+        autoUpdateInput: true, // Allow auto-updating input
+        locale: {
+            format: 'DD/MM/YYYY'
+        }
+    }, function(start, end) {
+        let leaveDays = countDaysExcludingWeekOffs(start, end, week_offs);
+        $('input[name="daterange"]').val(start.format('DD/MM/YYYY') + ' - ' + end.format('DD/MM/YYYY'));
+        $('.no_of_days').text(leaveDays);
+        $('#no_of_days').val(leaveDays);
+        console.log('leaveDays:', leaveDays);
+    });
+
+    function countDaysExcludingWeekOffs(start, end, week_offs) {
+        let totalDays = 0;
+        let current = moment(start);
+
+        while (current.isSameOrBefore(end, 'day')) {
+            let dayOfWeek = current.day();
+            if (!week_offs.includes(dayOfWeek)) {
+                totalDays++;
+            }
+            current.add(1, 'days');
+        }
+        return totalDays;
+    }
+});
+ 
+    // $(document).ready(function() {
+    // // Retrieve the week_offs array from the hidden input field
+    //     let week_offs = JSON.parse($('#weekOffData').val());  // Parse the hidden input value as JSON
+
+    //     $('input[name="daterange"]').daterangepicker({
+    //         opens: 'left',
+    //         autoUpdateInput: false
+    //     }, function(start, end) {
+    //         let leaveDays = countDaysExcludingWeekOffs(start, end, week_offs);
+
+    //         // Update the input field with formatted dates
+    //         $('input[name="daterange"]').val(start.format('DD/MM/YYYY') + ' - ' + end.format('DD/MM/YYYY'));
+
+    //         // Update the leave days count in the modal
+    //         $('.no_of_days').text(leaveDays);
+    //         $('#no_of_days').val(leaveDays);
+
+    //         console.log('leaveDays:', leaveDays);
+    //     });
+
+    //     function countDaysExcludingWeekOffs(start, end, week_offs) {
+    //         let totalDays = 0;
+    //         let current = moment(start); // Clone start date to prevent modifying original
+
+    //         while (current.isSameOrBefore(end, 'day')) {
+    //             let dayOfWeek = current.day(); // Get the day of the week (0 = Sunday, 1 = Monday, ...)
+
+    //             // Check if the current day is in the week_offs array (exclude it if it's a week off)
+    //             if (!week_offs.includes(dayOfWeek)) {
+    //                 totalDays++;
+    //             }
+    //             current.add(1, 'days'); // Move to the next day
+    //         }
+
+    //         return totalDays;
+    //     }
+    // });
+
 </script>
 
 <script>

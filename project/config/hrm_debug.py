@@ -1,18 +1,15 @@
 import urllib
 from celery.schedules import crontab
-from celery import Celery
-
 
 
 class AppConfig:
-    def __init__ (self, env, gmail_pass):
+    def __init__ (self, env):
         self.env = env
-        self.gmail_pass = gmail_pass
     
     celery_conf_beat_schedule = {
         'monthly-leave-accrual': {
             'task': 'Monthly-Accrual-Leaves',  # Replace with the actual task function
-            'schedule': crontab(day_of_month=0, minute=0, hour=0) #this will run at 12AM of Start of Month 
+            'schedule': crontab(day_of_month='1', minute=0, hour=0) #this will run at 12AM of Start of Month 
         },
         'yearly-leave-reset': {
         'task': 'Yearly-Reset-Leaves',  # Replace with the actual task function
@@ -24,10 +21,5 @@ class AppConfig:
 
     app_config_login_url_mail = 'hrms.cubes-intl.com'
 
-    db_uri="mongodb://localhost:27017/PdtHrms"
-
-    
-
-
-    # db_uri = "mongodb+srv://pdtuae-hrm:"+urllib.parse.quote("pass@123")+"@cluster0.mf10u.mongodb.net/hrm_live_debug_dump?retryWrites=true&w=majority"
+    db_uri="mongodb://localhost:27017/hrm-test-db-live"
 

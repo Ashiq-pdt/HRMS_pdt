@@ -57,6 +57,7 @@ def signup_post():
     # create new user with the form data. Hash the password so plaintext version isn't saved.
     user = user_datastore.create_user(email=email, password=generate_password_hash(password, method='sha256'),roles=['company'],type='company')
     if user:
+        company_details = CompanyDetails(user_id=ObjectId(user.id),email=email,company_name=name).save()
         token = generate_confirmation_token(user.email)
         confirm_url = url_for('auth.confirm_email', token=token, _external=True)
         html = render_template('email/confirmation.html', confirm_url=confirm_url)

@@ -1608,44 +1608,6 @@
     </div>
 </div>
 
-<div class="modal fade" id="AddMultipleAccess">
-    <div class="modal-dialog" role="document">
-        <div class="modal-content">
-            <form class="card-body pt-3" id="AddMultipleAccess_form">
-
-                <div class="modal-header">
-                    <h5 class="modal-title">Add Multiple Access</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close">
-                        <span aria-hidden="true">×</span>
-                    </button>
-                </div>
-                <div class="modal-body">
-                    <div id="message"></div>
-                    <div class="form-group">
-                        <div class="row">
-                            <div class="col-md-12">
-                                <div class="form-group">
-                                    <label class="form-label mb-3"> Select Employee you would like to assign Multiple Access*</label>
-                                    <select class="form-control select2-show-search custom-select" name="employees[]" placeholder="Choose one or more employees" multiple required>
-                                        {% for item in company_details.employees%}
-                                            <option value="{{item.id }}" data-email="{{item.personal_email}}" class="p-2">{{item.first_name + ' ' +item.last_name}}</option>
-                                        {%endfor%}
-                                    </select>
-                                </div>
-                            </div>
-                           
-                        </div>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <a href="javascript:void(0);" class="btn btn-outline-primary" data-bs-dismiss="modal">Close</a>
-                    <button class="btn btn-primary" id="btnddMultipleAccess">Submit</button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
-
 <!-- End Additions Modal  -->
 
 

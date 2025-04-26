@@ -206,30 +206,38 @@ def add_sundays_to_attendace_company_level(data, start_date, end_date, employee_
         next_item_same_date = False
 
         if current_date.weekday() == 6:  # Sunday
-            holiday_entry = {
-                'attendance_date': current_date,
-                'status': 'Holiday',
-                'day_label': 'Sunday',
-                'break_history': [],
-                'total_hrs_worked': '0:0:0',
-                'working_from': 'week off',
-                'working_office': 'week off'
-            }
-            result.append(holiday_entry)
+            for emplaoyee in employee_details:
+
+
+                holiday_entry = {
+                    'attendance_date': current_date,
+                    'status': 'Holiday',
+                    'day_label': 'Sunday',
+                    'break_history': [],
+                    'total_hrs_worked': '0:0:0',
+                    'working_from': 'week off',
+                    'working_office': 'week off',
+                    'employee_details_id': emplaoyee,
+                }
+                result.append(holiday_entry)
 
         elif is_holiday:
-            holiday_entry = {
-                'attendance_date': current_date,
-                'status': 'Holiday',
-                'attendance_status': 'holiday',
-                'day_label':  is_holiday.occasion_for if is_holiday.occasion_for else "Unnamed Company Holiday" ,
-                'occasion_for': is_holiday.occasion_for if is_holiday.occasion_for else "Unnamed Company Holiday",
-                'break_history': [],
-                'total_hrs_worked': '0:0:0',
-                'working_from': 'week off',
-                'working_office': 'week off'
-            }
-            result.append(holiday_entry)
+            for emplaoyee in employee_details:
+
+                holiday_entry = {
+                    'attendance_date': current_date,
+                    'status': 'Holiday',
+                    'attendance_status': 'holiday',
+                    'day_label':  is_holiday.occasion_for if is_holiday.occasion_for else "Unnamed Company Holiday" ,
+                    'occasion_for': is_holiday.occasion_for if is_holiday.occasion_for else "Unnamed Company Holiday",
+                    'break_history': [],
+                    'total_hrs_worked': '0:0:0',
+                    'working_from': 'week off',
+                    'working_office': 'week off',
+                    'employee_details_id': emplaoyee,
+
+                }
+                result.append(holiday_entry)
         else:
             pass
 
@@ -515,29 +523,15 @@ def get_late_and_absent (emp_id, company_id, start_date, end_date):
     return list(collection.aggregate(pipeline))
 
 
-def get_employee_schedule_statistics(company_id, start_date, end_date, env):
+def get_employee_schedule_statistics(company_id, start_date, end_date):
     # Connect to the MongoDB client
     collection = EmployeeAttendance._get_collection()
 
     # Perform the aggregation query
-    pipeline_pdt_hrm = [
+    pipeline = [
         {
             "$match": {
-                "attendance_date": {
-                    "$gte": start_date.replace(hour=0, minute=0, second=0, microsecond=0),
-                    "$lte": end_date.replace(hour=23, minute=59, second=59, microsecond=999999)
-                },
-                "company_id": ObjectId(company_id)
-            }
-        },
-        {
-            "$addFields": {
-                "day_of_week": { "$dayOfWeek": "$attendance_date" }
-            }
-        },
-        {
-            "$match": {
-                "day_of_week": { "$ne": 1 }  # Exclude Sundays
+                "attendance_date": { "$gte": start_date.replace(hour=23, minute=59, second=59, microsecond=999999), "$lte": end_date.replace(hour=23, minute=59, second=59, microsecond=999999) }, "company_id" : ObjectId(company_id)
             }
         },
         {
@@ -549,7 +543,9 @@ def get_employee_schedule_statistics(company_id, start_date, end_date, env):
                 "absent_count": {
                     "$sum": {
                         "$cond": [
-                            { "$ne": ["$attendance_status", "present"] },
+                            {
+                                "$ne": ["$attendance_status", "present"]
+                            },
                             1,
                             0
                         ]
@@ -558,7 +554,9 @@ def get_employee_schedule_statistics(company_id, start_date, end_date, env):
                 "present_count": {
                     "$sum": {
                         "$cond": [
-                            { "$eq": ["$attendance_status", "present"] },
+                            {
+                                "$eq": ["$attendance_status", "present"]
+                            },
                             1,
                             0
                         ]
@@ -567,46 +565,6 @@ def get_employee_schedule_statistics(company_id, start_date, end_date, env):
             }
         }
     ]
-
-    pipeline_hrm = [
-        {
-            "$match": {
-                "attendance_date": {
-                    "$gte": start_date.replace(hour=0, minute=0, second=0, microsecond=0),
-                    "$lte": end_date.replace(hour=23, minute=59, second=59, microsecond=999999)
-                },
-                "company_id": ObjectId(company_id)
-            }
-        },
-        {
-            "$group": {
-                "_id": "$employee_details_id",
-                "late_count": {
-                    "$sum": { "$cond": [ "$is_late", 1, 0 ] }
-                },
-                "absent_count": {
-                    "$sum": {
-                        "$cond": [
-                            { "$ne": ["$attendance_status", "present"] },
-                            1,
-                            0
-                        ]
-                    }
-                },
-                "present_count": {
-                    "$sum": {
-                        "$cond": [
-                            { "$eq": ["$attendance_status", "present"] },
-                            1,
-                            0
-                        ]
-                    }
-                }
-            }
-        }
-    ]
-
-    pipeline = pipeline_pdt_hrm if env == "pdthrm" else pipeline_hrm
 
     # Run the aggregation pipeline
     result = list(collection.aggregate(pipeline))

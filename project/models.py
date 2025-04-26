@@ -2,11 +2,10 @@
 
 # from flask_login import UserMixin, RoleMixin
 import datetime
-from project import db
+from . import db
 from bson import ObjectId
 from mongoengine import *
 from flask_mongoengine import BaseQuerySet
-from mongoengine import (EmbeddedDocumentField)
 from flask_security import Security, MongoEngineUserDatastore, \
     UserMixin, RoleMixin, login_required
 import pytz
@@ -227,25 +226,7 @@ class SuperLeaveApprovers(db.DynamicDocument):
     company_id = db.ReferenceField('User')
     employee_details_id = db.ReferenceField('EmployeeDetails')
     assigned_on = db.DateTimeField(default=datetime.datetime.now)
-
-class MultipleAccessEntry(db.DynamicEmbeddedDocument):
-    multiple_access_email_id =db.StringField(required=True)
-    multiple_access_company_id = db.ObjectIdField(required=True)
-    multiple_access_company_name = db.StringField(required=True)
-    multiple_access_enabled = db.BooleanField(default=True)
-    company_logo= db.StringField(required=True)
-    created_at = db.DateTimeField(default=datetime.datetime.now)
-
-class MutipleAcces(db.DynamicDocument):
-    _id =  db.ObjectIdField(default=ObjectId, primary_key=True)
-    email = db.StringField(required=True)
-    company_id =  db.ObjectIdField(required=True)
-    Main_company_id=  db.ObjectIdField(required=True)
-    MultipleAccessEntry = db.ListField(db.EmbeddedDocumentField('MultipleAccessEntry'),default=[])
-    created_at = db.DateTimeField(default=datetime.datetime.now)
-
-    meta = {'collection': 'MutipleAcces', 'queryset_class': BaseQuerySet}
-
+                 
 class CompanyDetails(db.DynamicDocument):
     _id = db.ObjectIdField(default=ObjectId, primary_key=True)
     company_name = db.StringField()
@@ -253,9 +234,6 @@ class CompanyDetails(db.DynamicDocument):
     email = db.StringField(unique=True)
     contact_no = db.StringField(max_length=15)
     employees = db.ListField(ReferenceField('EmployeeDetails'),default=[])
-    Currency=db.StringField()
-    Country=db.StringField()
-    Timezone=db.StringField()
     # payment_id = db.StringField()
     # cancelled_subscription_on = db.DateTimeField(default=datetime.datetime.utcnow)
     no_of_employees = db.IntField(default=2)
@@ -330,8 +308,7 @@ class BankDetails(db.DynamicDocument):
     _id = db.ObjectIdField(default=ObjectId, primary_key=True)
     bank_name = db.StringField()
     routing_code = db.StringField()
-    company_id = db.ObjectIdField() 
-
+    
     meta = { 'collection': 'bank_details', 'queryset_class': BaseQuerySet}
     
     

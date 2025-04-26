@@ -17,10 +17,13 @@ class AppConfig:
         },
     }
 
-    app_config_server_name = '127.0.0.1:5000'
+    # app_config_server_name = '127.0.0.1:5000'
 
-    app_config_login_url_mail = 'pdthrms.cubes-intl.com'
+    # app_config_login_url_mail = 'pdthrms.cubes-intl.com'
 
     # db_uri = "mongodb+srv://pdtuae-hrm:"+urllib.parse.quote("pass@123")+"@cluster0.mf10u.mongodb.net/pdthrm-debug-dump?retryWrites=true&w=majority"
-    db_uri="mongodb://localhost:27017/PdtHrms"
+    app_config_server_name = '127.0.0.1:5000'
 
+    app_config_login_url_mail = 'hrms.cubes-intl.com'
+
+    db_uri="mongodb://localhost:27017/hrm-test-db-live"
