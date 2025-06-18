@@ -53,6 +53,14 @@ import requests
 import base64
 from requests.auth import HTTPDigestAuth
 from ..config.config_strategy import Config_Strategy
+from datetime import datetime, timedelta
+import io
+import xlsxwriter
+from flask import send_file, jsonify
+from datetime import datetime
+from bson import ObjectId
+import pandas as pd
+from io import BytesIO
 
 company = Blueprint('company', __name__)
 app=create_app()
@@ -2063,6 +2071,190 @@ def send_resend_emails(email,company_id):
     # msg.html = html
     # mail.send(msg)
     # return True
+# @company.route('/attendancereport',methods=["GET","POST"])
+# @login_required
+# @roles_accepted('admin','company','supervisor','attendancemanager')
+# def attendance_report():
+#     company_employees = CompanyDetails.objects(user_id=current_user.id).only('employees','clock_in_options').first()
+#     company_id = current_user.id
+#     start_date = datetime.today().replace(minute=0, hour=0, second=0,microsecond=0)
+
+#     if not company_employees: 
+#         employee_details = EmployeeDetails.objects(user_id=current_user.id).first()
+#         company_employees = CompanyDetails.objects(user_id=employee_details.company_id).only('employees','clock_in_options').first()   
+#         company_id = employee_details.company_id
+
+
+#     # company_employees['employees'] = list(filter(lambda x: x['user_id']['active_till'] is None or x['user_id']['active_till'] > start_date, company_employees['employees']))
+#     company_employees['employees'] = list(filter(lambda x: x['user_id']['active'], company_employees['employees']))
+
+#     if request.method=="POST":
+#         company_employees = CompanyDetails.objects(user_id=current_user.id).only('employees','clock_in_options').first()
+
+#         daterange = request.form.get('daterange')
+#         attendance_from, attendance_to = [date.strip() for date in daterange.split('-')]
+#         employee_details_id = request.form.get('employee_id')
+#         start_date = datetime. strptime(attendance_from, '%d/%m/%Y')
+#         end_date = datetime. strptime(attendance_to, '%d/%m/%Y')
+
+#         # company_employees['employees'] = list(filter(lambda x: x['user_id']['active_till'] is None or x['user_id']['active_till'] > start_date, company_employees['employees']))
+#         company_employees['employees'] = list(filter(lambda x: x['user_id']['active'], company_employees['employees']))
+	
+
+#         total_hrs_worked = timedelta()
+#         data = []
+        
+#         if employee_details_id:
+#             employee_attendance = EmployeeAttendance.objects(company_id=company_id,attendance_date__gte=start_date,attendance_date__lte=end_date,employee_details_id=ObjectId(employee_details_id))
+#             for i in employee_attendance:
+#                 if "total_hrs_worked" in i:
+#                       # Splitting days and time components
+#                         parts = i.total_hrs_worked.split(', ')
+#                         if len(parts) == 2:  # If days component is present
+#                             days = int(parts[0].split()[0])  # Extracting the number of days
+#                             time_str = parts[1]  # Extracting the time component
+#                         else:
+#                             days = 0
+#                             time_str = parts[0]
+
+#                         # Parsing hours, minutes, and seconds
+#                         (h, m, s) = time_str.split(':')
+
+#                         # Calculate total hours worked excluding the day component
+#                         d = timedelta(days=days, hours=int(h), minutes=int(m), seconds=float(s))
+                        
+#                         # Adding the calculated timedelta to total_hrs_worked
+#                         total_hrs_worked += d
+#                     # (h, m, s) = i.total_hrs_worked.split(':')
+#                     # d = timedelta(hours=int(h), minutes=int(m), seconds=float(s))
+#                     # total_hrs_worked += d
+#             for item in employee_attendance:
+#                 sum_of_break = 0
+#                 if item.break_history:
+#                     for bh in item.break_history:
+#                         if bh.already_ended:
+#                             sum_of_break += bh.break_difference
+
+#                 if "total_hrs_worked" in item:
+#                     # Splitting days and time components
+#                     parts = item.total_hrs_worked.split(', ')
+#                     if len(parts) == 2:  # If days component is present
+#                         days = int(parts[0].split()[0])  # Extracting the number of days
+#                         time_str = parts[1]  # Extracting the time component
+#                     else:
+#                         days = 0
+#                         time_str = parts[0]
+
+#                     # Parsing hours, minutes, and seconds
+#                     (h, m, s) = time_str.split(':')
+
+#                     if sum_of_break > 0:
+#                         # Subtracting break time from total time
+#                         item.total_hr_worked_excluding = timedelta(days=days, hours=int(h), minutes=int(m), seconds=float(s)) - timedelta(minutes=int(sum_of_break))
+#                     else:
+#                         item.total_hr_worked_excluding = timedelta(days=days, hours=int(h), minutes=int(m), seconds=float(s))
+#                 # if "total_hrs_worked" in item:
+#                 #     (h, m, s) = item.total_hrs_worked.split(':')
+#                 #     if sum_of_break > 0:
+#                 #         item.total_hr_worked_excluding = d = timedelta(hours=int(h), minutes=int(m), seconds=float(s))-timedelta(minutes=int(sum_of_break))
+#                 #     else:
+#                 #         item.total_hr_worked_excluding = d = timedelta(hours=int(h), minutes=int(m), seconds=float(s))
+                    
+#                 data.append(item)
+#             if dynamic_config.env not in ["hrm", "hrm-debug"]:
+#                 emp_details = EmployeeDetails.objects(_id = ObjectId(employee_details_id)).first()
+#                 data = add_sundays_to_attendace(data, start_date, end_date, emp_details)
+            
+#                 # Sorting the result list by 'attendance_date'
+#             data.sort(key=lambda x: x['attendance_date'])
+
+#             return render_template('company/attendance_report.html',employee_attendance=data,employees_details=company_employees,selected_emp=ObjectId(employee_details_id),start=start_date,end=end_date,total_hrs_worked=chop_microseconds(total_hrs_worked))
+                    
+#         else:
+#             employee_attendance = EmployeeAttendance.objects(company_id=company_id,attendance_date__gte=start_date,attendance_date__lte=end_date)
+#             for item in employee_attendance:
+#                 sum_of_break = 0
+#                 if item.break_history:
+#                     for bh in item.break_history:
+#                         if bh.already_ended:
+#                             sum_of_break += bh.break_difference
+
+#                 if "total_hrs_worked" in item:
+#                     # Splitting days and time components
+#                     parts = item.total_hrs_worked.split(', ')
+#                     if len(parts) == 2:  # If days component is present
+#                         days = int(parts[0].split()[0])  # Extracting the number of days
+#                         time_str = parts[1]  # Extracting the time component
+#                     else:
+#                         days = 0
+#                         time_str = parts[0]
+
+#                     # Parsing hours, minutes, and seconds
+#                     (h, m, s) = time_str.split(':')
+
+#                     if sum_of_break > 0:
+#                         # Subtracting break time from total time
+#                         item.total_hr_worked_excluding = timedelta(days=days, hours=int(h), minutes=int(m), seconds=float(s)) - timedelta(minutes=int(sum_of_break))
+#                     else:
+#                         item.total_hr_worked_excluding = timedelta(days=days, hours=int(h), minutes=int(m), seconds=float(s))
+               
+#                 data.append(item)
+
+#             if dynamic_config.env not in ['hrm', "hrm-debug"]:
+
+#                 data = add_sundays_to_attendace_company_level(data, start_date, end_date, company_employees['employees'])
+
+                        
+#                 # Sorting the result list by 'attendance_date'
+#             data.sort(key=lambda x: x['attendance_date'])
+
+#             return render_template('company/attendance_report.html',employee_attendance=data,employees_details=company_employees,start=start_date,end=end_date)
+#         # attendance_date = datetime. strptime(request.form.get('attendance_range[0]'), '%d/%m/%Y')  if request.form.get('attendance_date') else datetime.today().replace(minute=0, hour=0, second=0,microsecond=0)
+#     else:
+#         # company_employees = CompanyDetails.objects(user_id=company_id).only('employees','clock_in_options').first()
+#         end_date = datetime.today().replace(minute=0, hour=0, second=0,microsecond=0)
+#         employee_attendance = EmployeeAttendance.objects(company_id=company_id,attendance_date__gte=start_date,attendance_date__lte=end_date)
+#         data =[]
+#         for item in employee_attendance:
+#             sum_of_break = 0
+#             if item.break_history:
+#                 for bh in item.break_history:
+#                     if bh.already_ended:
+#                         sum_of_break += bh.break_difference
+
+#             if "total_hrs_worked" in item:
+#                     # Splitting days and time components
+#                     parts = item.total_hrs_worked.split(', ')
+#                     if len(parts) == 2:  # If days component is present
+#                         days = int(parts[0].split()[0])  # Extracting the number of days
+#                         time_str = parts[1]  # Extracting the time component
+#                     else:
+#                         days = 0
+#                         time_str = parts[0]
+
+#                     # Parsing hours, minutes, and seconds
+#                     (h, m, s) = time_str.split(':')
+
+#                     if sum_of_break > 0:
+#                         # Subtracting break time from total time
+#                         item.total_hr_worked_excluding = timedelta(days=days, hours=int(h), minutes=int(m), seconds=float(s)) - timedelta(minutes=int(sum_of_break))
+#                     else:
+#                         item.total_hr_worked_excluding = timedelta(days=days, hours=int(h), minutes=int(m), seconds=float(s))
+#             # if "total_hrs_worked" in item:
+#             #     (h, m, s) = item.total_hrs_worked.split(':')
+#             #     if sum_of_break > 0:
+#             #         item.total_hr_worked_excluding = d = timedelta(hours=int(h), minutes=int(m), seconds=float(s))-timedelta(minutes=int(sum_of_break))
+#             #     else:
+#             #         item.total_hr_worked_excluding = d = timedelta(hours=int(h), minutes=int(m), seconds=float(s))
+                    
+#             data.append(item)        
+#         return render_template('company/attendance_report.html',employee_attendance=data,employees_details=company_employees,start=start_date,end=end_date)
+
+
+# ---------------------------server Issue--------
+
+
+
 @company.route('/attendancereport',methods=["GET","POST"])
 @login_required
 @roles_accepted('admin','company','supervisor','attendancemanager')
@@ -2160,9 +2352,19 @@ def attendance_report():
                 # Sorting the result list by 'attendance_date'
             data.sort(key=lambda x: x['attendance_date'])
 
-            return render_template('company/attendance_report.html',employee_attendance=data,employees_details=company_employees,selected_emp=ObjectId(employee_details_id),start=start_date,end=end_date,total_hrs_worked=chop_microseconds(total_hrs_worked))
+            return render_template('company/attendance_report.html',employee_attendance=data,employees_details=company_employees,selected_emp=ObjectId(employee_details_id),start=start_date,end=end_date,total_hrs_worked=chop_microseconds(total_hrs_worked),timedelta=timedelta)
                     
         else:
+            date_diff = (end_date - start_date).days
+            end_date1=end_date
+            if date_diff > 15:
+                start_date = start_date
+                end_date = start_date + timedelta(days=11) 
+               
+            else:
+                start_date = start_date
+                end_date = end_date
+              
             employee_attendance = EmployeeAttendance.objects(company_id=company_id,attendance_date__gte=start_date,attendance_date__lte=end_date)
             for item in employee_attendance:
                 sum_of_break = 0
@@ -2189,12 +2391,7 @@ def attendance_report():
                         item.total_hr_worked_excluding = timedelta(days=days, hours=int(h), minutes=int(m), seconds=float(s)) - timedelta(minutes=int(sum_of_break))
                     else:
                         item.total_hr_worked_excluding = timedelta(days=days, hours=int(h), minutes=int(m), seconds=float(s))
-                # if "total_hrs_worked" in item:
-                #     (h, m, s) = item.total_hrs_worked.split(':')
-                #     if sum_of_break > 0:
-                #         item.total_hr_worked_excluding = d = timedelta(hours=int(h), minutes=int(m), seconds=float(s))-timedelta(minutes=int(sum_of_break))
-                #     else:
-                #         item.total_hr_worked_excluding = d = timedelta(hours=int(h), minutes=int(m), seconds=float(s))
+               
                 data.append(item)
 
             if dynamic_config.env not in ['hrm', "hrm-debug"]:
@@ -2204,8 +2401,8 @@ def attendance_report():
                         
                 # Sorting the result list by 'attendance_date'
             data.sort(key=lambda x: x['attendance_date'])
-
-            return render_template('company/attendance_report.html',employee_attendance=data,employees_details=company_employees,start=start_date,end=end_date)
+            end_plus_10 = 1
+            return render_template('company/attendance_report.html',employee_attendance=data,employees_details=company_employees,start=start_date,end=end_date1,end1=end_date,has_next=1,timedelta=timedelta)
         # attendance_date = datetime. strptime(request.form.get('attendance_range[0]'), '%d/%m/%Y')  if request.form.get('attendance_date') else datetime.today().replace(minute=0, hour=0, second=0,microsecond=0)
     else:
         # company_employees = CompanyDetails.objects(user_id=company_id).only('employees','clock_in_options').first()
@@ -2245,8 +2442,1009 @@ def attendance_report():
             #         item.total_hr_worked_excluding = d = timedelta(hours=int(h), minutes=int(m), seconds=float(s))
                     
             data.append(item)        
-        return render_template('company/attendance_report.html',employee_attendance=data,employees_details=company_employees,start=start_date,end=end_date)
+        return render_template('company/attendance_report.html',employee_attendance=data,employees_details=company_employees,start=start_date,end=end_date,timedelta=timedelta)
 
+@company.route('/load_more_attendance', methods=["GET"])
+@login_required
+@roles_accepted('admin', 'company', 'supervisor', 'attendancemanager')
+def load_more_attendance():
+    try:
+        company_id = current_user.id
+
+        # Get parameters from request
+        start_date_str = request.args.get('start_date')
+        end_date_str = request.args.get('end_date')
+        
+        # Convert string dates to datetime
+        start_date = datetime.strptime(start_date_str, '%Y-%m-%d')
+        end_date = datetime.strptime(end_date_str, '%Y-%m-%d')
+        
+        # Get the actual end of current month using calendar
+        last_day = calendar.monthrange(start_date.year, start_date.month)[1]
+        end_of_month = start_date.replace(day=last_day)
+        
+        # Get next end date (10 days from start or end of month, whichever comes first)
+        next_end_date = min(start_date + timedelta(days=9), end_of_month)
+
+        # Get company details
+        if not CompanyDetails.objects(user_id=current_user.id).first():
+            employee_details = EmployeeDetails.objects(user_id=current_user.id).first()
+            company_id = employee_details.company_id
+            company_employees = CompanyDetails.objects(user_id=company_id).only('employees').first()
+        else:
+            company_employees = CompanyDetails.objects(user_id=current_user.id).only('employees').first()
+
+        data = []
+
+        # Build query
+        filter_kwargs = {
+            'company_id': company_id,
+            'attendance_date__gte': start_date,
+            'attendance_date__lte': next_end_date
+        }
+        
+        if employee_id := request.args.get('employee_id'):
+            filter_kwargs['employee_details_id'] = ObjectId(employee_id)
+
+        # Get attendance records
+        employee_attendance = EmployeeAttendance.objects(**filter_kwargs).order_by('attendance_date')
+
+        # Process records 
+        for item in employee_attendance:
+            sum_of_break = sum(bh.break_difference for bh in item.break_history if bh.already_ended) if item.break_history else 0
+
+            if "total_hrs_worked" in item:
+                try:
+                    parts = item.total_hrs_worked.split(', ')
+                    days = int(parts[0].split()[0]) if len(parts) == 2 else 0
+                    time_str = parts[1] if len(parts) == 2 else parts[0]
+
+                    h, m, s_str = time_str.split(':')
+                    s = int(float(s_str))
+                    
+                    if sum_of_break > 0:
+                        item.total_hr_worked_excluding = timedelta(days=days, hours=int(h), minutes=int(m), seconds=float(s)) - timedelta(minutes=int(sum_of_break))
+                    else:
+                        item.total_hr_worked_excluding = timedelta(days=days, hours=int(h), minutes=int(m), seconds=float(s))
+                except (ValueError, AttributeError) as e:
+                    print(f"Error processing time for record {item.id}: {str(e)}")
+                    item.total_hr_worked_excluding = timedelta(0)
+
+            data.append(item)
+
+        # Add Sundays if needed
+        if dynamic_config.env not in ['hrm', "hrm-debug"]:
+            data = add_sundays_to_attendace_company_level(
+                data, 
+                start_date,
+                next_end_date,
+                company_employees['employees']
+            )
+
+        # Sort by date
+        data.sort(key=lambda x: x['attendance_date'])
+
+        # Check if we've reached end of month or end date
+        has_next = next_end_date < end_of_month and next_end_date < end_date
+
+        return render_template(
+            'company/attendance_rows.html',
+            employee_attendance=data,
+            has_next=has_next
+        )
+
+    except Exception as e:
+        print(f"Error in load_more_attendance: {str(e)}")
+        return jsonify({'error': 'An error occurred while loading attendance data'}), 500# @company.route('/attendancereport',methods=["GET","POST"])
+
+
+
+@company.route('/attendancereport/download', methods=["GET", "POST"])
+def attendance_report_download():
+    """Generate and download attendance reports for employees or company-wide data."""
+    
+    # Get company details and employees
+    company_employees, company_id = get_company_details()
+    
+    if not company_employees:
+        return jsonify({"error": "No company data found"}), 404
+    
+    # Filter active employees only
+    company_employees['employees'] = [
+        emp for emp in company_employees['employees'] 
+        if emp['user_id']['active']
+    ]
+
+    # Extract GET parameters
+    start_date_str = request.args.get('start_date')
+    end_date_str = request.args.get('end_date')
+    employee_id = request.args.get('employee_id')  # Optional
+
+    if request.method == "POST":
+        return handle_today_report(company_id, company_employees)
+    else:
+        # Ensure dates are passed and valid
+        if not start_date_str or not end_date_str:
+            return jsonify({"error": "Start date and end date are required"}), 400
+
+        try:
+            from datetime import datetime
+            start_date = datetime.strptime(start_date_str, "%Y-%m-%d")
+            end_date = datetime.strptime(end_date_str, "%Y-%m-%d")
+        except ValueError:
+            return jsonify({"error": "Invalid date format. Use YYYY-MM-DD."}), 400
+
+        # Call your custom report handler
+        return handle_custom_date_report(
+            company_id, 
+            company_employees, 
+            start_date=start_date, 
+            end_date=end_date, 
+            employee_details_id=employee_id  # Updated argument name
+        )
+def get_company_details():
+    """Get company details and determine company ID."""
+    company_employees = CompanyDetails.objects(
+        user_id=current_user.id
+    ).only('employees', 'clock_in_options').first()
+    company_id = current_user.id
+
+    if not company_employees:
+        employee_details = EmployeeDetails.objects(user_id=current_user.id).first()
+        if employee_details:
+            company_employees = CompanyDetails.objects(
+                user_id=employee_details.company_id
+            ).only('employees', 'clock_in_options').first()
+            company_id = employee_details.company_id
+    
+    return company_employees, company_id
+
+
+def handle_custom_date_report(company_id, company_employees, start_date, end_date, employee_details_id=None):
+    """Handle GET requests for custom date range reports."""
+
+    try:
+        # Validate date types
+        if not isinstance(start_date, datetime) or not isinstance(end_date, datetime):
+            return jsonify({"error": "Start date and end date must be datetime objects"}), 400
+
+        # Route based on employee or full company report
+        if employee_details_id:
+            return generate_individual_report(company_id, employee_details_id, start_date, end_date)
+        else:
+            return generate_company_report(company_id, company_employees, start_date, end_date)
+
+    except Exception as e:
+        return jsonify({"error": f"An error occurred: {str(e)}"}), 500
+
+
+def handle_today_report(company_id, company_employees):
+    """Handle GET requests for today's report."""
+    start_date = datetime.today().replace(minute=0, hour=0, second=0, microsecond=0)
+    end_date = start_date
+    
+    return generate_company_report(company_id, company_employees, start_date, end_date)
+
+
+
+def generate_individual_report(company_id, employee_details_id, start_date, end_date):
+    """Generate individual employee attendance report."""
+    try:
+        employee_details_id = ObjectId(employee_details_id)
+    except:
+        return jsonify({"error": "Invalid employee ID"}), 400
+
+    # Fetch employee attendance data
+    employee_attendance = EmployeeAttendance.objects(
+        company_id=company_id,
+        attendance_date__gte=start_date,
+        attendance_date__lte=end_date,
+        employee_details_id=employee_details_id
+    )
+
+    if not employee_attendance:
+        return jsonify({"error": "No attendance data found for the specified period"}), 404
+
+    # Get employee details
+    emp_details = EmployeeDetails.objects(_id=employee_details_id).first()
+    if not emp_details:
+        return jsonify({"error": "Employee not found"}), 404
+
+    total_hrs_worked = timedelta()
+    data = []
+
+    for item in employee_attendance:
+        # --- Parse total_hrs_worked ---
+        if "total_hrs_worked" in item and item.total_hrs_worked:
+            parts = item.total_hrs_worked.split(', ')
+            if len(parts) == 2:
+                days = int(parts[0].split()[0])
+                time_str = parts[1]
+            else:
+                days = 0
+                time_str = parts[0]
+
+            h, m, s = time_str.split(':')
+            worked_time = timedelta(days=days, hours=int(h), minutes=int(m), seconds=float(s))
+
+            total_hrs_worked += worked_time
+
+            # --- Handle break deduction ---
+            sum_of_break = 0
+            if item.break_history:
+                for bh in item.break_history:
+                    if bh.already_ended:
+                        sum_of_break += bh.break_difference
+
+            if sum_of_break > 0:
+                item.total_hr_worked_excluding = worked_time - timedelta(minutes=int(sum_of_break))
+            else:
+                item.total_hr_worked_excluding = worked_time
+
+        data.append(item)
+
+    # Add Sundays if not in HRM environment
+    if dynamic_config.env not in ["hrm", "hrm-debug"]:
+        data = add_sundays_to_attendace(data, start_date, end_date, emp_details)
+
+    # Sort the attendance by date
+    data.sort(key=lambda x: x['attendance_date'])
+
+    # Generate Excel report
+    return generate_individual_employee_excel(
+        data, emp_details, start_date, end_date, chop_microseconds(total_hrs_worked)
+    )
+
+def generate_company_report(company_id, company_employees, start_date, end_date):
+    """Generate company-wide attendance report."""
+
+    # Fetch all employee attendance data for the date range
+    employee_attendance = EmployeeAttendance.objects(
+        company_id=company_id,
+        attendance_date__gte=start_date,
+        attendance_date__lte=end_date
+    )
+
+    data = []
+
+    # Process each attendance record
+    for item in employee_attendance:
+        sum_of_break = 0
+
+        # Calculate total break time if break history exists
+        if item.break_history:
+            for bh in item.break_history:
+                if bh.already_ended:
+                    sum_of_break += bh.break_difference
+
+        # Process total hours worked
+        if "total_hrs_worked" in item:
+            parts = item.total_hrs_worked.split(', ')
+            if len(parts) == 2:
+                days = int(parts[0].split()[0])  # Extract days
+                time_str = parts[1]
+            else:
+                days = 0
+                time_str = parts[0]
+
+            h, m, s = time_str.split(':')
+
+            total_worked = timedelta(days=days, hours=int(h), minutes=int(m), seconds=float(s))
+            if sum_of_break > 0:
+                item.total_hr_worked_excluding = total_worked - timedelta(minutes=int(sum_of_break))
+            else:
+                item.total_hr_worked_excluding = total_worked
+
+        data.append(item)
+
+    # Add Sundays if not in HRM environment
+    if dynamic_config.env not in ['hrm', "hrm-debug"]:
+        data = add_sundays_to_attendace_company_level(
+            data, start_date, end_date, company_employees['employees']
+        )
+
+    # Sort the result list by 'attendance_date'
+    data.sort(key=lambda x: x['attendance_date'])
+
+    # Generate Excel report
+    return generate_company_excel(data, company_employees, start_date, end_date)
+
+
+def process_attendance_data(employee_attendance):
+    """Process attendance data to calculate total hours and break times."""
+    data = []
+    total_hrs_worked = timedelta()
+    
+    for item in employee_attendance:
+        # Calculate break time
+        sum_of_break = calculate_break_time(item)
+        
+        # Calculate total hours worked excluding breaks
+        if hasattr(item, "total_hrs_worked") and item.total_hrs_worked:
+            total_time = parse_time_string(item.total_hrs_worked)
+            
+            if sum_of_break > 0:
+                item.total_hr_worked_excluding = total_time - timedelta(minutes=int(sum_of_break))
+            else:
+                item.total_hr_worked_excluding = total_time
+            
+            total_hrs_worked += total_time
+        
+        data.append(item)
+    
+    return data, total_hrs_worked
+
+
+def calculate_break_time(item):
+    """Calculate total break time for an attendance item."""
+    sum_of_break = 0
+    if hasattr(item, 'break_history') and item.break_history:
+        for bh in item.break_history:
+            if (hasattr(bh, 'already_ended') and bh.already_ended and 
+                hasattr(bh, 'break_difference')):
+                sum_of_break += bh.break_difference
+    return sum_of_break
+
+
+def parse_time_string(time_str):
+    """Parse time string format like '1 day, 8:30:00' or '8:30:00'."""
+    try:
+        parts = time_str.split(', ')
+        if len(parts) == 2:  # Has days component
+            days = int(parts[0].split()[0])
+            time_part = parts[1]
+        else:
+            days = 0
+            time_part = parts[0]
+        
+        h, m, s = time_part.split(':')
+        return timedelta(days=days, hours=int(h), minutes=int(m), seconds=float(s))
+    except (ValueError, IndexError) as e:
+        print(f"Error parsing time string '{time_str}': {e}")
+        return timedelta()
+
+def generate_individual_employee_excel(data, employee_details, start_date, end_date, total_hrs_worked):
+    """Generate Excel file for individual employee attendance report."""
+    try:
+        excel_data = []
+
+        for item in data:
+            try:
+                # Calculate break time
+                break_time = calculate_break_time(item)
+
+                if (isinstance(item, dict) and item.get('status') == 'absent') or \
+                   (hasattr(item, 'attendance_status') and item.attendance_status == 'absent'):
+                    if (isinstance(item, dict) and item.get('leave_name')) or \
+                    (hasattr(item, 'leave_name') and item.leave_name):
+                        # Handle as leave case with full details
+                        row = {
+                            'Date': format_date(getattr(item, 'attendance_date', None)),
+                            'Day': item.get('day_label', ''),
+                            'Employee Name': get_employee_name_from_item(item),
+                            'Status': get_formatted_status(item),
+                            'Working From': get_working_location(item),
+                            'Office': get_office_location(item), 
+                            'Clock In': get_clock_in_display(item),
+                            'Clock Out': get_clock_out_display(item),
+                            'Has Breaks': 'Yes' if break_time > 0 else 'No',
+                            'Clock In Note': getattr(item, 'clock_in_note', '') or '',
+                            'Clock Out Note': getattr(item, 'clock_out_note', '') or '',
+                            'Break Time (Minutes)': break_time,
+                            'Total Hours': calculate_total_hours_display(item),
+                            'Total Hours (Excluding Breaks)': str(getattr(item, 'total_hr_worked_excluding', '-'))
+                        }
+                    else:
+                        # Handle as regular absent case
+                        row = {
+                            'Date': format_date(item.get('attendance_date')),
+                            'Day': item.get('day_label', ''),
+                            'Employee Name': get_employee_name_from_item_att(item),
+                            'Status': 'Absent',
+                            'Working From': '-',
+                            'Office': '-',
+                            'Clock In': '-',
+                            'Clock Out': '-', 
+                            'Has Breaks': 'No',
+                            'Clock In Note': '',
+                            'Clock Out Note': '',
+                            'Break Time (Minutes)': 0,
+                            'Total Hours': '0:0:0',
+                            'Total Hours (Excluding Breaks)': '-'
+                        }
+                    
+                # Holiday / Week off / Day off case
+                elif isinstance(item, dict) and item.get('status') in ['holiday', 'weekoff', 'dayoff']:
+                    row = {
+                        'Date': format_date(item.get('attendance_date')),
+                        'Day': format_day_of_week(getattr(item, 'attendance_date', None)),
+                        'Employee Name': get_employee_name_from_item_att(item),
+                        'Status': item.get('status', 'Unknown'),
+                        'Working From': item.get('working_from', '-'),
+                        'Office': item.get('working_office', '-'),
+                        'Clock In': '-',
+                        'Clock Out': '-',
+                        'Has Breaks': 'No',
+                        'Clock In Note': '',
+                        'Clock Out Note': '',
+                        'Break Time (Minutes)': 0,
+                        'Total Hours': item.get('total_hrs_worked', '-'),
+                        'Total Hours (Excluding Breaks)': '-'
+                    }
+                elif isinstance(item, dict) and item.get('status') in ['vacation', 'leave']:
+                    row = {
+                        'Date': format_date(getattr(item, 'attendance_date', None)),
+                        'Day': format_day_of_week(getattr(item, 'attendance_date', None)),
+                        'Employee Name': get_employee_name_from_item(item),
+                        'Status': get_formatted_status(item),
+                        'Working From': get_working_location(item),
+                        'Office': get_office_location(item),
+                        'Clock In': get_clock_in_display(item),
+                        'Clock Out': get_clock_out_display(item),
+                        'Has Breaks': 'Yes' if break_time > 0 else 'No',
+                        'Clock In Note': getattr(item, 'clock_in_note', '') or '',
+                        'Clock Out Note': getattr(item, 'clock_out_note', '') or '',
+                        'Break Time (Minutes)': break_time,
+                        'Total Hours': calculate_total_hours_display(item),
+                        'Total Hours (Excluding Breaks)': str(getattr(item, 'total_hr_worked_excluding', '-'))
+                    }
+                # Regular attendance case
+                else:
+                    row = {
+                        'Date': format_date(getattr(item, 'attendance_date', None)),
+                        'Day': format_day_of_week(getattr(item, 'attendance_date', None)),
+                        'Employee Name': get_employee_name_from_item(item),
+                        'Status': get_formatted_status(item),
+                        'Working From': get_working_location(item),
+                        'Office': get_office_location(item),
+                        'Clock In': get_clock_in_display(item),
+                        'Clock Out': get_clock_out_display(item),
+                        'Has Breaks': 'Yes' if break_time > 0 else 'No',
+                        'Clock In Note': getattr(item, 'clock_in_note', '') or '',
+                        'Clock Out Note': getattr(item, 'clock_out_note', '') or '',
+                        'Break Time (Minutes)': break_time,
+                        'Total Hours': calculate_total_hours_display(item),
+                        'Total Hours (Excluding Breaks)': str(getattr(item, 'total_hr_worked_excluding', '-'))
+                    }
+
+                excel_data.append(row)
+
+            except Exception as row_error:
+                print(f"Error processing row: {str(row_error)}")
+                continue
+
+        if not excel_data:
+            raise ValueError("No valid attendance data to export")
+
+        # Create DataFrame and generate Excel file
+        df = pd.DataFrame(excel_data)
+        output = create_excel_with_summary_ind(
+            df,
+            start_date,
+            end_date,
+            additional_summary={'Total Hours Worked': str(chop_microseconds(total_hrs_worked))}
+        )
+
+        # Generate filename
+        filename = f"Attendance_Report_{get_safe_filename(get_employee_full_name(employee_details))}_{format_date_filename(start_date)}_{format_date_filename(end_date)}.xlsx"
+
+        return send_excel_file(output, filename)
+
+    except Exception as e:
+        print(f"Error generating Excel report: {str(e)}")
+        raise
+
+def create_excel_with_summary_ind(df, start_date, end_date, additional_summary=None):
+    """Create Excel file with summary information and color-coded status."""
+    output = BytesIO()
+    
+    with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
+        df.to_excel(writer, sheet_name='Attendance Report', index=False)
+        
+        # Get workbook and worksheet objects
+        workbook = writer.book
+        worksheet = writer.sheets['Attendance Report']
+
+        # Define formats for different status types
+        formats = {
+            'header': workbook.add_format({
+                'bold': True,
+                'bg_color': '#4472C4',  # Blue header
+                'font_color': 'white',
+                'align': 'center',
+                'valign': 'vcenter',
+                'text_wrap': True
+            }),
+            'present': workbook.add_format({
+                'bg_color': '#C6EFCE',  # Light green
+                'font_color': '#006100',
+                
+                'align': 'center'
+            }),
+            'absent': workbook.add_format({
+                'bg_color': '#FFC7CE',  # Light red
+                'font_color': '#9C0006',
+                
+                'align': 'center'
+            }),
+            'holiday': workbook.add_format({
+                'bg_color': '#BDD7EE',  # Light blue
+                'font_color': '#1F4E79',
+                
+                'align': 'center'
+            }),
+            'leave': workbook.add_format({
+                'bg_color': '#FFEB9C',  # Light yellow
+                'font_color': '#9C5700',
+                
+                'align': 'center'
+            }),
+            'regular': workbook.add_format({
+               
+                'align': 'center'
+            }),
+            'summary': workbook.add_format({
+                'bold': True,
+                'bg_color': '#F2F2F2',
+                
+            })
+        }
+
+        # Format headers
+        for col_num, value in enumerate(df.columns.values):
+            worksheet.write(0, col_num, value, formats['header'])
+
+        # Format data rows with color coding based on status
+        status_col = df.columns.get_loc('Status')
+        for row_num in range(1, len(df) + 1):
+            status_value = df.iloc[row_num - 1]['Status']
+            
+            # Choose format based on status
+            if 'Present' in str(status_value):
+                format_to_use = formats['present']
+            elif 'Absent' in str(status_value):
+                format_to_use = formats['absent']
+            elif any(x in str(status_value) for x in ['Holiday', 'Week off', 'Day off']):
+                format_to_use = formats['holiday']
+            elif any(x in str(status_value) for x in ['Vacation', 'Leave']):
+                format_to_use = formats['leave']
+            else:
+                format_to_use = formats['regular']
+
+            # Write the status cell with appropriate format
+            worksheet.write(row_num, status_col, status_value, format_to_use)
+            
+            # Write other cells with regular format
+            for col_num in range(len(df.columns)):
+                if col_num != status_col:  # Skip status column as it's already formatted
+                    value = df.iloc[row_num - 1, col_num]
+                    worksheet.write(row_num, col_num, value, formats['regular'])
+
+        # Auto-adjust column widths
+        for idx, col in enumerate(df):
+            series = df[col]
+            max_len = max(
+                series.astype(str).map(len).max(),  # len of largest item
+                len(str(series.name))  # len of column name/header
+            ) + 2  # adding a little extra space
+            worksheet.set_column(idx, idx, min(max_len, 30))  # setting column width
+
+        # Add summary section
+        summary_row = len(df) + 3
+        worksheet.write(summary_row, 0, 'REPORT SUMMARY', formats['summary'])
+        worksheet.write(summary_row + 1, 0, 'Report Period:', formats['summary'])
+        worksheet.write(summary_row + 1, 1, 
+            f"{start_date.strftime('%d/%m/%Y')} - {end_date.strftime('%d/%m/%Y')}")
+
+        # Add statistics
+        if not df.empty:
+            stat_row = summary_row + 3
+            present_count = len(df[df['Status'].str.contains('Present', na=False)])
+            absent_count = len(df[df['Status'].str.contains('Absent', na=False)])
+            leave_count = len(df[df['Status'].str.contains('Leave|Vacation', na=False)])
+            holiday_count = len(df[df['Status'].str.contains('Holiday|Week off|Day off', na=False)])
+            
+            worksheet.write(stat_row, 0, 'Present Days:', formats['summary'])
+            worksheet.write(stat_row, 1, present_count)
+            worksheet.write(stat_row + 1, 0, 'Absent Days:', formats['summary'])
+            worksheet.write(stat_row + 1, 1, absent_count)
+            worksheet.write(stat_row + 2, 0, 'Leave Days:', formats['summary'])
+            worksheet.write(stat_row + 2, 1, leave_count)
+            worksheet.write(stat_row + 3, 0, 'Holidays/Week offs:', formats['summary'])
+            worksheet.write(stat_row + 3, 1, holiday_count)
+
+        # Add additional summary info if provided
+        if additional_summary:
+            add_row = stat_row + 5 if not df.empty else summary_row + 2
+            for i, (key, value) in enumerate(additional_summary.items()):
+                worksheet.write(add_row + i, 0, f'{key}:', formats['summary'])
+                worksheet.write(add_row + i, 1, value)
+
+        # Add filters and freeze panes
+        worksheet.autofilter(0, 0, len(df), len(df.columns) - 1)
+        worksheet.freeze_panes(1, 0)
+
+    output.seek(0)
+    return output
+
+
+def format_day_of_week_in(date_obj):
+    """Format date to return day name (e.g., 'Monday')"""
+    if date_obj:
+        return date_obj.strftime('%A')
+    return ''
+
+def generate_company_excel(employee_attendance, company_employees, start_date, end_date):
+    """Generate Excel file for company-wide attendance report."""
+    
+    # Prepare data for Excel
+    excel_data = []
+    
+    for item in employee_attendance:
+    # Check if item has special holiday/weekoff data structure
+        if isinstance(item, dict) and 'status' in item and item['status'] in ['Holiday', 'Week off']:
+            row = {
+                'Date': format_date(item.get('attendance_date')),
+                'Day': item.get('day_label', ''),
+                'Employee Name':  get_employee_name_from_item_att(item),
+                'Status': item.get('status', 'Unknown'),
+                'Working From': item.get('working_from', '-'),
+                'Office': item.get('working_office', '-'),
+                'Clock In': '-',
+                'Clock Out': '-',
+                'Has Breaks': 'No',
+                'Clock In Note': '',
+                'Clock Out Note': '',
+                'Break Time (Minutes)': 0,
+                'Total Hours': item.get('total_hrs_worked', '-'),
+                'Total Hours (Excluding Breaks)': '-'
+            }
+        else:
+            # Regular attendance record
+            row = {
+                'Date': format_date(getattr(item, 'attendance_date', None)),
+                'Day': format_day_of_week(getattr(item, 'attendance_date', None)),
+                'Employee Name': get_employee_name_from_item(item),
+                'Status': get_formatted_status(item),
+                'Working From': get_working_location(item),
+                'Office': get_office_location(item),
+                'Clock In': get_clock_in_display(item),
+                'Clock Out': get_clock_out_display(item), 
+                'Has Breaks': get_break_existence(item),
+                'Clock In Note': getattr(item, 'clock_in_note', '') or '',
+                'Clock Out Note': getattr(item, 'clock_out_note', '') or '',
+                'Break Time (Minutes)': calculate_break_time(item),
+                'Total Hours': calculate_total_hours_display(item),
+                'Total Hours (Excluding Breaks)': str(getattr(item, 'total_hr_worked_excluding', '-')),
+            }
+        excel_data.append(row)
+    
+    # Create DataFrame and Excel file
+    return create_company_excel_file(excel_data, start_date, end_date)
+
+
+# Helper functions for data formatting
+def format_date(date_obj):
+    """Format date object to string."""
+    return date_obj.strftime('%d/%m/%Y') if date_obj else ''
+
+def get_employee_name_from_item_att(item):
+    """Get employee name from attendance item."""
+    try:
+        # Handle dictionary case (for holiday/weekoff records)
+        if isinstance(item, dict):
+            if 'employee_details_id' in item and item['employee_details_id']:
+                emp_details = item['employee_details_id']
+                if isinstance(emp_details, EmployeeDetails):
+                    return f"{emp_details.first_name} {emp_details.last_name}"
+                return "---"
+        # Handle direct EmployeeDetails reference
+        elif hasattr(item, 'employee_details_id') and item.employee_details_id:
+            return f"{item.employee_details_id.first_name} {item.employee_details_id.last_name}"
+        return "---"
+    except Exception as e:
+        print(f"Error getting employee name: {str(e)}")
+        return "---"
+
+def format_time(time_obj):
+    """Format time object to string."""
+    return time_obj.strftime('%H:%M:%S') if time_obj else ''
+
+
+def format_day_of_week(date_obj):
+    """Get day of week from date object."""
+    return date_obj.strftime('%A') if date_obj else ''
+
+
+def format_date_filename(date_obj):
+    """Format date for filename."""
+    return date_obj.strftime('%d%m%Y')
+
+
+def get_employee_full_name(employee_details):
+    """Get full name of employee."""
+    if employee_details:
+        return f"{employee_details.first_name} {employee_details.last_name}"
+    return 'Employee'
+
+
+def get_safe_filename(name):
+    """Create safe filename from employee name."""
+    return name.replace(' ', '_').replace('/', '_').replace('\\', '_')
+
+
+def get_employee_name_from_item(item):
+    """Get employee name from attendance item."""
+    if hasattr(item, 'employee_details_id') and item.employee_details_id:
+        return f"{item.employee_details_id.first_name} {item.employee_details_id.last_name}"
+    return "---"
+
+
+def get_formatted_status(item):
+    """Get formatted attendance status with detailed information."""
+    if not hasattr(item, 'attendance_status'):
+        return "Unknown"
+    
+    status_mapping = {
+        'present': lambda item: get_present_status(item),
+        'absent': lambda item: getattr(item, 'leave_name', '') or "Absent",
+        'dayoff': lambda item: get_dayoff_status(item),
+        'holiday': lambda item: get_holiday_status(item)
+    }
+    
+    status_display = status_mapping.get(
+        item.attendance_status, 
+        lambda item: "Week off"
+    )(item)
+    
+    # Add break indicator
+    if hasattr(item, 'on_break') and item.on_break:
+        status_display += " [On Break]"
+    
+    return status_display
+
+
+def get_present_status(item):
+    """Get present status with half day indicator."""
+    status = "Present"
+    if hasattr(item, 'half_day') and item.half_day:
+        status += " (Half Day)"
+    return status
+
+
+def get_dayoff_status(item):
+    """Get day off status with leave name."""
+    status = "Day off"
+    if hasattr(item, 'leave_name') and item.leave_name:
+        status += f" ({item.leave_name})"
+    return status
+
+
+def get_holiday_status(item):
+    """Get holiday status with occasion."""
+    if hasattr(item, 'occasion_for') and item.occasion_for:
+        return f"Holiday ({item.occasion_for})"
+    return "Holiday"
+
+
+def get_clock_in_display(item):
+    """Get formatted clock in time with late indicator."""
+    if not hasattr(item, 'attendance_status') or item.attendance_status != 'present':
+        return "-"
+    
+    if hasattr(item, 'employee_check_in_at') and item.employee_check_in_at:
+        clock_in_display = item.employee_check_in_at.strftime('%I:%M %p')
+        if hasattr(item, 'is_late') and item.is_late:
+            clock_in_display += " [Late]"
+        return clock_in_display
+    
+    return "-"
+
+
+def get_clock_out_display(item):
+    """Get formatted clock out time with early departure indicator."""
+    if hasattr(item, 'employee_check_out_at') and item.employee_check_out_at:
+        clock_out_display = item.employee_check_out_at.strftime('%I:%M %p')
+        if hasattr(item, 'has_left_early') and item.has_left_early:
+            clock_out_display += " [Left Early]"
+        return clock_out_display
+    
+    return "-"
+
+
+def calculate_total_hours_display(item):
+    """Calculate and display total hours worked."""
+    if (hasattr(item, 'employee_check_out_at') and hasattr(item, 'employee_check_in_at') 
+        and item.employee_check_out_at and item.employee_check_in_at):
+        return str(item.employee_check_out_at - item.employee_check_in_at)
+    return "-"
+
+
+def get_break_existence(item):
+    """Check if employee has breaks."""
+    if hasattr(item, 'break_history') and item.break_history:
+        return "Yes"
+    return "No"
+
+
+def get_working_location(item):
+    """Get working location information."""
+    if hasattr(item, 'working_from') and item.working_from:
+        return getattr(item.working_from, 'clock_in_from', '-')
+    return "-"
+
+
+def get_office_location(item):
+    """Get office location information."""
+    if hasattr(item, 'working_office') and item.working_office:
+        return getattr(item.working_office, 'office_name', '-')
+    return "-"
+
+
+def create_excel_with_summary(df, start_date, end_date, additional_summary=None):
+    """Create Excel file with summary information."""
+    output = BytesIO()
+    with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
+        df.to_excel(writer, sheet_name='Attendance Report', index=False)
+        
+        # Get workbook and worksheet objects
+        workbook = writer.book
+        worksheet = writer.sheets['Attendance Report']
+        
+        # Add summary information
+        summary_row = len(df) + 3
+        worksheet.write(summary_row, 0, 'Report Period:')
+        worksheet.write(summary_row, 1, f"{start_date.strftime('%d/%m/%Y')} - {end_date.strftime('%d/%m/%Y')}")
+        
+        if additional_summary:
+            for i, (key, value) in enumerate(additional_summary.items()):
+                worksheet.write(summary_row + 1 + i, 0, f'{key}:')
+                worksheet.write(summary_row + 1 + i, 1, value)
+        
+        # Format headers
+        header_format = workbook.add_format({'bold': True, 'bg_color': '#D7E4BC'})
+        for col_num, value in enumerate(df.columns.values):
+            worksheet.write(0, col_num, value, header_format)
+    
+    output.seek(0)
+    return output
+
+
+def create_company_excel_file(excel_data, start_date, end_date):
+    """Create comprehensive Excel file for company attendance data."""
+    df = pd.DataFrame(excel_data)
+    
+    # Create Excel file in memory
+    output = BytesIO()
+    with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
+        df.to_excel(writer, sheet_name='Attendance Report', index=False)
+        
+        # Get workbook and worksheet objects
+        workbook = writer.book
+        worksheet = writer.sheets['Attendance Report']
+        
+        # Apply comprehensive formatting
+        apply_excel_formatting(workbook, worksheet, df, start_date, end_date)
+    
+    output.seek(0)
+    
+    # Generate filename
+    filename = f"Company_Attendance_Report_{format_date_filename(start_date)}_{format_date_filename(end_date)}.xlsx"
+    
+    return send_excel_file(output, filename)
+
+
+def apply_excel_formatting(workbook, worksheet, df, start_date, end_date):
+    """Apply comprehensive formatting to Excel worksheet."""
+    # Define formats
+    formats = {
+        'header': workbook.add_format({
+            'bold': True, 
+            'bg_color': '#4472C4',
+            'font_color': 'white',
+            'border': 1,
+            'align': 'center',
+            'valign': 'vcenter'
+        }),
+        'present': workbook.add_format({'bg_color': '#C6EFCE', 'font_color': '#006100'}),
+        'absent': workbook.add_format({'bg_color': '#FFC7CE', 'font_color': '#9C0006'}),
+        'leave': workbook.add_format({'bg_color': '#FFEB9C', 'font_color': '#9C5700'}),
+        'holiday': workbook.add_format({'bg_color': '#BDD7EE', 'font_color': '#1F4E79'}),
+        'summary': workbook.add_format({'bold': True, 'bg_color': '#F2F2F2'})
+    }
+    
+    # Apply header formatting
+    for col_num, value in enumerate(df.columns.values):
+        worksheet.write(0, col_num, value, formats['header'])
+    
+    # Apply conditional formatting for status column
+    apply_status_formatting(worksheet, df, formats)
+    
+    # Auto-adjust column widths
+    adjust_column_widths(worksheet, df)
+    
+    # Add summary information
+    add_comprehensive_summary(worksheet, df, start_date, end_date, formats['summary'])
+    
+    # Add filters and freeze panes
+    worksheet.autofilter(0, 0, len(df), len(df.columns) - 1)
+    worksheet.freeze_panes(1, 0)
+
+
+def apply_status_formatting(worksheet, df, formats):
+    """Apply conditional formatting based on status values."""
+    if 'Status' not in df.columns:
+        return
+        
+    status_col = df.columns.get_loc('Status')
+    for row_num in range(1, len(df) + 1):
+        status_value = df.iloc[row_num - 1]['Status']
+        format_to_use = get_status_format(status_value, formats)
+        worksheet.write(row_num, status_col, status_value, format_to_use)
+
+
+def get_status_format(status_value, formats):
+    """Return format style based on the specific attendance status."""
+    if 'Present' in status_value:
+        return formats['present']
+    elif 'Absent' in status_value:
+        return formats['absent']
+    elif 'Holiday' in status_value:
+        return formats['holiday']
+    elif 'Day off' in status_value:
+        return formats['day_off']
+    elif 'Week off' in status_value or 'week off' in status_value:
+        return formats['week_off']
+    else:
+        return formats['leave']
+
+
+
+def adjust_column_widths(worksheet, df):
+    """Auto-adjust column widths for better readability."""
+    for i, col in enumerate(df.columns):
+        column_len = max(df[col].astype(str).str.len().max(), len(col)) + 2
+        worksheet.set_column(i, i, min(column_len, 50))
+
+
+def add_comprehensive_summary(worksheet, df, start_date, end_date, summary_format):
+    """Add comprehensive summary information to worksheet."""
+    summary_start_row = len(df) + 3
+    
+    # Report header
+    worksheet.write(summary_start_row, 0, 'REPORT SUMMARY', summary_format)
+    worksheet.write(summary_start_row + 1, 0, 'Report Period:', summary_format)
+    worksheet.write(summary_start_row + 1, 1, f"{start_date.strftime('%d/%m/%Y')} - {end_date.strftime('%d/%m/%Y')}")
+    
+    if not df.empty and 'Employee Name' in df.columns and 'Status' in df.columns:
+        # Calculate statistics
+        stats = calculate_attendance_statistics(df)
+        
+        # Write statistics
+        for i, (key, value) in enumerate(stats.items()):
+            worksheet.write(summary_start_row + 2 + i, 0, f'{key}:', summary_format)
+            worksheet.write(summary_start_row + 2 + i, 1, value)
+
+
+def calculate_attendance_statistics(df):
+    """Calculate attendance statistics from DataFrame."""
+    return {
+        'Total Employees': df['Employee Name'].nunique(),
+        'Total Present Days': len(df[df['Status'].str.contains('Present', na=False)]),
+        'Total Absent Days': len(df[df['Status'].str.contains('Absent', na=False)]),
+        'Total Leave/Holiday Days': len(df[df['Status'].str.contains('Holiday|Day off|Week off', na=False)])
+    }
+
+
+def send_excel_file(output, filename):
+    """Send Excel file as download response."""
+    return send_file(
+        output,
+        as_attachment=True,
+        download_name=filename,
+        mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    )
+# ---------------------------server Issue--------
 
 def get_company_employees(current_user):
     return CompanyDetails.objects(user_id=current_user.id).only('employees', 'clock_in_options').first()

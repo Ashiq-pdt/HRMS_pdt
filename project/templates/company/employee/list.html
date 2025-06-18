@@ -3,6 +3,18 @@
 {% extends "layout/base.html" %}
 
 {% block content %}
+<style>
+.custom-tooltip .tooltip-inner {
+    background-color: #9ba5ca3b ;
+    color: #128af9;
+    padding: 5px 10px;
+    border-radius: 4px;
+    width: max-content;
+    max-width: none;        /* Remove Bootstrap default max-width */
+    white-space: nowrap;    /* Prevent line wrap */
+    border: 1px solid #080808; /* Add border */
+}
+</style>
 <!--Page header-->
 <div class="page-header d-xl-flex d-block">
     <div class="page-leftheader">
@@ -119,10 +131,10 @@
                                 <td>{{loop.index}}</td>
                                 <td>
                                     <a class="btn-md pr-2"  href="{{ url_for('company.edit_employee_details',emp_id=item._id) }}">
-                                        <i class="feather feather-edit text-info" data-bs-toggle="tooltip" data-original-title="View/Edit"></i>
+                                        <i class="feather feather-edit text-info" data-bs-toggle="tooltip" data-bs-placement="top" data-bs-custom-class="custom-tooltip" data-bs-title="View/Edit"></i>
                                     </a>
                                     <a class="btn-md"  href="{{ url_for('company.resend_password',emp_id=item._id) }}">
-                                        <i class="feather feather-send text-info" data-bs-toggle="tooltip" data-original-title="Send Activation Link/Password"></i>
+                                        <i class="feather feather-send text-info"  data-bs-toggle="tooltip" data-bs-placement="top" data-bs-custom-class="custom-tooltip" data-bs-title="Send Activation Link/Password"></i>
                                     </a>
                                 </td>
                                 <td>

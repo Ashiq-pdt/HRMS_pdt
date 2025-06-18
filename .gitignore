@@ -2,8 +2,11 @@
 /venv
 *.pyc
 /project/static/uploads/*
+/pythonProject
+/env
 *.pyo
 *.pdf
+/.idea
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

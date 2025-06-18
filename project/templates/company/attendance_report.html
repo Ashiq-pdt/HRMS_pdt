@@ -155,7 +155,9 @@
                                 <th class="border-bottom-0" hidden>Total Hours Worked(EB)</th>
                             </tr>
                         </thead>
-                        <tbody>
+                        <button id="downloadExcelBtn111" class="btn  btn-primary" style="margin-bottom: 5px;">Excel</button>
+
+                        <tbody  id="attendance-body">
                             {% for item in employee_attendance %}
                             <tr>
                                 <td>{{item.attendance_date.strftime('%d/%m/%Y')}}
@@ -358,9 +360,28 @@
                             
                         </tbody>
                     </table>
+                    
+                    
+                    
                 </div>
-            </div>
-
+                <div class="pagination-controls text-center mt-3">
+                    {% if has_next is not none and has_next %}
+                        {% set end_of_month = end.replace(day=1).replace(month=end.month+1 if end.month < 12 else 1) - timedelta(days=1) %}
+                        {% if end <= end_of_month %}
+                            <button id="loadMoreBtn" class="btn btn-primary"
+                                    data-start-date="{{ end.strftime('%Y-%m-%d') }}"
+                                    data-end-date="{{ end1.strftime('%Y-%m-%d') }}"
+                                    {% if selected_emp %}data-employee-id="{{ selected_emp }}"{% endif %}>
+                                Load More Records (Next 10 Days)
+                            </button>
+                        {% endif %}
+                    {% endif %}
+                <div class="pagination-info mt-2">
+                    <small class="text-muted">
+                        Showing {{ employee_attendance|length }} records
+                    </small>
+                </div>
+            </div>              
         </div>
     </div>
 </div>
@@ -741,7 +762,8 @@
 
 <script>
 
-$(document).ready(function() {
+
+    $(document).ready(function() {
         $('#report').DataTable({
             "order": [],
             "paging": false,
@@ -750,93 +772,22 @@ $(document).ready(function() {
                 sSearch: '',
             },
             dom: 'Bfrtip',
-            buttons: [
-                {
-                    extend: 'excelHtml5',
-                    title: 'Attendance Report '
-                },
-            ]
+            // buttons: [
+            //     {
+            //         extend: 'excelHtml5',
+            //         title: 'Attendance Report ',
+            //         exportOptions: {
+            //             modifier: {
+            //                 page: 'all',        // Export all pages
+            //                 search: 'applied'   // Export only filtered/searched rows
+            //             },
+            //             columns: ':visible'
+            //         }
+            //     },
+            // ]
         });
     });
     
-
-    // function downloadSummary() {
-        //     const totalHoursWorked = document.getElementById('totalHoursWorked').innerText.trim();
-        //     const dayOffs = document.getElementById('dayOffs').innerText.trim();
-        //     const unpaidLeaves = document.getElementById("unpaidLeaves").innerText.trim();
-        //     const paidLeaves = document.getElementById("paidLeaves").innerText.trim();
-        //     const holidays = document.getElementById("holidays").innerText.trim();
-        //     const daysPresent = document.getElementById("daysPresent").innerText.trim();
-        //     const name = document.getElementById("selectedEmpName").innerText.trim();
-
-        //     const totalWorkingDays = parseInt(daysPresent) + parseInt(unpaidLeaves) + parseInt(paidLeaves);
-        //     const daysAbsent = parseInt(unpaidLeaves) + parseInt(paidLeaves);
-
-        //     // Create a workbook and worksheet
-        //     const wb = XLSX.utils.book_new();
-        //     const ws = XLSX.utils.aoa_to_sheet([
-        //         ['Name', 'Total working days', 'Days Present', 'Days Absent', 'Days Late', 'Days on leave'],
-        //         [name, totalWorkingDays, daysPresent, daysAbsent, 0, paidLeaves]
-        //     ]);
-
-        //     // Add the worksheet to the workbook
-        //     XLSX.utils.book_append_sheet(wb, ws, 'Attendance Summary');
-
-        //     // Generate a Blob object containing the workbook data
-        //     const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'blob' });
-
-        //     const selectedEmpName = document.getElementById("selectedEmpName").innerHTML;
-
-        //     // Trigger the download
-        //     const filename = `${selectedEmpName}_Summary.xlsx`;
-        //     if (navigator.msSaveBlob) {
-        //         // For IE and Edge
-        //         navigator.msSaveBlob(wbout, filename);
-        //     } else {
-        //         // For other browsers
-        //         const link = document.createElement('a');
-        //         link.href = URL.createObjectURL(wbout);
-        //         link.download = filename;
-        //         document.body.appendChild(link);
-        //         link.click();
-        //         document.body.removeChild(link);
-        //     }
-
-    //     const attendanceDateFrom = document.getElementsByName('attendance_date_from').value;
-    //     const attendanceDateTo = document.getElementsByName('attendance_date_to').value;
-
-    //     const data = {
-    //         attendance_date_from: attendanceDateFrom,
-    //         attendance_date_to: attendanceDateTo
-    //     };
-
-    //     fetch("/attendancesummary", {
-    //         method: 'POST',
-    //         headers: {
-    //             'Content-Type': 'application/json'
-    //         },
-    //         body: JSON.stringify(data)
-    //     })
-    //     .then(response => {
-    //         if (!response.ok) {
-    //             throw new Error('Network response was not ok ' + response.statusText);
-    //         }
-    //         return response.json(); // Assuming the server responds with JSON
-    //     })
-    //     .then(data => {
-    //         console.log(data); // Handle the data received from the server
-    //         // Display the data in the summaryContainer div
-    //         const summaryContainer = document.getElementById('summaryContainer');
-    //         summaryContainer.innerHTML = JSON.stringify(data, null, 2);
-    //     })
-    //     .catch(error => {
-    //         console.error('There was a problem with the fetch operation:', error);
-    //         // Handle the error
-    //     });
-    // }
-
-
-
     //Daterangepicker with Callback
     $('input[name="daterange"]').daterangepicker({
         opens: 'below',
@@ -861,10 +812,7 @@ $(document).ready(function() {
                     attendance_id: attendance_id
                 },
                 success: function (response) {
-                    // Add response in Modal body
-                    //data = JSON.parse(response)
-                    //console.log(response.details)
-
+                
                     if (response.details) {
                         //console.log(response.details.employee_id)
                         break_history_details = ''
@@ -1267,6 +1215,176 @@ $(document).ready(function() {
         }
     });
 </script>
+<script>
+   $(document).ready(function () {
+    $('#loadMoreBtn').on('click', function () {
+        var btn = $(this);
+        var currentStart = new Date(btn.data('start-date'));
+        var currentEnd = new Date(btn.data('end-date'));
+        var employeeId = btn.data('employee-id');
 
+        // Calculate next 10-day range
+        var newStart = new Date(currentEnd);
+        newStart.setDate(newStart.getDate() + 1);
+
+        // Get the end of current month
+        var endOfMonth = new Date(newStart.getFullYear(), newStart.getMonth() + 1, 0);
+
+        // Calculate new end date (10 days from start)
+        var newEnd = new Date(newStart);
+        newEnd.setDate(newStart.getDate() + 9);
+
+        // If newEnd goes beyond current month's end, adjust it
+        if (newEnd > endOfMonth) {
+            newEnd = endOfMonth;
+        }
+
+        // If we're already at or past the end of month, hide button and return
+        if (newStart > endOfMonth || newStart.getMonth() !== currentStart.getMonth()) {
+            btn.hide();
+            $('.pagination-info').html('<small class="text-muted">End of month reached</small>');
+            return;
+        }
+
+        function formatDate(date) {
+            let d = new Date(date),
+                month = '' + (d.getMonth() + 1),
+                day = '' + d.getDate(),
+                year = d.getFullYear();
+            return [year, month.padStart(2, '0'), day.padStart(2, '0')].join('-');
+        }
+
+        var formattedStart = formatDate(newStart);
+        var formattedEnd = formatDate(newEnd);
+
+        btn.prop('disabled', true).html('<i class="fa fa-spinner fa-spin"></i> Loading...');
+
+        var url = '/load_more_attendance?start_date=' + formattedStart + '&end_date=' + formattedEnd;
+        if (employeeId) {
+            url += '&employee_id=' + employeeId;
+        }
+
+        $.ajax({
+            url: url,
+            type: 'GET',
+            success: function (response) {
+                if (response.trim() === '') {
+                    btn.hide();
+                    $('.pagination-info').html('<small class="text-muted">All records loaded</small>');
+                } else {
+                    $('#attendance-body').append(response);
+                    
+                    // Only update button if we haven't reached end of month
+                    if (newEnd < endOfMonth) {
+                        btn.data('start-date', formattedStart);
+                        btn.data('end-date', formattedEnd);
+                        btn.prop('disabled', false).html('Load More Records (Next 10 Days)');
+                    } else {
+                        // We've reached the end of month, hide the button
+                        btn.hide();
+                        $('.pagination-info').html('<small class="text-muted">End of month reached</small>');
+                    }
+
+                    var count = $('#attendance-body tr').length;
+                    $('.pagination-info').html('<small class="text-muted">Showing ' + count + ' records</small>');
+                }
+            },
+            error: function (xhr) {
+                btn.prop('disabled', false).html('Load More Records (Next 10 Days)');
+                if (xhr.responseJSON && xhr.responseJSON.error) {
+                    $('.pagination-info').html('<small class="text-danger">' + xhr.responseJSON.error + '</small>');
+                }
+            }
+        });
+    });
+});</script>
+
+
+
+
+
+<script>
+    $('#downloadExcelBtn111').on('click', function(e) {
+        e.preventDefault();
+        var startDate = '{{ start.strftime("%Y-%m-%d") }}';
+        var endDate = '{{ end.strftime("%Y-%m-%d") }}';
+        var employeeId = '{{ selected_emp|default("") }}';
+        var url = '/attendancereport/download?start_date=' + startDate + '&end_date=' + endDate;
+        if (employeeId) {
+            url += '&employee_id=' + employeeId;
+        }
+    
+        $.ajax({
+            url: url,
+            type: 'GET',
+            xhrFields: { responseType: 'blob' },
+            success: function(data) {
+                var blob = new Blob([data], { 
+                    type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' 
+                });
+                var downloadUrl = URL.createObjectURL(blob);
+                var a = document.createElement('a');
+                a.href = downloadUrl;
+                a.download = 'attendance_report.xlsx';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+            },
+            error: function(xhr) {
+                // alert('Error generating Excel file');
+            }
+        });
+    });
+</script>
+
+ <!-- <script>
+    $(document).ready(function() {
+        $('#loadMoreBtn').on('click', function() {
+            var btn = $(this);
+            var page = btn.data('page');
+            var startDate = btn.data('start-date');
+            var endDate = btn.data('end-date');
+            var employeeId = btn.data('employee-id');
+            
+            // Show loading state
+            btn.prop('disabled', true).html('<i class="fa fa-spinner fa-spin"></i> Loading...');
+            
+            // Prepare URL parameters
+            var url = '/load_more_attendance?page=' + page + '&start_date=' + startDate + '&end_date=' + endDate;
+            if (employeeId) {
+                url += '&employee_id=' + employeeId;
+            }
+            
+            $.ajax({
+                url: url,
+                type: 'GET',
+                success: function(response) {
+                    // Append new rows to the table
+                    $('#attendance-body').append(response);
+                    
+                    // Update button for next page or hide if no more records
+                    var nextPage = page + 1;
+                    btn.data('page', nextPage);
+                    
+                    // Check if response is empty (no more records)
+                    if (response.trim() === '') {
+                        btn.hide();
+                        $('.pagination-info').html('<small class="text-muted">All records loaded</small>');
+                    } else {
+                        btn.prop('disabled', false).html('Load More Records (100)');
+                        
+                        // Update pagination info
+                        var currentCount = $('#attendance-body tr').length;
+                        $('.pagination-info').html('<small class="text-muted">Showing ' + currentCount + ' records</small>');
+                    }
+                },
+                error: function() {
+                    btn.prop('disabled', false).html('Load More Records (100)');
+                   
+                }
+            });
+        });
+    });
+</script> -->
 <!-- custom js -->
 {% endblock %}

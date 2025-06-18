@@ -1,0 +1,360 @@
+{% for item in employee_attendance %}
+<tr>
+    <td>{{item.attendance_date.strftime('%d/%m/%Y')}}</td>
+    <td hidden>
+        {% if item.attendance_date.strftime('%A') == "Sunday" %}
+            <span class="badge badge-warning-light">{{item.attendance_date.strftime('%A')}}</span>
+        {% else %}
+            {{ item.attendance_date.strftime('%A') }}
+        {% endif %}
+    </td>                                
+    <td>
+        {% if item.employee_details_id %}
+            {{ item.employee_details_id.first_name }} {{ item.employee_details_id.last_name }}
+        {% else %}
+            ---
+        {% endif %}
+    </td>
+    <td>
+        {% if item.attendance_status == 'present' %}
+            <span class="badge badge-success-light">Present</span>
+            {% if item.half_day %}
+                <a href="javascript:void(0);" class="mark_half_day" data-attendance_id="{{item._id}}" class="">
+                <span class="fa fa-adjust text-orange" style="float:right"></span></a>
+             {% else %}
+                <a href="javascript:void(0);" class="mark_half_day" id="btnMarkHalfAttendance" data-attendance_id="{{item._id}}" class="">
+                <span class="fa fa-adjust text-success" style="float:right"></span></a>
+             {% endif %}
+            </a>
+
+        {% if item.half_day %}
+            <span class="badge badge-warning-light">Half Day</span>
+        {% endif %}
+        
+        {% elif item.attendance_status == 'absent' %}
+        <span class="badge {{'badge-info-light' if item.leave_name else 'badge-danger-light'}}">{{item.leave_name if item.leave_name else 'Absent'}}</span>
+        {% elif item.attendance_status == 'dayoff' %}
+        <span class="badge badge-pink-light">Day off {{'('+item.leave_name+')' if item.leave_name else ''}}</span>
+        {% elif item.attendance_status == 'holiday' %}
+        <span class="badge badge-warning-light">Holiday({{item.occasion_for}})</span>
+        {% else %}
+        <span class="badge badge-pink-light">Week off</span>
+        {% endif %}
+
+        {% if item.on_break %}
+        <span class="badge badge-danger-light ms-3 px-2"><i class="ion-coffee text-danger"
+                data-bs-toggle="tooltip" data-bs-placement="top"
+                title="On Break"></i></span>
+        {% endif %}
+    </td>
+    <td>{{item.working_from.clock_in_from|default('-')}}</td>
+    <td>{{item.working_office.office_name|default('-')}}</td>
+    <td>
+        {% if item.attendance_status == 'present' %}
+            {{item.employee_check_in_at.strftime('%I:%M %p') if item.employee_check_in_at else '-'}}
+                <a class="btn btn-light btn-icon btn-sm break_history p-0" href="javascript:void(0);"
+                    data-bs-toggle="modal" data-bs-target="#presentmodal"
+                    data-attendance_id="{{item._id}}">
+                    <i class="feather fe fe-clock {{'text-success' if item.break_history else 'text-danger'}}" data-bs-toggle="tooltip"
+                        data-bs-placement="top" title="View History"></i>
+                </a>
+                {% if item.clock_in_coords %}
+                    <a class="btn btn-light btn-icon btn-sm clockinlocation p-0" href="javascript:void(0);"
+                    data-bs-toggle="modal" data-bs-target="#clockinmodal"
+                    data-attendance_id="{{item._id}}">
+                    <i class="feather fe fe-map text-info" data-bs-toggle="tooltip"
+                        data-bs-placement="top" title="Clock In Location"></i>
+                    </a>
+                {% endif %}
+                {% if not (item.early_approval_status or item.late_approval_status or item.ot_approval_status) %}
+                    <a class="btn btn-light btn-icon btn-sm editClockin p-0" href="javascript:void(0);"
+                        data-bs-toggle="modal" data-bs-target="#editmodal"
+                        data-attendance_id="{{item._id}}" data-clock_type="clockin">
+                        <i class="feather feather-edit-2 text-info" data-bs-toggle="tooltip"
+                            title="Edit"></i>
+                    </a>
+                {% endif %}
+                {% if item.clock_in_note %}
+                    <a class="btn btn-light btn-icon btn-sm p-0" href="javascript:void(0);">
+                        <i class="text-info ion-chatbubble-working" data-bs-toggle="tooltip"
+                            data-bs-placement="top" title="{{item.clock_in_note}}"></i>
+                    </a>
+                {% endif %}
+            <!-- Late Tag If the employee clocks in Late -->
+            {% if item.is_late %}<span class="badge badge-orange-light mt-1" style="float:right">Late</span> {% endif %}
+        {% else %}
+            <span class="text-center">-</span>
+        {% endif %}
+    </td>
+    <td>{% if item.employee_check_out_at %}
+            {{item.employee_check_out_at.strftime('%I:%M %p') if item.employee_check_out_at else '-'}}
+        {% else %}
+            <span class="text-center">-</span>
+        {% endif %}
+        {% if item.attendance_status == 'present' %}
+            {% if not (item.early_approval_status or item.late_approval_status or item.ot_approval_status) %}
+            <a class="btn btn-light btn-icon btn-sm editClockin p-0" href="javascript:void(0);"
+                data-bs-toggle="modal" data-bs-target="#editmodal"
+                data-attendance_id="{{item._id}}" data-clock_type="clockout">
+                <i class="feather feather-edit-2 text-info" data-bs-toggle="tooltip"
+                    title="Edit"></i>
+            </a>
+            {% endif %}
+        {% endif %}
+        
+        {% if item.clock_out_coords %}
+            <a class="btn btn-light btn-icon btn-sm clockoutlocation p-0" href="javascript:void(0);"
+            data-bs-toggle="modal" data-bs-target="#clockinmodal"
+            data-attendance_id="{{item._id}}">
+            <i class="feather fe fe-map text-info" data-bs-toggle="tooltip"
+                data-bs-placement="top" title="View History"></i>
+            </a>
+        {% endif %}
+       
+        {% if item.clock_out_note %}
+        <a class="btn btn-light btn-icon btn-sm p-0" href="javascript:void(0);">
+            <i class="text-info ion-chatbubble-working" data-bs-toggle="tooltip"
+                data-bs-placement="top" title="{{item.clock_out_note}}"></i>
+        </a>
+        {% endif %}
+        <!-- Left Early Tag If the employee clocks in Late -->
+        {% if item.has_left_early %}<span class="badge badge-danger-light mt-1" style="float:right">Left Early</span> {% endif %}
+    </td>
+    <td hidden>{{"Yes" if item.break_history else "No"}}</td>
+    <td hidden>{{item.clock_in_note if item.clock_in_note else ""}}</td>
+    <td hidden>{{item.clock_out_note if item.clock_out_note else ""}}</td>
+    <td hidden>{{ item.break_history|selectattr('already_ended','equalto',true)|sum(attribute='break_difference') }}</td>
+    <td>
+        {% if item.employee_check_out_at %}
+        {{(item.employee_check_out_at-item.employee_check_in_at) if item.employee_check_out_at else '-'}}
+        {% else %}
+        <span class="text-center">-</span>
+        {% endif %}
+    </td>
+    <td hidden>
+        {% if item.total_hr_worked_excluding %}
+        {{item.total_hr_worked_excluding}}
+        {% else %}
+        <span class="text-center">-</span>
+        {% endif %}
+    </td>
+</tr>
+{% endfor %}
+
+
+<script>
+
+       $(document).ready(function () {
+        $('.clockinlocation').click(function () {
+            // AJAX request
+            $("#global-loader").show();
+            var attendance_id = $(this).attr("data-attendance_id"); //Start or end
+
+            $.ajax({
+                url: '/clockinhistory',
+                type: 'get',
+                data: {
+                    attendance_id: attendance_id
+                },
+                success: function (response) {
+                    // Add response in Modal body
+                    //data = JSON.parse(response)
+                    //console.log(response.details)
+
+                    if (response.details) {
+                        break_history_details = ''
+                        points = []
+                        points.push(new google.maps.LatLng(response.details[0]['lat'],
+                            response.details[0]['lng']));
+                        initMap()
+                        //$('.modal-body').html(response);
+                        //$('ul.notification').html(break_history_details);
+                        $("#global-loader").hide();
+                    } else {
+                        $('ul.notification').html(
+                            '<span class="px-3">Break History Not Found! </span>');
+                        //$('#largemodal').modal('toggle');
+                        $("#global-loader").hide();
+                    }
+                    // Display Modal
+                    $('#largemodal').modal('show');
+                }
+            });
+        });
+    });
+
+    $(document).ready(function () {
+        $('.clockoutlocation').click(function () {
+            // AJAX request
+            $("#global-loader").show();
+            var attendance_id = $(this).attr("data-attendance_id"); //Start or end
+
+            $.ajax({
+                url: '/clockouthistory',
+                type: 'get',
+                data: {
+                    attendance_id: attendance_id
+                },
+                success: function (response) {
+                    // Add response in Modal body
+                    //data = JSON.parse(response)
+                    //console.log(response.details)
+
+                    if (response.details) {
+                        break_history_details = ''
+                        points = []
+                        points.push(new google.maps.LatLng(response.details[0]['lat'],
+                            response.details[0]['lng']));
+                        initMap()
+                        //$('.modal-body').html(response);
+                        //$('ul.notification').html(break_history_details);
+                        $("#global-loader").hide();
+                    } else {
+                        $('ul.notification').html(
+                            '<span class="px-3">Break History Not Found! </span>');
+                        //$('#largemodal').modal('toggle');
+                        $("#global-loader").hide();
+                    }
+                    // Display Modal
+                    $('#largemodal').modal('show');
+                }
+            });
+        });
+    });
+
+
+    $(document).ready(function () {
+        $('.editClockin').click(function () {
+            // AJAX request
+            $("#global-loader").show();
+            var attendance_id = $(this).attr("data-attendance_id"); //Start or end
+            var clock_type = $(this).attr("data-clock_type"); //Start or end
+
+            $.ajax({
+                url: '/getClockindetails',
+                type: 'get',
+                data: {
+                    attendance_id: attendance_id
+                },
+                success: function (response) {
+                    if (response.details) {
+
+                        if (response.details[0].employee_check_in_at && clock_type ==
+                            "clockin") {
+                            $('.clock_in_details').removeClass('d-none')
+                            $('.clock_out_details').addClass('d-none')
+                            $('.current_clock_in').val(response.details[0]
+                                .employee_check_in_at)
+                            $('.attendance_id').val(response.details[0]
+                            .attendance_id)    
+                            $('.clock_in_note').val(response.details[0].clock_in_note)
+                        } else if (clock_type == "clockout") {
+                            $('.clock_out_details').removeClass('d-none')
+                            $('.clock_in_details').addClass('d-none')
+                            $('.current_clock_out').val(response.details[0]
+                                .employee_check_out_at)
+                            $('.attendance_id').val(response.details[0]
+                            .attendance_id)    
+                            $('.clock_out_note').val(response.details[0].clock_out_note)
+
+                        }
+                        //$('#editmodal.modal_body').html(clock_in_out_field);
+                        $("#global-loader").hide();
+                    } else {
+                        $('ul.notification').html(
+                            '<span class="px-3">Break History Not Found! </span>');
+                        //$('#largemodal').modal('toggle');
+                        $("#global-loader").hide();
+                    }
+                    // Display Modal
+                    $('#largemodal').modal('show');
+                }
+            });
+        });
+    });
+
+    // Ajax Edit Clock In
+    $(document).on("click", '#btnEditClockIn', function (e) {
+        e.preventDefault();
+        var cs = "{{ csrf_token() }}";
+
+        swal({
+            title: "Are you sure?",
+            text: "You want to edit clock in time?",
+            icon: "warning",
+            buttons: true,
+            dangerMode: true,
+        }).then((willDelete) => {
+            if (willDelete) {
+                $.ajax({
+                        headers: {
+                            'X-CSRF-TOKEN': cs
+                        },
+                        url: '/edit/clockin/',
+                        data: $('#edit_clockin_form').serialize(),
+                        type: 'POST',
+                    })
+                    .done(function (data) {
+                        //$('#offices-table tbody').empty();
+                        $('#editmodal').modal('toggle');
+                        swal({
+                            title: "Success",
+                            text: "Successfully Updated Clock in(s)!",
+                            icon: "success",
+                        }).then(function(){ 
+                            $("#global-loader").show();
+                            location.reload();
+                            });
+                    })
+                    .fail(function (err) {
+                        console.log(err);
+                        $('#message').html(err);
+                    })
+            }
+        });
+    });
+    //EnD Ajax Edit Clock In
+
+    // Ajax Edit Clock In
+    $(document).on("click", '#btnEditClockOut', function (e) {
+        e.preventDefault();
+        var cs = "{{ csrf_token() }}";
+
+        swal({
+            title: "Are you sure?",
+            text: "You want to edit clock out time?",
+            icon: "warning",
+            buttons: true,
+            dangerMode: true,
+        }).then((willDelete) => {
+            if (willDelete) {
+                $.ajax({
+                        headers: {
+                            'X-CSRF-TOKEN': cs
+                        },
+                        url: '/edit/clockout/',
+                        data: $('#edit_clockout_form').serialize(),
+                        type: 'POST',
+                    })
+                    .done(function (data) {
+                        //$('#offices-table tbody').empty();
+                        $('#editmodal').modal('toggle');
+                        swal({
+                            title: "Success",
+                            text: "Successfully Updated Clock in(s)!",
+                            icon: "success",
+                        }).then(function(){ 
+                            $("#global-loader").show();
+                            location.reload();
+                            });
+                    })
+                    .fail(function (err) {
+                        console.log(err);
+                        $('#message').html(err);
+                    })
+            }
+        });
+    });
+    //EnD Ajax Edit Clock In
+
+</script>

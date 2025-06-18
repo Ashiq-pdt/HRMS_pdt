@@ -12,20 +12,24 @@
     .fc-daygrid-event-dot {
         display: none !important;
     }
-    .fc-event-title{
-        font-size:10px;
+
+    .fc-event-title {
+        font-size: 10px;
     }
-    .fc-event-title-container{
+
+    .fc-event-title-container {
         color: #000000;
-        font-weight:bolder;
+        font-weight: bolder;
     }
+
     table.dataTable tbody th,
     table.dataTable tbody td,
     table.dataTable thead th,
     table.dataTable thead td {
         padding: 5px 10px !important;
     }
-    .fc .fc-daygrid-day-bottom{
+
+    .fc .fc-daygrid-day-bottom {
         margin-top: -30px !important;
     }
 </style>
@@ -63,32 +67,38 @@
                             <label class="form-label mb-0 mt-2">Department</label>
                         </div>
                         <div class="col-md-4">
-                            {% if session['is_super_approver']  %}
-                                <select name="department"  class="form-control custom-select select2" id="selector" data-placeholder="Select Department">
-                                    <option label="All" value="all"></option>
-                                    {% for item in super_department_list %}
-                                        <option value="{{item}}">{{item}}</option>
-                                    {% endfor %}
-                                </select>
+                            {% if session['is_super_approver'] %}
+                            <select name="department" class="form-control custom-select select2" id="selector"
+                                data-placeholder="Select Department">
+                                <option label="All" value="all"></option>
+                                {% for item in super_department_list %}
+                                <option value="{{item}}">{{item}}</option>
+                                {% endfor %}
+                            </select>
                             {% else %}
-                                <select name="department"  class="form-control custom-select select2" id="selector" data-placeholder="Select Department">
-                                    <option label="All" value="all"></option>
-                                    {% for item in department_list %}
-                                        <option value="{{item}}">{{item}}</option>
-                                    {% endfor %}
-                                </select>
+                            <select name="department" class="form-control custom-select select2" id="selector"
+                                data-placeholder="Select Department">
+                                <option label="All" value="all"></option>
+                                {% for item in department_list %}
+                                <option value="{{item}}">{{item}}</option>
+                                {% endfor %}
+                            </select>
                             {% endif %}
 
                         </div>
-                        
+
                         <div class="col-md-2">
                             <p href="javascript:void(0);" class="d-flex align-items-center px-0 py-2">
-                                <span class="w-3 h-3 brround me-2" style="background-color:rgb(227, 177, 19) !important"></span> <span style="color:rgb(227, 177, 19) !important">Pending</span>
+                                <span class="w-3 h-3 brround me-2"
+                                    style="background-color:rgb(227, 177, 19) !important"></span> <span
+                                    style="color:rgb(227, 177, 19) !important">Pending</span>
                             </p>
                         </div>
                         <div class="col-md-3">
-                            <p  href="javascript:void(0);" class="d-flex align-items-center px-3 py-2">
-                                <span class="w-3 h-3 brround me-2" style="background-color:rgb(13, 205, 148) !important;color:"></span> <span style="color:rgb(13, 205, 148) !important;color:">Approved</span>
+                            <p href="javascript:void(0);" class="d-flex align-items-center px-3 py-2">
+                                <span class="w-3 h-3 brround me-2"
+                                    style="background-color:rgb(13, 205, 148) !important;color:"></span> <span
+                                    style="color:rgb(13, 205, 148) !important;color:">Approved</span>
                             </p>
                         </div>
                     </div>
@@ -107,132 +117,147 @@
             <div class="card-body">
                 <div class="row">
                     {% if leave_requests|selectattr('request_status','equalto','pending')|list|length >0 %}
-                        {% for item in leave_requests|selectattr('request_status','equalto','pending')|sort(attribute='employee_leave_app_id.application_on',reverse=True) %}
-                            {% if loop.index <= 3 %}
-                                <div class="col-xl-4 col-lg-4 col-md-12 col-sm-12">
-                                    <div class="card border p-0 shadow-none">
-                                        <div class="card-header border-0">
-                                            <h3 class="card-title text-info">
-                                                {{item.employee_leave_app_id.employee_leave_policy.leave_policy_id.leave_policy_name}}
-                                                Request</h3>
-                                            <div class="ms-auto">
-                                                <!-- <span class="badge badge-md badge-warning-light">3 days left</span> -->
-                                            </div>
-                                        </div>
-                                        <div class="d-flex p-4">
-                                            <div class="ps-3">
-                                                <h5 class="mb-0 mt-2 text-dark fs-18">
-                                                    {{item.employee_leave_app_id.employee_details_id.first_name + ' ' +item.employee_leave_app_id.employee_details_id.last_name}}
-                                                </h5>
-                                                <p class="text-muted fs-12 mt-1 mb-0">
-                                                    {{item.employee_leave_app_id.employee_details_id.employee_company_details.department}}
-                                                    <span class="my-auto fs-9 font-weight-normal  ms-1 me-1 text-black-60">/</span>
-                                                    {{item.employee_leave_app_id.employee_details_id.employee_company_details.designation}}
-                                                </p>
-                                                <p class="text-muted fs-12 mt-1 mb-0">
-                                                    {{item.employee_leave_app_id.emergency_contact if item.employee_leave_app_id.emergency_contact != "" else "Not Specified"|default("Not Specified")}}
-                                                    <span class="my-auto fs-9 font-weight-normal  ms-1 me-1 text-black-60">/</span>
-                                                    {{item.employee_leave_app_id.employee_details_id.emergency_contact_no_1 if item.employee_leave_app_id.employee_details_id.emergency_contact_no_1 != "None" else "Not Specified"|default("Not Specified")}}
-                                                </p>
-                                                <p class="text-muted fs-12 mt-1 mb-0">
-                                                    {{item.employee_leave_app_id.contact_address if item.employee_leave_app_id.contact_address != "" else "Not Specified"|default("Not Specified")}}
-                                                </p>
-                                            </div>
-                                        </div>
-                                        <div class="card-body pt-2 pb-2 bg-light">
-                                            <div class="mt-3 mb-3">
-                                                <div class="h6 mb-1 fs-13">
-                                                    <span class="feather feather-calendar"></span> :
-                                                    {{item.employee_leave_app_id.leave_from.strftime('%d/%m/%Y')}}
-                                                    {% if item.employee_leave_app_id.leave_till %}
-                                                    - {{item.employee_leave_app_id.leave_till.strftime('%d/%m/%Y')}}
-                                                    {% endif %}
-                                                    <span
-                                                        class="badge badge-md badge-danger-light ms-1">{{item.employee_leave_app_id.no_of_days}}
-                                                        day </span>
-                                                </div>
-                                                <small class="text-muted fs-11">Applied On:
-                                                    {{item.employee_leave_app_id.application_on.strftime('%d/%m/%Y')}}</small>
-                                            </div>
-                                            <!-- <div class="d-flex align-items-end justify-content-between mb-2">
+                    {% for item in
+                    leave_requests|selectattr('request_status','equalto','pending')|sort(attribute='employee_leave_app_id.application_on',reverse=True)
+                    %}
+                    {% if loop.index <= 3 %} <div class="col-xl-4 col-lg-4 col-md-12 col-sm-12">
+                        <div class="card border p-0 shadow-none">
+                            <div class="card-header border-0">
+                                <h3 class="card-title text-info">
+                                    {{item.employee_leave_app_id.employee_leave_policy.leave_policy_id.leave_policy_name}}
+                                    Request</h3>
+                                <div class="ms-auto">
+                                    <!-- <span class="badge badge-md badge-warning-light">3 days left</span> -->
+                                </div>
+                            </div>
+                            <div class="d-flex p-4">
+                                <div class="ps-3">
+                                    <h5 class="mb-0 mt-2 text-dark fs-18">
+                                        {{item.employee_leave_app_id.employee_details_id.first_name + ' '
+                                        +item.employee_leave_app_id.employee_details_id.last_name}}
+                                    </h5>
+                                    <p class="text-muted fs-12 mt-1 mb-0">
+                                        {{item.employee_leave_app_id.employee_details_id.employee_company_details.department}}
+                                        <span class="my-auto fs-9 font-weight-normal  ms-1 me-1 text-black-60">/</span>
+                                        {{item.employee_leave_app_id.employee_details_id.employee_company_details.designation}}
+                                    </p>
+                                    <p class="text-muted fs-12 mt-1 mb-0">
+                                        {{item.employee_leave_app_id.emergency_contact if
+                                        item.employee_leave_app_id.emergency_contact != "" else "Not
+                                        Specified"|default("Not Specified")}}
+                                        <span class="my-auto fs-9 font-weight-normal  ms-1 me-1 text-black-60">/</span>
+                                        {{item.employee_leave_app_id.employee_details_id.emergency_contact_no_1 if
+                                        item.employee_leave_app_id.employee_details_id.emergency_contact_no_1 != "None"
+                                        else "Not Specified"|default("Not Specified")}}
+                                    </p>
+                                    <p class="text-muted fs-12 mt-1 mb-0">
+                                        {{item.employee_leave_app_id.contact_address if
+                                        item.employee_leave_app_id.contact_address != "" else "Not
+                                        Specified"|default("Not Specified")}}
+                                    </p>
+                                </div>
+                            </div>
+                            <div class="card-body pt-2 pb-2 bg-light">
+                                <div class="mt-3 mb-3">
+                                    <div class="h6 mb-1 fs-13">
+                                        <span class="feather feather-calendar"></span> :
+                                        {{item.employee_leave_app_id.leave_from.strftime('%d/%m/%Y')}}
+                                        {% if item.employee_leave_app_id.leave_till %}
+                                        - {{item.employee_leave_app_id.leave_till.strftime('%d/%m/%Y')}}
+                                        {% endif %}
+                                        <span
+                                            class="badge badge-md badge-danger-light ms-1">{{item.employee_leave_app_id.no_of_days}}
+                                            day </span>
+                                    </div>
+                                    <small class="text-muted fs-11">Applied On:
+                                        {{item.employee_leave_app_id.application_on.strftime('%d/%m/%Y')}}</small>
+                                </div>
+                                <!-- <div class="d-flex align-items-end justify-content-between mb-2">
                                                                 <h6 class="fs-12 mb-0">Leave Type Selected </h6>
                                                                 <h6 class="font-weight-bold fs-12 mb-0">{{item.employee_leave_app_id.employee_leave_policy.leave_policy_id.leave_policy_name}}</h6>
                                                             </div> -->
-                                            <div class="d-flex align-items-end mb-0">
-                                                <h6 class="fs-12 mb-0">Remaining Leaves </h6>
-                                                <span
-                                                class="badge badge-md badge-success-light ms-1">{{item.employee_leave_app_id.employee_leave_policy.balance}}
-                                                day(s) </span>
-                                                <!-- <h6 class="font-weight-bold fs-12 mb-0">
+                                <div class="d-flex align-items-end mb-0">
+                                    <h6 class="fs-12 mb-0">Remaining Leaves </h6>
+                                    <span
+                                        class="badge badge-md badge-success-light ms-1">{{item.employee_leave_app_id.employee_leave_policy.balance}}
+                                        day(s) </span>
+                                    <!-- <h6 class="font-weight-bold fs-12 mb-0">
                                                     {{item.employee_leave_app_id.employee_leave_policy.balance}}</h6> -->
-                                            </div>
-                                        </div>
-                                        <div class="p-4" style="height: 175px;overflow-y: scroll;">
-                                            <label class="form-label fs-12">Remark by Employee/Approvers:</label>
-                                            <!-- <p class="text-muted leave-text"> -->
-                                                {% if item.employee_leave_app_id.reason%}
-                                                <div class="offer offer-success">
-                                                    <div class="p-1 leave-text"  style="height:50px !important">
-                                                        <span class="badge badge-md badge-success-light">Employee Remark:</span>{{item.employee_leave_app_id.reason}}
-                                                    </div>
-                                                </div>
-                                                    <!-- <span class="badge badge-md badge-success-light">Employee Remark:</span> {{item.employee_leave_app_id.reason}} -->
-                                                {% endif %}
-                                                {% if item.employee_leave_app_id.approver_list and item.employee_leave_app_id.current_approval_level != '1' %}
-                                                    {% for r in item.employee_leave_app_id.approver_list %}
-                                                        {% if item.employee_leave_app_id.current_aprrover._id != r._id %}
-                                                        <div class="offer offer-success">
-                                                            <div class="p-1 leave-text" style="height:50px !important">
-                                                                <span class="badge badge-md badge-orange-light">{{r.approver_id.employee_details_id.first_name+' '+r.approver_id.employee_details_id.last_name}} Comment: </span>
-                                                                {{r.comment if r.comment|default("") != "" else "No Comment"}} - <span class="badge badge-md badge-info">{{r.approved_on.strftime('%d/%m/%Y')}}</span>
-                                                            </div>
-                                                        </div>
-
-                                                            <!-- <span class="badge badge-md badge-orange-light">{{r.approver_id.employee_details_id.first_name+' '+r.approver_id.employee_details_id.last_name}} Comment: </span>
-                                                            {{r.comment if r.comment|default("") != "" else "No Comment"}} - <span class="badge badge-md badge-info">{{r.approved_on.strftime('%d/%m/%Y')}}</span>
-                                                            <br> -->
-                                                        {% endif %}
-                                                    {% endfor %} 
-                                                {% endif %}
-                                                   
-                                               
-                                               <!-- </p> -->
-                                        </div>
-                                        <div class="card-footer p-0 border-top-0">
-                                            <div class="btn-group w-100 leaves-btns">
-                                                <a href="javascript:void(0);" class="btn btn-lg btn-outline-light w-55 text-success fs-14"
-                                                    data-leave_request_id="{{item._id}}" data-bs-toggle="modal"
-                                                    data-bs-target="#previewapprovemodal"
-                                                    data-employee_id="{{item.employee_leave_app_id.employee_details_id.id}}"
-                                                    data-start="{{item.employee_leave_app_id.leave_from.strftime('%d/%m/%Y')}}"
-                                                    data-no_of_days="{{item.employee_leave_app_id.no_of_days}}"
-                                                    data-week_off="{{item.week_off_days_list}}"
-                                                    data-end="{{item.employee_leave_app_id.leave_till.strftime('%d/%m/%Y')}}">Approve</a>
-                                                <a href="javascript:void(0);" class="btn btn-lg btn-outline-light w-55 text-danger fs-14"
-                                                    data-leave_request_id="{{item._id}}" data-bs-toggle="modal"
-                                                    data-bs-target="#rejectleavemodal">Reject</a>
-
-                                                <!-- <a href="javascript:void(0);"
-                                                                class="btn btn-lg btn-outline-light w-55 text-danger" data-leave_request_id="{{item._id}}" data-bs-toggle="modal"
-                                                                data-bs-target="#previewapprovemodal" data-start="{{item.employee_leave_app_id.leave_from.strftime('%d/%m/%Y')}}" data-no_of_days="{{item.employee_leave_app_id.no_of_days}}" data-end="{{item.employee_leave_app_id.leave_till.strftime('%d/%m/%Y')}}">Preview</a> -->
-                                            </div>
-                                        </div>
+                                </div>
+                            </div>
+                            <div class="p-4" style="height: 175px;overflow-y: scroll;">
+                                <label class="form-label fs-12">Remark by Employee/Approvers:</label>
+                                <!-- <p class="text-muted leave-text"> -->
+                                {% if item.employee_leave_app_id.reason%}
+                                <div class="offer offer-success">
+                                    <div class="p-1 leave-text" style="height:50px !important">
+                                        <span class="badge badge-md badge-success-light">Employee
+                                            Remark:</span>{{item.employee_leave_app_id.reason}}
                                     </div>
                                 </div>
-                            {% endif %}
-                        {% endfor %}
-                    {% else %}
-                        <div class="expanel expanel-default mt-4 add-expanel">
-                            <div class="expanel-body">
-                                No Recent Leave Requests.
+                                <!-- <span class="badge badge-md badge-success-light">Employee Remark:</span> {{item.employee_leave_app_id.reason}} -->
+                                {% endif %}
+                                {% if item.employee_leave_app_id.approver_list and
+                                item.employee_leave_app_id.current_approval_level != '1' %}
+                                {% for r in item.employee_leave_app_id.approver_list %}
+                                {% if item.employee_leave_app_id.current_aprrover._id != r._id %}
+                                <div class="offer offer-success">
+                                    <div class="p-1 leave-text" style="height:50px !important">
+                                        <span
+                                            class="badge badge-md badge-orange-light">{{r.approver_id.employee_details_id.first_name+'
+                                            '+r.approver_id.employee_details_id.last_name}} Comment: </span>
+                                        {{r.comment if r.comment|default("") != "" else "No Comment"}} - <span
+                                            class="badge badge-md badge-info">{{r.approved_on.strftime('%d/%m/%Y')}}</span>
+                                    </div>
+                                </div>
+
+                                <!-- <span class="badge badge-md badge-orange-light">{{r.approver_id.employee_details_id.first_name+' '+r.approver_id.employee_details_id.last_name}} Comment: </span>
+                                                            {{r.comment if r.comment|default("") != "" else "No Comment"}} - <span class="badge badge-md badge-info">{{r.approved_on.strftime('%d/%m/%Y')}}</span>
+                                                            <br> -->
+                                {% endif %}
+                                {% endfor %}
+                                {% endif %}
+
+
+                                <!-- </p> -->
+                            </div>
+                            <div class="card-footer p-0 border-top-0">
+                                <div class="btn-group w-100 leaves-btns">
+                                    <a href="javascript:void(0);"
+                                        class="btn btn-lg btn-outline-light w-55 text-success fs-14"
+                                        data-leave_request_id="{{item._id}}" data-bs-toggle="modal"
+                                        data-bs-target="#previewapprovemodal"
+                                        data-employee_id="{{item.employee_leave_app_id.employee_details_id.id}}"
+                                        data-start="{{item.employee_leave_app_id.leave_from.strftime('%d/%m/%Y')}}"
+                                        data-no_of_days="{{item.employee_leave_app_id.no_of_days}}"
+                                        data-week_off="{{item.week_off_days_list}}"
+                                        data-end="{{item.employee_leave_app_id.leave_till.strftime('%d/%m/%Y')}}">Approve</a>
+                                    <a href="javascript:void(0);"
+                                        class="btn btn-lg btn-outline-light w-55 text-danger fs-14"
+                                        data-leave_request_id="{{item._id}}" data-bs-toggle="modal"
+                                        data-bs-target="#rejectleavemodal">Reject</a>
+
+                                    <!-- <a href="javascript:void(0);"
+                                                                class="btn btn-lg btn-outline-light w-55 text-danger" data-leave_request_id="{{item._id}}" data-bs-toggle="modal"
+                                                                data-bs-target="#previewapprovemodal" data-start="{{item.employee_leave_app_id.leave_from.strftime('%d/%m/%Y')}}" data-no_of_days="{{item.employee_leave_app_id.no_of_days}}" data-end="{{item.employee_leave_app_id.leave_till.strftime('%d/%m/%Y')}}">Preview</a> -->
+                                </div>
                             </div>
                         </div>
-                    {% endif %}
                 </div>
+                {% endif %}
+                {% endfor %}
+                {% else %}
+                <div class="expanel expanel-default mt-4 add-expanel">
+                    <div class="expanel-body">
+                        No Recent Leave Requests.
+                    </div>
+                </div>
+                {% endif %}
             </div>
         </div>
     </div>
-   
+</div>
+
 </div>
 <!-- End Row -->
 
@@ -255,16 +280,19 @@
                                             class="fa fa-hourglass-half"></i> Pending Requests (<span
                                             class="text-bold">{{leave_requests|selectattr('request_status','equalto','pending')|list|count}}</span>)</a>
                                 </li>
-                                <li><a href="#tab12" data-bs-toggle="tab"><i class="fa fa-check-circle-o"></i> Approved
+                                <li><a href="#tab12" data-bs-toggle="tab"><i class="fa fa-check-circle-o"></i> Approved 
                                         ({{leave_requests|selectattr('request_status','equalto','approved')|list|count}})</a>
                                 </li>
                                 <li><a href="#tab13" data-bs-toggle="tab"><i class="fa fa-times-circle-o"></i> Rejected
                                         ({{leave_requests|selectattr('request_status','equalto','rejected')|list|count}})</a>
                                 </li>
                                 {% if session['is_super_approver'] %}
-                                    <li><a href="#tab14" data-bs-toggle="tab"><i class="fa fa-times-circle-o"></i> Super Approver
+                                <li><a href="#tab14" data-bs-toggle="tab"><i class="fa fa-times-circle-o"></i> Super
+                                        Approver
                                         ({{all_leave_list|selectattr('request_status','equalto','pending')|list|count}})</a>
-                                    </li> 
+                                </li>
+                                 <li><a href="#tab15" data-bs-toggle="tab"><i class="fa fa-check-circle-o"></i> All Approved list
+                                        ({{leave_applications|selectattr('leave_status','equalto','approved')|list|count}})</a>
                                 {% endif %}
                             </ul>
                         </div>
@@ -297,21 +325,26 @@
                                                     </tr>
                                                 </thead>
                                                 <tbody>
-                                                    {% for item in leave_requests|selectattr('request_status','equalto','pending')|sort(attribute='employee_leave_app_id.application_on',reverse=True) %}
+                                                    {% for item in
+                                                    leave_requests|selectattr('request_status','equalto','pending')|sort(attribute='employee_leave_app_id.application_on',reverse=True)
+                                                    %}
                                                     <tr>
                                                         <!-- <td>{{loop.index}}</td> -->
                                                         <td>
                                                             <div class="d-flex">
                                                                 <div class="me-3 mt-0 mt-sm-2 d-block">
                                                                     <h6 class="mb-1 fs-14">
-                                                                        {{item.employee_leave_app_id.employee_details_id.first_name + ' ' +item.employee_leave_app_id.employee_details_id.last_name}}
+                                                                        {{item.employee_leave_app_id.employee_details_id.first_name
+                                                                        + ' '
+                                                                        +item.employee_leave_app_id.employee_details_id.last_name}}
                                                                     </h6>
                                                                 </div>
                                                             </div>
                                                         </td>
                                                         <td>{{item.employee_leave_app_id.employee_details_id.employee_company_details.department}}
                                                         <td>{{item.employee_leave_app_id.employee_leave_policy.leave_policy_id.leave_policy_name}}
-                                                            <span class="badge badge-warning">Balance {{item.employee_leave_app_id.employee_leave_policy.balance}}</span>
+                                                            <span class="badge badge-warning">Balance
+                                                                {{item.employee_leave_app_id.employee_leave_policy.balance}}</span>
                                                         </td>
                                                         <td>{{item.employee_leave_app_id.leave_from.strftime('%d/%m/%Y')}}
                                                         </td>
@@ -320,36 +353,43 @@
                                                         <td class="font-weight-semibold">
                                                             {{item.employee_leave_app_id.no_of_days}} day(s)
                                                             <a class="btn btn-light btn-icon btn-sm p-0"
-                                                            href="javascript:void(0);">
-                                                            <i class="text-info ion-chatbubble-working"
-                                                                data-bs-toggle="tooltip" data-bs-placement="top"
-                                                                title="{{item.employee_leave_app_id.reason if item.employee_leave_app_id.reason != '' else 'No Comment Added By Employee'  | default('No Comment Added By Employee')}}""></i>
+                                                                href="javascript:void(0);">
+                                                                <i class="text-info ion-chatbubble-working"
+                                                                    data-bs-toggle="tooltip" data-bs-placement="top"
+                                                                    title="{{item.employee_leave_app_id.reason if item.employee_leave_app_id.reason != '' else 'No Comment Added By Employee'  | default('No Comment Added By Employee')}}""></i>
                                                             </a>
-                                                            <a class="btn btn-light btn-icon btn-sm p-0"
-                                                            href="javascript:void(0);">
-                                                            <i class="text-info ion-speakerphone"
-                                                                data-bs-toggle="tooltip" data-bs-placement="top"
-                                                                title="{% if item.employee_leave_app_id.approver_comments %}{% for app_comment in item.employee_leave_app_id.approver_comments %}{{app_comment.approver_id.employee_details_id.first_name+' '+app_comment.approver_id.employee_details_id.last_name}} - {{ app_comment.comment }} , {% endfor %}{% else %}No approver comments available.{% endif %}"></i>
+                                                            <a class=" btn btn-light btn-icon btn-sm p-0"
+                                                                    href="javascript:void(0);">
+                                                                    <i class="text-info ion-speakerphone"
+                                                                        data-bs-toggle="tooltip" data-bs-placement="top"
+                                                                        title="{% if item.employee_leave_app_id.approver_comments %}{% for app_comment in item.employee_leave_app_id.approver_comments %}{{app_comment.approver_id.employee_details_id.first_name+' '+app_comment.approver_id.employee_details_id.last_name}} - {{ app_comment.comment }} , {% endfor %}{% else %}No approver comments available.{% endif %}"></i>
                                                             </a>
 
                                                             <a class="btn btn-light btn-icon btn-sm p-0"
-                                                            href="javascript:void(0);">
-                                                            <i class="text-info ion-information-circled"
-                                                                data-bs-toggle="tooltip" data-bs-placement="top"
-                                                                title="{{item.employee_leave_app_id.emergency_contact if item.employee_leave_app_id.emergency_contact != '' else 'No Emergency Contact Added By Employee' | default('No Emergency Contact Added.')}} - {{ item.employee_leave_app_id.contact_address if item.employee_leave_app_id.contact_address != '' else 'No Address Added By Employee' | default('No Address Added.')}}"></i>
+                                                                href="javascript:void(0);">
+                                                                <i class="text-info ion-information-circled"
+                                                                    data-bs-toggle="tooltip" data-bs-placement="top"
+                                                                    title="{{item.employee_leave_app_id.emergency_contact if item.employee_leave_app_id.emergency_contact != '' else 'No Emergency Contact Added By Employee' | default('No Emergency Contact Added.')}} - {{ item.employee_leave_app_id.contact_address if item.employee_leave_app_id.contact_address != '' else 'No Address Added By Employee' | default('No Address Added.')}}"></i>
                                                             </a>
                                                         </td>
 
                                                         <td>
-                                                            {% for sub_item in item.employee_leave_app_id.approver_list %}
-                                                                {% if sub_item.request_status == "pending" %}
-                                                                    <span class="badge badge-warning">{{sub_item.approver_id.employee_details_id.first_name+' '+sub_item.approver_id.employee_details_id.last_name}}</span>
-                                                                {% elif sub_item.request_status == "approved" %}
-                                                                    <span class="badge badge-success">{{sub_item.approver_id.employee_details_id.first_name+' '+sub_item.approver_id.employee_details_id.last_name}}</span>
-                                                                {% elif sub_item.request_status == "rejected" %}
-                                                                    <span class="badge badge-danger">{{sub_item.approver_id.employee_details_id.first_name+' '+sub_item.approver_id.employee_details_id.last_name}}</span>
-                                                                    
-                                                                {% endif %}
+                                                            {% for sub_item in item.employee_leave_app_id.approver_list
+                                                            %}
+                                                            {% if sub_item.request_status == "pending" %}
+                                                            <span
+                                                                class="badge badge-warning">{{sub_item.approver_id.employee_details_id.first_name+'
+                                                                '+sub_item.approver_id.employee_details_id.last_name}}</span>
+                                                            {% elif sub_item.request_status == "approved" %}
+                                                            <span
+                                                                class="badge badge-success">{{sub_item.approver_id.employee_details_id.first_name+'
+                                                                '+sub_item.approver_id.employee_details_id.last_name}}</span>
+                                                            {% elif sub_item.request_status == "rejected" %}
+                                                            <span
+                                                                class="badge badge-danger">{{sub_item.approver_id.employee_details_id.first_name+'
+                                                                '+sub_item.approver_id.employee_details_id.last_name}}</span>
+
+                                                            {% endif %}
                                                             {% endfor %}
                                                         </td>
                                                         <td>{{item.employee_leave_app_id.application_on.strftime('%d/%m/%Y')}}
@@ -363,8 +403,8 @@
                                                             <span class="badge badge-danger">Rejected</span>
                                                             {% endif %}
                                                             {% if item.employee_leave_app_id.leave_reject_reason %}
-                                                            <span class="feather feather-info p-0" data-bs-toggle="tooltip"
-                                                                data-bs-placement="top"
+                                                            <span class="feather feather-info p-0"
+                                                                data-bs-toggle="tooltip" data-bs-placement="top"
                                                                 title="{{item.employee_leave_app_id.leave_reject_reason}}"></span>
                                                             {% endif %}
                                                         </td>
@@ -382,7 +422,8 @@
                                                                 <i class="feather feather-check text-success"></i>
                                                             </a>
                                                             {% endif %}
-                                                            {% if item.request_status == "pending" and not item.request_status == "approved" %}
+                                                            {% if item.request_status == "pending" and not
+                                                            item.request_status == "approved" %}
                                                             <a href="javascript:void(0);" class="action-btns1 p-0"
                                                                 title="Rejected" data-leave_request_id="{{item._id}}"
                                                                 data-bs-toggle="modal"
@@ -397,11 +438,14 @@
                                                             </a> -->
                                                             {% endif %}
 
-                                                            <a href="javascript:void(0);" class="action-btns1 p-0 leave_application_history"
-                                                                title="Rejected" data-leave_application_id="{{item.employee_leave_app_id._id}}"
+                                                            <a href="javascript:void(0);"
+                                                                class="action-btns1 p-0 leave_application_history"
+                                                                title="Rejected"
+                                                                data-leave_application_id="{{item.employee_leave_app_id._id}}"
                                                                 data-bs-toggle="modal" data-bs-target="#presentmodal">
-                                                                <i class="fa fa-history text-info" data-bs-toggle="tooltip"
-                                                                    data-bs-placement="top" title="View History"></i>
+                                                                <i class="fa fa-history text-info"
+                                                                    data-bs-toggle="tooltip" data-bs-placement="top"
+                                                                    title="View History"></i>
                                                             </a>
                                                         </td>
                                                     </tr>
@@ -439,21 +483,26 @@
                                                     </tr>
                                                 </thead>
                                                 <tbody>
-                                                    {% for item in leave_requests|selectattr('request_status','equalto','approved')|sort(attribute='employee_leave_app_id.application_on',reverse=True) %}
+                                                    {% for item in
+                                                    leave_requests|selectattr('request_status','equalto','approved')|sort(attribute='employee_leave_app_id.application_on',reverse=True)
+                                                    %}
                                                     <tr>
                                                         <!-- <td>{{loop.index}}</td> -->
                                                         <td>
                                                             <div class="d-flex">
                                                                 <div class="me-3 mt-0 mt-sm-2 d-block">
                                                                     <h6 class="mb-1 fs-14">
-                                                                        {{item.employee_leave_app_id.employee_details_id.first_name + ' ' +item.employee_leave_app_id.employee_details_id.last_name}}
+                                                                        {{item.employee_leave_app_id.employee_details_id.first_name
+                                                                        + ' '
+                                                                        +item.employee_leave_app_id.employee_details_id.last_name}}
                                                                     </h6>
                                                                 </div>
                                                             </div>
                                                         </td>
                                                         <td>{{item.employee_leave_app_id.employee_details_id.employee_company_details.department}}
-                                                        <td>{{item.employee_leave_app_id.employee_leave_policy.leave_policy_id.leave_policy_name}} 
-                                                            <span class="badge badge-warning">Balance {{item.employee_leave_app_id.employee_leave_policy.balance}}</span>
+                                                        <td>{{item.employee_leave_app_id.employee_leave_policy.leave_policy_id.leave_policy_name}}
+                                                            <span class="badge badge-warning">Balance
+                                                                {{item.employee_leave_app_id.employee_leave_policy.balance}}</span>
                                                         </td>
                                                         <td>{{item.employee_leave_app_id.leave_from.strftime('%d/%m/%Y')}}
                                                         </td>
@@ -467,19 +516,19 @@
                                                                     data-bs-toggle="tooltip" data-bs-placement="top"
                                                                     title="{{item.employee_leave_app_id.reason if item.employee_leave_app_id.reason != '' else 'No Comment Added By Employee'  | default('No Comment Added By Employee')}}"></i>
                                                             </a>
-                                                        
+
                                                             <a class="btn btn-light btn-icon btn-sm p-0"
-                                                            href="javascript:void(0);">
-                                                            <i class="text-info ion-speakerphone"
-                                                                data-bs-toggle="tooltip" data-bs-placement="top"
-                                                                title="{% if item.employee_leave_app_id.approver_comments %}{% for app_comment in item.employee_leave_app_id.approver_comments %}{{app_comment.approver_id.employee_details_id.first_name+' '+app_comment.approver_id.employee_details_id.last_name}} - {{ app_comment.comment }} , {% endfor %}{% else %}No approver comments available.{% endif %}"></i>
+                                                                href="javascript:void(0);">
+                                                                <i class="text-info ion-speakerphone"
+                                                                    data-bs-toggle="tooltip" data-bs-placement="top"
+                                                                    title="{% if item.employee_leave_app_id.approver_comments %}{% for app_comment in item.employee_leave_app_id.approver_comments %}{{app_comment.approver_id.employee_details_id.first_name+' '+app_comment.approver_id.employee_details_id.last_name}} - {{ app_comment.comment }} , {% endfor %}{% else %}No approver comments available.{% endif %}"></i>
                                                             </a>
 
                                                             <a class="btn btn-light btn-icon btn-sm p-0"
-                                                            href="javascript:void(0);">
-                                                            <i class="text-info ion-information-circled"
-                                                                data-bs-toggle="tooltip" data-bs-placement="top"
-                                                                title="{{item.employee_leave_app_id.emergency_contact if item.employee_leave_app_id.emergency_contact != '' else 'No Emergency Contact Added By Employee' | default('No Emergency Contact Added.')}} - {{ item.employee_leave_app_id.contact_address if item.employee_leave_app_id.contact_address != '' else 'No Address Added By Employee' | default('No Address Added.')}}"></i>
+                                                                href="javascript:void(0);">
+                                                                <i class="text-info ion-information-circled"
+                                                                    data-bs-toggle="tooltip" data-bs-placement="top"
+                                                                    title="{{item.employee_leave_app_id.emergency_contact if item.employee_leave_app_id.emergency_contact != '' else 'No Emergency Contact Added By Employee' | default('No Emergency Contact Added.')}} - {{ item.employee_leave_app_id.contact_address if item.employee_leave_app_id.contact_address != '' else 'No Address Added By Employee' | default('No Address Added.')}}"></i>
                                                             </a>
                                                         </td>
                                                         <td>{{item.employee_leave_app_id.application_on.strftime('%d/%m/%Y')}}
@@ -499,7 +548,7 @@
                                                                 title="{{item.employee_leave_app_id.leave_reject_reason}}"></span>
                                                             {% endif %}
                                                         </td>
-                                                        
+
                                                     </tr>
                                                     {% endfor %}
                                                 </tbody>
@@ -535,14 +584,18 @@
                                                     </tr>
                                                 </thead>
                                                 <tbody>
-                                                    {% for item in leave_requests|selectattr('request_status','equalto','rejected')|sort(attribute='employee_leave_app_id.application_on',reverse=True) %}
+                                                    {% for item in
+                                                    leave_requests|selectattr('request_status','equalto','rejected')|sort(attribute='employee_leave_app_id.application_on',reverse=True)
+                                                    %}
                                                     <tr>
                                                         <!-- <td>{{loop.index}}</td> -->
                                                         <td>
                                                             <div class="d-flex">
                                                                 <div class="me-3 mt-0 mt-sm-2 d-block">
                                                                     <h6 class="mb-1 fs-14">
-                                                                        {{item.employee_leave_app_id.employee_details_id.first_name + ' ' +item.employee_leave_app_id.employee_details_id.last_name}}
+                                                                        {{item.employee_leave_app_id.employee_details_id.first_name
+                                                                        + ' '
+                                                                        +item.employee_leave_app_id.employee_details_id.last_name}}
                                                                     </h6>
                                                                 </div>
                                                             </div>
@@ -579,7 +632,7 @@
                                                                 title="{{item.employee_leave_app_id.leave_reject_reason}}"></span>
                                                             {% endif %}
                                                         </td>
-                                                        
+
                                                     </tr>
                                                     {% endfor %}
                                                 </tbody>
@@ -615,21 +668,26 @@
                                                     </tr>
                                                 </thead>
                                                 <tbody>
-                                                    {% for item in all_leave_list|selectattr('request_status','equalto','pending')|sort(attribute='employee_leave_app_id.application_on',reverse=True) %}
+                                                    {% for item in
+                                                    all_leave_list|selectattr('request_status','equalto','pending')|sort(attribute='employee_leave_app_id.application_on',reverse=True)
+                                                    %}
                                                     <tr>
                                                         <!-- <td>{{loop.index}}</td> -->
                                                         <td>
                                                             <div class="d-flex">
                                                                 <div class="me-3 mt-0 mt-sm-2 d-block">
                                                                     <h6 class="mb-1 fs-14">
-                                                                        {{item.employee_leave_app_id.employee_details_id.first_name + ' ' +item.employee_leave_app_id.employee_details_id.last_name}}
+                                                                        {{item.employee_leave_app_id.employee_details_id.first_name
+                                                                        + ' '
+                                                                        +item.employee_leave_app_id.employee_details_id.last_name}}
                                                                     </h6>
                                                                 </div>
                                                             </div>
                                                         </td>
                                                         <td>{{item.employee_leave_app_id.employee_details_id.employee_company_details.department}}
                                                         <td>{{item.employee_leave_app_id.employee_leave_policy.leave_policy_id.leave_policy_name}}
-                                                            <span class="badge badge-warning">Balance {{item.employee_leave_app_id.employee_leave_policy.balance}}</span>
+                                                            <span class="badge badge-warning">Balance
+                                                                {{item.employee_leave_app_id.employee_leave_policy.balance}}</span>
                                                         </td>
                                                         <td>{{item.employee_leave_app_id.leave_from.strftime('%d/%m/%Y')}}
                                                         </td>
@@ -643,31 +701,38 @@
                                                                     data-bs-toggle="tooltip" data-bs-placement="top"
                                                                     title="{{item.employee_leave_app_id.reason if item.employee_leave_app_id.reason != '' else 'No Comment Added By Employee'  | default('No Comment Added By Employee')}}"></i>
                                                             </a>
-                                                        
+
                                                             <a class="btn btn-light btn-icon btn-sm p-0"
-                                                            href="javascript:void(0);">
-                                                            <i class="text-info ion-speakerphone"
-                                                                data-bs-toggle="tooltip" data-bs-placement="top"
-                                                                title="{% if item.employee_leave_app_id.approver_comments %}{% for app_comment in item.employee_leave_app_id.approver_comments %}{{app_comment.approver_id.employee_details_id.first_name+' '+app_comment.approver_id.employee_details_id.last_name}} - {{ app_comment.comment }} , {% endfor %}{% else %}No approver comments available.{% endif %}"></i>
+                                                                href="javascript:void(0);">
+                                                                <i class="text-info ion-speakerphone"
+                                                                    data-bs-toggle="tooltip" data-bs-placement="top"
+                                                                    title="{% if item.employee_leave_app_id.approver_comments %}{% for app_comment in item.employee_leave_app_id.approver_comments %}{{app_comment.approver_id.employee_details_id.first_name+' '+app_comment.approver_id.employee_details_id.last_name}} - {{ app_comment.comment }} , {% endfor %}{% else %}No approver comments available.{% endif %}"></i>
                                                             </a>
 
                                                             <a class="btn btn-light btn-icon btn-sm p-0"
-                                                            href="javascript:void(0);">
-                                                            <i class="text-info ion-information-circled"
-                                                                data-bs-toggle="tooltip" data-bs-placement="top"
-                                                                title="{{item.employee_leave_app_id.emergency_contact if item.employee_leave_app_id.emergency_contact != '' else 'No Emergency Contact Added By Employee' | default('No Emergency Contact Added.')}} - {{ item.employee_leave_app_id.contact_address if item.employee_leave_app_id.contact_address != '' else 'No Address Added By Employee' | default('No Address Added.')}}"></i>
+                                                                href="javascript:void(0);">
+                                                                <i class="text-info ion-information-circled"
+                                                                    data-bs-toggle="tooltip" data-bs-placement="top"
+                                                                    title="{{item.employee_leave_app_id.emergency_contact if item.employee_leave_app_id.emergency_contact != '' else 'No Emergency Contact Added By Employee' | default('No Emergency Contact Added.')}} - {{ item.employee_leave_app_id.contact_address if item.employee_leave_app_id.contact_address != '' else 'No Address Added By Employee' | default('No Address Added.')}}"></i>
                                                             </a>
                                                         </td>
                                                         <td>
-                                                            {% for sub_item in item.employee_leave_app_id.approver_list %}
-                                                                {% if sub_item.request_status == "pending" %}
-                                                                    <span class="badge badge-warning">{{sub_item.approver_id.employee_details_id.first_name+' '+sub_item.approver_id.employee_details_id.last_name}}</span>
-                                                                {% elif sub_item.request_status == "approved" %}
-                                                                    <span class="badge badge-success">{{sub_item.approver_id.employee_details_id.first_name+' '+sub_item.approver_id.employee_details_id.last_name}}</span>
-                                                                {% elif sub_item.request_status == "rejected" %}
-                                                                    <span class="badge badge-danger">{{sub_item.approver_id.employee_details_id.first_name+' '+sub_item.approver_id.employee_details_id.last_name}}</span>
-                                                                    
-                                                                {% endif %}
+                                                            {% for sub_item in item.employee_leave_app_id.approver_list
+                                                            %}
+                                                            {% if sub_item.request_status == "pending" %}
+                                                            <span
+                                                                class="badge badge-warning">{{sub_item.approver_id.employee_details_id.first_name+'
+                                                                '+sub_item.approver_id.employee_details_id.last_name}}</span>
+                                                            {% elif sub_item.request_status == "approved" %}
+                                                            <span
+                                                                class="badge badge-success">{{sub_item.approver_id.employee_details_id.first_name+'
+                                                                '+sub_item.approver_id.employee_details_id.last_name}}</span>
+                                                            {% elif sub_item.request_status == "rejected" %}
+                                                            <span
+                                                                class="badge badge-danger">{{sub_item.approver_id.employee_details_id.first_name+'
+                                                                '+sub_item.approver_id.employee_details_id.last_name}}</span>
+
+                                                            {% endif %}
                                                             {% endfor %}
                                                         </td>
                                                         <td>{{item.employee_leave_app_id.application_on.strftime('%d/%m/%Y')}}
@@ -681,8 +746,8 @@
                                                             <span class="badge badge-danger">Rejected</span>
                                                             {% endif %}
                                                             {% if item.employee_leave_app_id.leave_reject_reason %}
-                                                            <span class="feather feather-info p-0" data-bs-toggle="tooltip"
-                                                                data-bs-placement="top"
+                                                            <span class="feather feather-info p-0"
+                                                                data-bs-toggle="tooltip" data-bs-placement="top"
                                                                 title="{{item.employee_leave_app_id.leave_reject_reason}}"></span>
                                                             {% endif %}
                                                         </td>
@@ -700,18 +765,22 @@
                                                                 <i class="feather feather-check text-success"></i>
                                                             </a>
                                                             {% endif %}
-                                                            {% if item.request_status == "pending" and not item.request_status == "approved" %}
+                                                            {% if item.request_status == "pending" and not
+                                                            item.request_status == "approved" %}
                                                             <a href="javascript:void(0);" class="action-btns1 p-0"
                                                                 title="Rejected" data-leave_request_id="{{item._id}}"
                                                                 data-bs-toggle="modal"
                                                                 data-bs-target="#superrejectleavemodal">
                                                                 <i class="feather feather-x text-danger"></i>
                                                             </a>
-                                                            <a href="javascript:void(0);" class="action-btns1 p-0 leave_application_history"
-                                                                title="Rejected" data-leave_application_id="{{item.employee_leave_app_id._id}}"
+                                                            <a href="javascript:void(0);"
+                                                                class="action-btns1 p-0 leave_application_history"
+                                                                title="Rejected"
+                                                                data-leave_application_id="{{item.employee_leave_app_id._id}}"
                                                                 data-bs-toggle="modal" data-bs-target="#presentmodal">
-                                                                <i class="fa fa-history text-info" data-bs-toggle="tooltip"
-                                                                    data-bs-placement="top" title="View History"></i>
+                                                                <i class="fa fa-history text-info"
+                                                                    data-bs-toggle="tooltip" data-bs-placement="top"
+                                                                    title="View History"></i>
                                                             </a>
                                                             {% endif %}
                                                         </td>
@@ -723,6 +792,106 @@
                                     </div>
                                 </div>
                             </div>
+                            <div class="tab-pane" id="tab15">
+                                <div class="card">
+                                    <div class="card-body">
+                                        <div class="table-responsive">
+                                            <table
+                                                class="table  table-vcenter text-nowrap table-bordered border-bottom hr-leaves table-striped"
+                                                id="hr-leaves">
+                                                <thead>
+                                                    <tr>
+                                                        <!-- <th class="border-bottom-0 w-5">#No</th> -->
+                                                        <th class="border-bottom-0 w-5">Emp Name</th>
+                                                        <th class="border-bottom-0 w-5">Department</th>
+                                                        <th class="border-bottom-0">Leave Type</th>
+                                                        <th class="border-bottom-0">From</th>
+                                                        <th class="border-bottom-0">To</th>
+                                                        <th class="border-bottom-0">Days</th>
+                                                        <th class="border-bottom-0">Reason</th>
+                                                        <th class="border-bottom-0">Applied on</th>
+                                                        <th class="border-bottom-0">Approved on</th>
+                                                        <th class="border-bottom-0">Status</th>
+                                                        <th class="border-bottom-0">Actions</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    {% for item in leave_applications|selectattr('leave_status', 'in', ['approved', 'modified'])%}
+                                                    <tr>
+                                                        <!-- <td>{{loop.index}}</td> -->
+                                                        <td>
+                                                            <div class="d-flex">
+                                                                <div class="me-3 mt-0 mt-sm-2 d-block">
+                                                                    <h6 class="mb-1 fs-14">
+                                                                        {{item.employee_details_id.first_name + ' ' +item.employee_details_id.last_name}}
+                                                                    </h6>
+                                                                </div>
+                                                            </div>
+                                                        </td>
+                                                        <td>{{item.employee_details_id.employee_company_details.department}}
+                                                        <td>{{item.employee_leave_policy.leave_policy_id.leave_policy_name}}
+                                                        </td>
+                                                        <td>{{item.leave_from.strftime('%d/%m/%Y')}}
+                                                        </td>
+                                                        <td>{{item.leave_till.strftime('%d/%m/%Y')}}
+                                                        </td>
+                                                        <td class="font-weight-semibold">
+                                                            {{item.no_of_days}} day(s)</td>
+                                                        <td><a class="btn btn-light btn-icon btn-sm p-0"
+                                                            href="javascript:void(0);">
+                                                            <i class="text-info ion-chatbubble-working"
+                                                                data-bs-toggle="tooltip" data-bs-placement="top"
+                                                                title="{{item.reason  | default('No Comment Added By Employee')}}"></i>
+                                                                
+                                                            </a>
+                                                            <a class="btn btn-light btn-icon btn-sm p-0"
+                                                                href="javascript:void(0);">
+                                                                <i class="text-info ion-chatbubble-working"
+                                                                    data-bs-toggle="tooltip" data-bs-placement="top"
+                                                                    title="{% for item in leave_applications.approver_comments %} item.comment {% endfor %}"></i>
+                                                            </a>
+                                                        </td>
+                                                        <td>{{item.application_on.strftime('%d/%m/%Y')}}
+                                                        </td>
+                                                        <td>{{item.approved_on.strftime('%d/%m/%Y')}}</td>
+                                                        <td>
+                                                            {% if item.leave_status == "pending" %}
+                                                            <span class="badge badge-warning">Pending</span>
+                                                            {% elif item.leave_status == "approved" %}
+                                                            <span class="badge badge-success">Approved</span>
+                                                            {% elif item.leave_status == "modified" %}
+                                                            <span class="badge badge-warning">Modified</span>
+                                                            {% elif item.leave_status == "rejected" %}
+                                                            <span class="badge badge-danger">Rejected</span>
+                                                            {% endif %}
+                                                            {% if item.leave_reject_reason %}
+                                                            <span class="feather feather-info" data-bs-toggle="tooltip"
+                                                                data-bs-placement="top"
+                                                                title="{{item.leave_reject_reason}}"></span>
+                                                            {% elif item.leave_status == "modified" %}
+                                                            <span class="feather feather-info" data-bs-toggle="tooltip" data-bs-placement="top" 
+                                                            title="{{item.leave_from.strftime('%d-%m-%Y')}} - {{ item.leave_till.strftime('%d-%m-%Y') }}">                                      
+                                                            </span>
+                                                            {% endif %}
+                                                        </td>
+                                                        <td>
+                                                            <a href="#" data-bs-toggle="modal" data-bs-target="#editModal" 
+                                                            data-id="{{ item.id }}" 
+                                                            data-from="{{ item.leave_from.strftime("%d/%m/%Y") }}" 
+                                                            data-to="{{ item.leave_till.strftime("%d/%m/%Y") }}">  
+                                                                <i class="fe fe-edit"></i>
+                                                            </a>
+                                                        </td>
+                                                        
+                                                    </tr>
+                                                    {% endfor %}
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                       
                         </div>
                     </div>
                 </div>
@@ -810,11 +979,11 @@
                                 <label class="mb-0 font-weight-semibold">No Of Days:</label>
                                 <span class="badge badge-success badge-pill ms-2 old_no_of_days">1</span>
                             </div>
-                            
+
                             <div class="" style="display: none;">
                                 <label class="mb-0 font-weight-semibold">week_off:</label>
                                 <input type="hidden" name="week-off-data_value" class="form-control week-off-data_value"
-                                            id="week-off-data_value" />
+                                    id="week-off-data_value" />
                                 <span class="badge badge-success badge-pill ms-2  week_off">1</span>
                             </div>
                             <div class="form-group mt-3">
@@ -846,8 +1015,8 @@
                                 <div class="">
                                     <label class="mb-0 font-weight-semibold">No Of Days:</label>
                                     <span class="badge badge-danger badge-pill ms-2 no_of_days">1</span>
-                                    <input type="text" name="no_of_days" id="no_of_days" value="1" class="form-control no_of_days"
-                                        hidden />
+                                    <input type="text" name="no_of_days" id="no_of_days" value="1"
+                                        class="form-control no_of_days" hidden />
                                 </div>
                             </div>
 
@@ -886,8 +1055,8 @@
                 <div class="modal-body">
                     <div class="leave-types">
                         <div class="" id="multiple">
-                            <input type="text" class="form-control" id="super_edit_leave_request_id" name="leave_request_id"
-                                hidden />
+                            <input type="text" class="form-control" id="super_edit_leave_request_id"
+                                name="leave_request_id" hidden />
 
                             <div class="form-group">
                                 <label class="form-label">Leave From - Leave Till:</label>
@@ -912,7 +1081,7 @@
                             <div class="" style="display: none;">
                                 <label class="mb-0 font-weight-semibold">week_off:</label>
                                 <input type="hidden" name="week-off-data_value" class="form-control week-off-data_value"
-                                            id="week-off-data_value" />
+                                    id="week-off-data_value" />
                                 <span class="badge badge-success badge-pill ms-2  week_off">1</span>
                             </div>
                             <div class="form-group mt-3">
@@ -944,8 +1113,8 @@
                                 <div class="">
                                     <label class="mb-0 font-weight-semibold">No Of Days:</label>
                                     <span class="badge badge-danger badge-pill ms-2 no_of_days">1</span>
-                                    <input type="text" name="no_of_days" id="super_no_of_days" value="1" class="form-control no_of_days"
-                                        hidden />
+                                    <input type="text" name="no_of_days" id="super_no_of_days" value="1"
+                                        class="form-control no_of_days" hidden />
                                 </div>
                             </div>
 
@@ -1059,7 +1228,7 @@
             },
             initComplete: function () {
                 this.api()
-                    .columns([1,2])
+                    .columns([1, 2])
                     .every(function () {
                         var column = this;
                         var select = $('<select class="form-control-sm select2 sm mx-2"><option value="">All</option></select>')
@@ -1069,9 +1238,9 @@
                                 t = column.search(val ? '^' + val + '$' : '', true, false).draw();
                                 var info = t.rows().count();
                             });
-                            $( select ).click( function(e) {
-                                e.stopPropagation();
-                            });
+                        $(select).click(function (e) {
+                            e.stopPropagation();
+                        });
                         column
                             .data()
                             .unique()
@@ -1172,71 +1341,71 @@
                     data: $('#preview_approve_form').serialize(), // Serialize form data
                     type: 'POST',
                 })
-                .done(function (response) {
-                    $("#global-loader").hide(); // Hide the loader after the request completes
+                    .done(function (response) {
+                        $("#global-loader").hide(); // Hide the loader after the request completes
 
-                    if (response.status === 'failed') {
-                        // Failed case: show retry, approve, and cancel buttons
-                        swal({
-                            title: "Failed",
-                            text: `Requested leaves exceed available leaves.\n\nCurrent Balance: ${response.current_balance}\nRequested Days: ${response.asking_leave_days}\nDifference: ${response.difference}`,
-                            icon: "error",
-                            buttons: {
-                                approve: {
-                                    text: "Approve",
-                                    value: "approve",
-                                    className: "btn btn-success", // Green button for approval
+                        if (response.status === 'failed') {
+                            // Failed case: show retry, approve, and cancel buttons
+                            swal({
+                                title: "Failed",
+                                text: `Requested leaves exceed available leaves.\n\nCurrent Balance: ${response.current_balance}\nRequested Days: ${response.asking_leave_days}\nDifference: ${response.difference}`,
+                                icon: "error",
+                                buttons: {
+                                    approve: {
+                                        text: "Approve",
+                                        value: "approve",
+                                        className: "btn btn-success", // Green button for approval
+                                    },
+                                    retry: {
+                                        text: "Retry",
+                                        value: "retry",
+                                        className: "btn btn-primary", // Blue button for retry
+                                    },
+                                    cancel: {
+                                        text: "Cancel",
+                                        value: "cancel",
+                                        className: "btn btn-secondary", // Grey button for cancel
+                                    },
                                 },
-                                retry: {
-                                    text: "Retry",
-                                    value: "retry",
-                                    className: "btn btn-primary", // Blue button for retry
-                                },
-                                cancel: {
-                                    text: "Cancel",
-                                    value: "cancel",
-                                    className: "btn btn-secondary", // Grey button for cancel
-                                },
-                            },
-                        }).then((action) => {
-                            if (action === "approve") {
-                                // Handle the approval action
-                                swal({
-                                    title: "Approved",
-                                    text: "Leave request has been approved!",
-                                    icon: "success",
-                                }).then(() => {
+                            }).then((action) => {
+                                if (action === "approve") {
+                                    // Handle the approval action
+                                    swal({
+                                        title: "Approved",
+                                        text: "Leave request has been approved!",
+                                        icon: "success",
+                                    }).then(() => {
+                                        $("#global-loader").show();
+                                        location.reload(); // Reload the page after approval
+                                    });
+                                } else if (action === "retry") {
+                                    // Retry logic: reload the page
                                     $("#global-loader").show();
-                                    location.reload(); // Reload the page after approval
-                                });
-                            } else if (action === "retry") {
-                                // Retry logic: reload the page
+                                    location.reload(); // Reload the page for retry
+                                }
+                                // "Cancel" does nothing and dismisses the alert
+                            });
+                        } else {
+                            // Success case: show approval success message
+                            swal({
+                                title: "Success",
+                                text: "Successfully Approved Leave!",
+                                icon: "success",
+                            }).then(() => {
                                 $("#global-loader").show();
-                                location.reload(); // Reload the page for retry
-                            }
-                            // "Cancel" does nothing and dismisses the alert
-                        });
-                    } else {
-                        // Success case: show approval success message
+                                location.reload(); // Reload the page after success
+                            });
+                        }
+                    })
+                    .fail(function (error) {
+                        $("#global-loader").hide(); // Hide the loader in case of error
+                        console.error("Error:", error); // Log any error to the console
                         swal({
-                            title: "Success",
-                            text: "Successfully Approved Leave!",
-                            icon: "success",
-                        }).then(() => {
-                            $("#global-loader").show();
-                            location.reload(); // Reload the page after success
+                            title: "Error",
+                            text: "An error occurred while processing the request. Please try again.",
+                            icon: "error",
                         });
-                    }
-                })
-                .fail(function (error) {
-                    $("#global-loader").hide(); // Hide the loader in case of error
-                    console.error("Error:", error); // Log any error to the console
-                    swal({
-                        title: "Error",
-                        text: "An error occurred while processing the request. Please try again.",
-                        icon: "error",
                     });
-                });
             }
         });
     });
@@ -1260,16 +1429,16 @@
                 if (willDelete) {
                     $("#global-loader").show();
                     $.ajax({
-                            headers: {
-                                'X-CSRF-TOKEN': cs
-                            },
-                            url: '/rejectleaverequest',
-                            data: {
-                                leave_request_id: leave_request_id,
-                                leave_reject_reason: leave_reject_reason
-                            },
-                            type: 'POST',
-                        })
+                        headers: {
+                            'X-CSRF-TOKEN': cs
+                        },
+                        url: '/rejectleaverequest',
+                        data: {
+                            leave_request_id: leave_request_id,
+                            leave_reject_reason: leave_reject_reason
+                        },
+                        type: 'POST',
+                    })
                         .done(function (data) {
                             //$('#markattendancemodal').modal('toggle');
                             $("#global-loader").hide();
@@ -1306,18 +1475,18 @@
         $("#edit_leave_date_range").val(start + ' - ' + end);
         var no_of_days = $(e.relatedTarget).data('no_of_days');
         $(".old_no_of_days").html(no_of_days);
-        var week_off= $(e.relatedTarget).data('week_off');
+        var week_off = $(e.relatedTarget).data('week_off');
         $(".week_off").html(week_off);
         var employee_id = $(e.relatedTarget).data('employee_id');
         $(".week_off").html(week_off);
         $(".week-off-data_value").val(JSON.stringify([week_off])); // Store as array in input field
         sessionStorage.setItem("week_off_data", JSON.stringify([week_off]));
         $.ajax({
-            url: "/get-employee-leave-details", 
+            url: "/get-employee-leave-details",
             type: "GET",
             data: { employee_id: employee_id },
             dataType: "json",
-            success: function(response) {
+            success: function (response) {
                 if (response.success) {
                     var weekOffData = response.data.week_off_days_list;
 
@@ -1333,7 +1502,7 @@
                     alert("Failed to fetch employee data.");
                 }
             },
-            error: function(xhr, status, error) {
+            error: function (xhr, status, error) {
                 console.error("AJAX Error: " + status + " " + error);
             }
         });
@@ -1357,11 +1526,11 @@
         sessionStorage.setItem("week_off_data", JSON.stringify([week_off]));
 
         $.ajax({
-            url: "/get-employee-leave-details", 
+            url: "/get-employee-leave-details",
             type: "GET",
             data: { employee_id: employee_id },
             dataType: "json",
-            success: function(response) {
+            success: function (response) {
                 if (response.success) {
                     var weekOffData = response.data.week_off_days_list;
 
@@ -1377,7 +1546,7 @@
                     alert("Failed to fetch employee data.");
                 }
             },
-            error: function(xhr, status, error) {
+            error: function (xhr, status, error) {
                 console.error("AJAX Error: " + status + " " + error);
             }
         });
@@ -1402,13 +1571,13 @@
             if (willDelete) {
                 $("#global-loader").show();
                 $.ajax({
-                        headers: {
-                            'X-CSRF-TOKEN': cs
-                        },
-                        url: '/superapproveleaverequest',
-                        data: $('#preview_super_approve_form').serialize(),
-                        type: 'POST',
-                    })
+                    headers: {
+                        'X-CSRF-TOKEN': cs
+                    },
+                    url: '/superapproveleaverequest',
+                    data: $('#preview_super_approve_form').serialize(),
+                    type: 'POST',
+                })
                     .done(function (data) {
                         //$('#markattendancemodal').modal('toggle');
                         $("#global-loader").hide();
@@ -1446,16 +1615,16 @@
                 if (willDelete) {
                     $("#global-loader").show();
                     $.ajax({
-                            headers: {
-                                'X-CSRF-TOKEN': cs
-                            },
-                            url: '/superrejectleaverequest',
-                            data: {
-                                leave_request_id: leave_request_id,
-                                leave_reject_reason: leave_reject_reason
-                            },
-                            type: 'POST',
-                        })
+                        headers: {
+                            'X-CSRF-TOKEN': cs
+                        },
+                        url: '/superrejectleaverequest',
+                        data: {
+                            leave_request_id: leave_request_id,
+                            leave_reject_reason: leave_reject_reason
+                        },
+                        type: 'POST',
+                    })
                         .done(function (data) {
                             //$('#markattendancemodal').modal('toggle');
                             $("#global-loader").hide();
@@ -1479,7 +1648,7 @@
     //EnD Ajax Reject Leave
     // Toggle Is Day off in Work Timings
     $('.edit_leave_date').change(function () {
-        
+
 
         if (this.checked) {
             $('.edit_day_off_div').show();
@@ -1488,12 +1657,12 @@
         }
     });
     //End Toggle
-    
-   
 
 
-    
-    $(document).ready(function() {
+
+
+
+    $(document).ready(function () {
         var storedWeekOffData = [0];
 
         console.log('storedWeekOffData', storedWeekOffData);
@@ -1504,7 +1673,7 @@
             locale: {
                 format: 'DD/MM/YYYY' // Ensure consistent date format
             }
-        }, function(start, end) {
+        }, function (start, end) {
             let leaveDays = countDaysExcludingWeekOffs(start, end, storedWeekOffData);
 
             // Update the input field with formatted dates
@@ -1551,7 +1720,7 @@
                         //console.log(response.details.employee_id)
                         break_history_details = ''
                         $.each(response.details, function (index, value) {
-                            let status = value.status == "pending" ?"badge badge-warning":(value.status == "rejected" ? "badge badge-danger":"badge badge-success")
+                            let status = value.status == "pending" ? "badge badge-warning" : (value.status == "rejected" ? "badge badge-danger" : "badge badge-success")
                             break_history_details += '<li>\
                             <div class="notification-icon text-success">\
                                 <a href="javascript:void(0);" style="border-color:#128af9 !important;margin-top: 10px;"></a>\
@@ -1563,13 +1732,13 @@
                                 <div class="media mt-0">\
                                     <div class="media-body ms-3 d-flex">\
                                         <div class="">\
-                                            <p class="fs-15 text-dark fw-bold mb-0">'+value.approver_name+'</p>\
-                                            <p class="mb-0 fs-13 text-dark">' + value.comment +'</p>\
+                                            <p class="fs-15 text-dark fw-bold mb-0">'+ value.approver_name + '</p>\
+                                            <p class="mb-0 fs-13 text-dark">' + value.comment + '</p>\
                                             <span class="badge badge-lg badge-info">' + value.approved_on + '</span>\
                                         </div>\
                                         <div class="notify-time">\
                                             <p class="mb-0 text-muted fs-11"><span\
-                                                    class="'+status+' ms-3 px-2 pb-1 mb-1">'+value.status.toUpperCase()+'</span></p>\
+                                                    class="'+ status + ' ms-3 px-2 pb-1 mb-1">' + value.status.toUpperCase() + '</span></p>\
                                         </div>\
                                     </div>\
                                 </div>\

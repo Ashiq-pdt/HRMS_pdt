@@ -21,5 +21,5 @@ class AppConfig:
 
     app_config_login_url_mail = 'hrms.cubes-intl.com'
 
-    db_uri="mongodb://localhost:27017/hrm-test-db-live"
+    db_uri="mongodb://localhost:27017/hrm-test-db-live_latest"
 

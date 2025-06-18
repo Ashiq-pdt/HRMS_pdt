@@ -646,180 +646,226 @@ def get_employee_leave_details():
     }
     return jsonify(employee_data)
 
+
 @employee.route('/leavesapprovals')
 @login_required
 @roles_accepted('employee')
 def leaves_approvals():
-    # Get employee details for current user
     employee_details = EmployeeDetails.objects(user_id=current_user.id).first()
+
     if not employee_details:
-        employee_details = CompanyDetails.objects(user_id=current_user.id).first()
-        employee_details.is_super_leave_approver = True
-        employee_details.company_id = employee_details.user_id
-        employee_details.is_approver = True
-    
-    super_leave_list = []
-    super_department_list = []
-    leave_list = []
-    all_leave_list = []
-    department_list = []
-    leave_requests = []
-    
-    # Current year filter
-    current_year = 2025
+        company_details = CompanyDetails.objects(user_id=current_user.id).first()
+        if company_details:
+            employee_details = company_details
+            employee_details.is_super_leave_approver = True
+            employee_details.company_id = company_details.user_id
+            employee_details.is_approver = True
+        else:
+            flash("User profile not found.", 'danger')
+            return redirect(url_for('employee.dashboard'))
+
+    # Initialize lists
+    super_leave_list, super_department_list, leave_list, all_leave_list = [], [], [], []
+    department_list, leave_requests, super_approver_list, super_approver_details = [], [], [], []
+
+    current_year = datetime.now().year
     year_start_date = datetime(current_year, 1, 1)
     year_end_date = datetime(current_year, 12, 31)
 
-    if employee_details.is_super_leave_approver:
-        # For super approvers, filter all leave applications by current year
+    if getattr(employee_details, 'is_super_leave_approver', False):
+        (super_leave_list, super_department_list, all_leave_list,
+         super_approver_list, super_approver_details) = process_super_approver(
+            employee_details, current_year, year_start_date, year_end_date
+        )
+
+    if getattr(employee_details, 'is_approver', False):
+        leave_list, department_list, leave_requests = process_regular_approver(employee_details, current_year)
+
+    leave_applications = EmployeeLeaveApplication.objects(company_id=employee_details.company_id)
+    if getattr(employee_details, 'is_super_leave_approver', False) or getattr(employee_details, 'is_approver', False):
+        return render_template('employee/leaves_approval.html',
+                               leave_requests=leave_requests,
+                               leave_list=leave_list,
+                               department_list=department_list,
+                               all_leave_list=all_leave_list,
+                               super_leave_list=super_leave_list,
+                               super_department_list=super_department_list,
+                               super_approver_list=super_approver_list,
+                               super_approver_details=super_approver_details,
+                               leave_applications=leave_applications)
+    else:
+        flash("Sorry, you do not have permission to view/(perform action on) this resource.", 'danger')
+        return redirect(url_for('employee.dashboard'))
+
+
+def process_super_approver(employee_details, current_year, year_start_date, year_end_date):
+    super_leave_list, super_department_list, all_leave_list = [], [], []
+    super_approver_list, super_approver_details = [], []
+
+    try:
+        super_approvers = SuperLeaveApprovers.objects(company_id=employee_details.company_id)
+        super_approver_ids = [sa.employee_details_id.id for sa in super_approvers if hasattr(sa, 'employee_details_id') and sa.employee_details_id]
+
+        approvers_de = EmployeeLeaveApprover.objects(employee_details_id__in=super_approver_ids).only('_id')
+        approver_ids = [item._id for item in approvers_de]
+
         all_leave_list_cal = EmployeeLeaveApplication.objects(
             company_id=employee_details.company_id,
             asked_leave_from__gte=year_start_date,
             asked_leave_from__lte=year_end_date
         )
-        
-        # Get all leave requests for super approvers
-        all_leave_list = EmployeeLeaveRequest.objects(
-            company_id=employee_details.company_id
-        )
-        
-        # Filter the all_leave_list to only include current year PENDING requests
-        filtered_all_leave_list = []
-        for request in all_leave_list:
-            try:
-                # Try to access date and ensure it's from current year
-                if (request.employee_leave_app_id and 
-                    hasattr(request.employee_leave_app_id, 'asked_leave_from') and
-                    request.employee_leave_app_id.asked_leave_from and
-                    request.employee_leave_app_id.asked_leave_from.year == current_year and 
-                    request.request_status.lower() == "pending"):
-                    filtered_all_leave_list.append(request)
-            except (AttributeError, TypeError):
-                # Skip this request if there was an issue accessing its properties
-                continue
-        
-        all_leave_list = filtered_all_leave_list
 
-        # Process filtered leave applications
-        for subitem in all_leave_list_cal:
-            if subitem.leave_status.lower() == "pending":
-                super_leave_list.append({
-                    'id': str(subitem._id),
-                    'title': subitem.employee_details_id.first_name + ' ' + subitem.employee_details_id.last_name,
-                    'start': subitem.asked_leave_from.strftime("%Y-%m-%d"),
-                    'end': (subitem.asked_leave_till + timedelta(days=1)).strftime("%Y-%m-%d"),
-                    'color': '#e3b113',
-                    'userId': subitem.employee_details_id.employee_company_details.department,
-                })
-                
-                if subitem.employee_details_id.employee_company_details.department not in super_department_list:
-                    super_department_list.append(subitem.employee_details_id.employee_company_details.department)
-            
-            # Also include approved leaves in the super approver view
-            elif subitem.leave_status.lower() == "approved":
-                super_leave_list.append({
-                    'id': str(subitem._id),
-                    'title': subitem.employee_details_id.first_name + ' ' + subitem.employee_details_id.last_name,
-                    'start': subitem.leave_from.strftime("%Y-%m-%d"),
-                    'end': (subitem.leave_till + timedelta(days=1)).strftime("%Y-%m-%d"),
+        all_leave_requests = EmployeeLeaveRequest.objects(
+            company_id=employee_details.company_id,
+            request_status="pending"
+        )
+
+        leave_requests_super_approved = EmployeeLeaveRequest.objects(
+            company_id=employee_details.company_id,
+            request_status="approved"
+        )
+
+        super_approver_list = [
+            request for request in leave_requests_super_approved
+            if request.employee_leave_app_id and hasattr(request.employee_leave_app_id, 'asked_leave_from')
+        ]
+
+        for subitem in super_approver_list:
+            app = subitem.employee_leave_app_id
+            if not app or not hasattr(app, 'asked_leave_from'):
+                continue
+
+            emp = app.employee_details_id
+            if not emp or not hasattr(emp, 'employee_company_details'):
+                continue
+
+            dept = emp.employee_company_details.department
+
+            leave_data = {
+                'id': str(app._id),
+                'title': f"{emp.first_name} {emp.last_name}",
+                'userId': dept,
+            }
+
+            if subitem.request_status.lower() == "approved":
+                leave_data.update({
+                    'start': app.leave_from.strftime("%Y-%m-%d"),
+                    'end': (app.leave_till + timedelta(days=1)).strftime("%Y-%m-%d"),
                     'color': 'rgb(13, 205, 148)',
-                    'userId': subitem.employee_details_id.employee_company_details.department,
                 })
-                
-                if subitem.employee_details_id.employee_company_details.department not in super_department_list:
-                    super_department_list.append(subitem.employee_details_id.employee_company_details.department)
- 
-    # Check if the user is an approver
-    approvers = EmployeeLeaveApprover.objects(employee_details_id=employee_details._id).only('_id')
-    if approvers:
-        # Get approver IDs
-        approver_ids = [item._id for item in approvers]
-        
-        # Attempt to filter leave requests directly in the database query
-        try:
-            # Try to filter directly in the query for pending requests
+            super_approver_details.append(leave_data)
+
+            if dept not in super_department_list:
+                super_department_list.append(dept)
+
+        all_leave_list = [
+            request for request in all_leave_requests
+            if request.employee_leave_app_id and
+               hasattr(request.employee_leave_app_id, 'asked_leave_from') and
+               request.employee_leave_app_id.asked_leave_from.year == current_year
+        ]
+
+        for subitem in all_leave_list_cal:
+            try:
+                emp = subitem.employee_details_id
+                if not emp or not hasattr(emp, 'employee_company_details'):
+                    continue
+
+                dept = emp.employee_company_details.department
+                leave_data = {
+                    'id': str(subitem._id),
+                    'title': f"{emp.first_name} {emp.last_name}",
+                    'userId': dept,
+                }
+
+                if subitem.leave_status.lower() == "pending":
+                    leave_data.update({
+                        'start': subitem.asked_leave_from.strftime("%Y-%m-%d"),
+                        'end': (subitem.asked_leave_till + timedelta(days=1)).strftime("%Y-%m-%d"),
+                        'color': '#e3b113',
+                    })
+                elif subitem.leave_status.lower() == "approved":
+                    leave_data.update({
+                        'start': subitem.leave_from.strftime("%Y-%m-%d"),
+                        'end': (subitem.leave_till + timedelta(days=1)).strftime("%Y-%m-%d"),
+                        'color': 'rgb(13, 205, 148)',
+                    })
+                super_leave_list.append(leave_data)
+
+                if dept not in super_department_list:
+                    super_department_list.append(dept)
+            except (AttributeError, TypeError):
+                continue
+
+    except Exception as e:
+        print(f"Error in process_super_approver: {str(e)}")
+
+    return super_leave_list, super_department_list, all_leave_list, super_approver_list, super_approver_details
+
+
+def process_regular_approver(employee_details, current_year):
+    leave_list, department_list, leave_requests = [], [], []
+
+    try:
+        approvers = EmployeeLeaveApprover.objects(employee_details_id=employee_details._id).only('_id')
+        if approvers:
+            approver_ids = [item._id for item in approvers]
+
             leave_requests_pending = EmployeeLeaveRequest.objects(
                 approver_id__in=approver_ids,
                 request_status="pending"
             )
-            
-            # Also get approved requests
+
             leave_requests_approved = EmployeeLeaveRequest.objects(
                 approver_id__in=approver_ids,
                 request_status="approved"
             )
-            
-            # Now handle these in Python code
-            leave_requests = []
-            for req in leave_requests_pending:
+
+            filtered_pending = [
+                req for req in leave_requests_pending
+                if req.employee_leave_app_id and
+                   hasattr(req.employee_leave_app_id, 'asked_leave_from') and
+                   req.employee_leave_app_id.asked_leave_from.year == current_year
+            ]
+
+            leave_requests = filtered_pending + list(leave_requests_approved)
+
+            for subitem in leave_requests:
                 try:
-                    if (req.employee_leave_app_id and 
-                        hasattr(req.employee_leave_app_id, 'asked_leave_from') and
-                        req.employee_leave_app_id.asked_leave_from and
-                        req.employee_leave_app_id.asked_leave_from.year == current_year):
-                        leave_requests.append(req)
+                    emp_app = subitem.employee_leave_app_id
+                    emp_detail = emp_app.employee_details_id
+                    dept = emp_detail.employee_company_details.department
+
+                    leave_data = {
+                        'id': str(subitem._id),
+                        'title': f"{emp_detail.first_name} {emp_detail.last_name}",
+                        'userId': dept
+                    }
+
+                    if subitem.request_status.lower() == "pending":
+                        leave_data.update({
+                            'start': emp_app.asked_leave_from.strftime("%Y-%m-%d"),
+                            'end': (emp_app.asked_leave_till + timedelta(days=1)).strftime("%Y-%m-%d"),
+                            'color': '#e3b113'
+                        })
+                    elif subitem.request_status.lower() == "approved":
+                        leave_data.update({
+                            'start': emp_app.leave_from.strftime("%Y-%m-%d"),
+                            'end': (emp_app.leave_till + timedelta(days=1)).strftime("%Y-%m-%d"),
+                            'color': 'rgb(13, 205, 148)'
+                        })
+
+                    leave_list.append(leave_data)
+                    if dept not in department_list:
+                        department_list.append(dept)
                 except (AttributeError, TypeError):
                     continue
-            
-            # Add all approved requests regardless of year
-            for req in leave_requests_approved:
-                leave_requests.append(req)
-                    
-        except Exception:
-            # Fallback to the original query if the filtered query fails
-            leave_requests = EmployeeLeaveRequest.objects(
-                approver_id__in=approver_ids
-            )
-        
-        # Process leave requests for regular approvers
-        for subitem in leave_requests:
-            try:
-                # Ensure the leave application exists
-                if (subitem.employee_leave_app_id and 
-                    hasattr(subitem.employee_leave_app_id, 'asked_leave_from') and 
-                    subitem.employee_leave_app_id.asked_leave_from):
-                    
-                    # For pending requests, only show current year
-                    if subitem.request_status.lower() == "pending":
-                        if subitem.employee_leave_app_id.asked_leave_from.year == current_year:
-                            leave_list.append({
-                                'id': str(subitem._id),
-                                'title': subitem.employee_leave_app_id.employee_details_id.first_name + ' ' + subitem.employee_leave_app_id.employee_details_id.last_name,
-                                'start': subitem.employee_leave_app_id.asked_leave_from.strftime("%Y-%m-%d"),
-                                'end': (subitem.employee_leave_app_id.asked_leave_till + timedelta(days=1)).strftime("%Y-%m-%d"),
-                                'color': '#e3b113',
-                                'userId': subitem.employee_leave_app_id.employee_details_id.employee_company_details.department,
-                            })
-                    
-                    # For approved requests, show all years
-                    elif subitem.request_status.lower() == "approved":
-                        leave_list.append({
-                            'id': str(subitem._id),
-                            'title': subitem.employee_leave_app_id.employee_details_id.first_name + ' ' + subitem.employee_leave_app_id.employee_details_id.last_name,
-                            'start': subitem.employee_leave_app_id.leave_from.strftime("%Y-%m-%d"),
-                            'end': (subitem.employee_leave_app_id.leave_till + timedelta(days=1)).strftime("%Y-%m-%d"),
-                            'color': 'rgb(13, 205, 148)',
-                            'userId': subitem.employee_leave_app_id.employee_details_id.employee_company_details.department,
-                        })
-                    
-                    if subitem.employee_leave_app_id.employee_details_id.employee_company_details.department not in department_list:
-                        department_list.append(subitem.employee_leave_app_id.employee_details_id.employee_company_details.department)
-            except (AttributeError, TypeError):
-                # Skip if there are any issues accessing properties
-                continue
-    
-    if employee_details.is_super_leave_approver or employee_details.is_approver:
-        return render_template('employee/leaves_approval.html', 
-                              leave_requests=leave_requests,
-                              leave_list=leave_list,
-                              department_list=department_list,
-                              all_leave_list=all_leave_list,
-                              super_leave_list=super_leave_list,
-                              super_department_list=super_department_list)
-    else:
-        flash("Sorry, You do not have permission to view/(perform action on) this resource.", 'danger')
-        return redirect(url_for('employee.dashboard'))
-    
+
+    except Exception as e:
+        print(f"Error in process_regular_approver: {str(e)}")
+
+    return leave_list, department_list, leave_requests
+
 # @employee.route('/leavesapprovals')
 # @login_required
 # @roles_accepted('employee')
